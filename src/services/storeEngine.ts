@@ -28,6 +28,10 @@ export type Order = {
   idempotencyKey: string
   adminNotes?: string
   items: OrderItemSnapshot[]
+  redemptionToken?: string
+  isRedeemed?: boolean
+  redeemedAt?: string
+  redeemedBy?: string
   verifiedAt?: string
   completedAt?: string
   createdAt: string
@@ -130,6 +134,38 @@ const STORAGE_KEYS = {
 
 type RealtimeListener = (event: string, payload: unknown) => void
 
+function normalizeProductCategory(p: any): Product {
+  let cat: 'VISA' | 'MASTERCARD' | 'RUPAY' = 'MASTERCARD'
+  const rawCat = String(p.collection || p.category || p.name || '').toUpperCase()
+  if (
+    rawCat.includes('VISA') ||
+    rawCat.includes('ROYAL') ||
+    rawCat.includes('AZURE') ||
+    rawCat.includes('TITANIUM') ||
+    rawCat.includes('BLUE') ||
+    rawCat.includes('PLATINUM')
+  ) {
+    cat = 'VISA'
+  } else if (
+    rawCat.includes('RUPAY') ||
+    rawCat.includes('EMERALD') ||
+    rawCat.includes('JADE') ||
+    rawCat.includes('GOLD')
+  ) {
+    cat = 'RUPAY'
+  } else {
+    cat = 'MASTERCARD'
+  }
+
+  return {
+    ...p,
+    collection: cat,
+    category: cat,
+    categoryLabel: cat,
+    currency: 'INR',
+  }
+}
+
 /**
  * Reactive Store Engine
  * Seamlessly abstracts Supabase PostgreSQL and persistent local reactive layer.
@@ -165,41 +201,43 @@ class StoreEngine {
           .order('created_at', { ascending: false })
 
         if (!error && data && data.length > 0) {
-          return data.map((row: any) => ({
-            id: row.id,
-            sku: row.sku,
-            slug: row.slug,
-            name: row.name,
-            description: row.description || '',
-            collection: row.collection as CollectibleCollection,
-            category: row.collection,
-            categoryLabel: row.collection,
-            priceMinor: row.price_minor,
-            salePriceMinor: row.sale_price_minor,
-            discountPercent: row.discount_percent || 0,
-            currency: row.currency || 'USD',
-            stockCount: 10,
-            stockLabel: 'In Stock',
-            availability: 'in_stock',
-            editionNumber: row.artwork_number,
-            editionTotal: 100,
-            artwork: (row.artwork_key || 'northstar') as any,
-            artworkNumber: row.artwork_number,
-            artworkCaption: row.artwork_caption || '',
-            artworkTitle: row.artwork_title || '',
-            images: row.images || [],
-            digitalAsset: {
-              filename: row.digital_asset_name || 'collectible-master.zip',
-              sizeBytes: row.digital_asset_size_bytes || 52428800,
-              format: 'High-Res Digital Archive',
-            },
-            specifications: Array.isArray(row.specifications) ? row.specifications : [],
-            status: row.status,
-            isFeatured: row.is_featured,
-            isPopular: row.is_popular,
-            tags: row.tags || [],
-            createdAt: row.created_at,
-          }))
+          return data.map((row: any) =>
+            normalizeProductCategory({
+              id: row.id,
+              sku: row.sku,
+              slug: row.slug,
+              name: row.name,
+              description: row.description || '',
+              collection: row.collection as CollectibleCollection,
+              category: row.collection,
+              categoryLabel: row.collection,
+              priceMinor: row.price_minor,
+              salePriceMinor: row.sale_price_minor,
+              discountPercent: row.discount_percent || 0,
+              currency: 'INR',
+              stockCount: 10,
+              stockLabel: 'In Stock',
+              availability: 'in_stock',
+              editionNumber: row.artwork_number,
+              editionTotal: 100,
+              artwork: (row.artwork_key || 'northstar') as any,
+              artworkNumber: row.artwork_number,
+              artworkCaption: row.artwork_caption || '',
+              artworkTitle: row.artwork_title || '',
+              images: row.images || [],
+              digitalAsset: {
+                filename: row.digital_asset_name || 'collectible-master.zip',
+                sizeBytes: row.digital_asset_size_bytes || 52428800,
+                format: 'High-Res Digital Archive',
+              },
+              specifications: Array.isArray(row.specifications) ? row.specifications : [],
+              status: row.status,
+              isFeatured: row.is_featured,
+              isPopular: row.is_popular,
+              tags: row.tags || [],
+              createdAt: row.created_at,
+            }),
+          )
         }
       } catch (e) {
         console.warn('Falling back to local persistent store for products.', e)
@@ -213,7 +251,10 @@ class StoreEngine {
     }
     try {
       const parsed = JSON.parse(saved)
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEED_PRODUCTS
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(normalizeProductCategory)
+      }
+      return SEED_PRODUCTS
     } catch {
       return SEED_PRODUCTS
     }
@@ -316,18 +357,22 @@ class StoreEngine {
     const orderNumber = `RM-${new Date().getFullYear()}-${randomNum}`
     const now = new Date().toISOString()
 
+    const redemptionToken = `RM-QR-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`
+
     const newOrder: Order = {
       id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       orderNumber,
       userId: params.userId,
       status: 'pending',
       subtotalMinor,
-      currency: 'USD',
+      currency: 'INR',
       customerEmail: params.customerEmail,
       customerName: params.customerName || 'Valued Collector',
       paymentMethod: params.paymentMethod,
       idempotencyKey: params.idempotencyKey,
       items: params.items,
+      redemptionToken,
+      isRedeemed: false,
       createdAt: now,
       updatedAt: now,
     }
@@ -349,7 +394,7 @@ class StoreEngine {
     await this.createNotification({
       userId: params.userId,
       title: 'Order Submitted',
-      body: `Your order #${orderNumber} for $${(subtotalMinor / 100).toFixed(2)} has been registered. Pending settlement verification.`,
+      body: `Your order #${orderNumber} for ₹${Math.round(subtotalMinor / 100).toLocaleString('en-IN')} has been registered. Pending settlement verification.`,
       notificationType: 'order',
     })
 
@@ -428,6 +473,62 @@ class StoreEngine {
 
     this.emit('order_updated', updatedOrder)
     return updatedOrder
+  }
+
+  async getOrderByIdOrToken(identifier: string): Promise<Order | null> {
+    const q = identifier.trim().toLowerCase()
+    if (!q) return null
+    const orders = await this.getOrders()
+    return (
+      orders.find(
+        (o) =>
+          o.id.toLowerCase() === q ||
+          o.orderNumber.toLowerCase() === q ||
+          (o.redemptionToken && o.redemptionToken.toLowerCase() === q) ||
+          o.idempotencyKey.toLowerCase() === q,
+      ) || null
+    )
+  }
+
+  async redeemOrderCollectible(identifier: string, adminUser = 'Administrator'): Promise<{ order: Order; message: string }> {
+    const order = await this.getOrderByIdOrToken(identifier)
+    if (!order) {
+      throw new Error(`Order or collectible token "${identifier}" not found in system records.`)
+    }
+
+    if (order.isRedeemed) {
+      throw new Error(
+        `Collectible was already redeemed on ${new Date(order.redeemedAt || '').toLocaleString('en-IN')}${
+          order.redeemedBy ? ` by ${order.redeemedBy}` : ''
+        }. Duplicate redemption prevented.`,
+      )
+    }
+
+    const now = new Date().toISOString()
+    const updatedOrder: Order = {
+      ...order,
+      isRedeemed: true,
+      redeemedAt: now,
+      redeemedBy: adminUser,
+      updatedAt: now,
+    }
+
+    const orders = await this.getOrders()
+    const updatedList = orders.map((o) => (o.id === order.id ? updatedOrder : o))
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updatedList))
+
+    await this.createNotification({
+      userId: order.userId,
+      title: 'Digital Collectible Redeemed',
+      body: `Your collectible token for Order #${order.orderNumber} was successfully validated and redeemed by ${adminUser}.`,
+      notificationType: 'vault',
+    })
+
+    this.emit('order_updated', updatedOrder)
+    return {
+      order: updatedOrder,
+      message: `Collectible token for Order #${order.orderNumber} successfully redeemed and sealed.`,
+    }
   }
 
   // --- DIGITAL VAULT & ENTITLEMENTS ---
@@ -555,12 +656,52 @@ class StoreEngine {
     return newMsg
   }
 
+  async clearConversationMessages(conversationId: string): Promise<void> {
+    const raw = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS)
+    const list: SupportConversation[] = raw ? JSON.parse(raw) : []
+    const conv = list.find((c) => c.id === conversationId)
+    if (conv) {
+      conv.messages = [
+        {
+          id: `msg_${Date.now()}`,
+          conversationId,
+          senderType: 'admin',
+          body: 'Conversation history has been cleared. How may our concierge assist your collection today?',
+          createdAt: new Date().toISOString(),
+        },
+      ]
+      conv.updatedAt = new Date().toISOString()
+      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
+      this.emit('new_message', conv.messages[0])
+    }
+  }
+
   // --- WALLET ---
 
   async getWalletTransactions(userId?: string | null): Promise<WalletTx[]> {
     const raw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
-    const list: WalletTx[] = raw ? JSON.parse(raw) : []
-    return userId ? list.filter((tx) => tx.userId === userId) : list
+    if (!raw) {
+      const initial: WalletTx[] = [
+        {
+          id: 'wtx_init_01',
+          userId: userId || 'demo_collector_user',
+          amountMinor: 500000, // ₹5,000.00
+          transactionType: 'credit',
+          status: 'completed',
+          reference: 'WELCOME-BONUS-INR',
+          description: 'Russian Market Collector Allocation',
+          createdAt: new Date().toISOString(),
+        },
+      ]
+      localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(initial))
+      return initial
+    }
+    try {
+      const list: WalletTx[] = JSON.parse(raw)
+      return userId ? list.filter((tx) => tx.userId === userId) : list
+    } catch {
+      return []
+    }
   }
 
   async getWalletBalance(userId?: string | null): Promise<number> {
@@ -670,7 +811,7 @@ class StoreEngine {
     const defaults: StoreSettings = {
       storeName: 'RUSSIAN MARKET',
       tagline: 'Haute Digital Collectibles & Cryptographic Artifacts',
-      currency: 'USD',
+      currency: 'INR',
       supportEmail: 'concierge@russianmarket.store',
       refundPolicy: 'Due to the cryptographic custody of digital assets, all verified acquisitions are final. Our concierge provides immediate replacement tokens in case of transmission failures.',
       privacyPolicy: 'Zero-knowledge architecture. No financial balances or payment card numbers are collected or stored.',

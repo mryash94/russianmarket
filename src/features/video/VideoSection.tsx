@@ -19,17 +19,17 @@ export function VideoSection() {
   )
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-5 pb-16">
       {/* Header */}
       <div>
         <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-cyan-400 block mb-1">
-          CURATED CINEMA & TUTORIALS
+          VIDEO GUIDES
         </span>
         <h2 className="font-cinzel text-xl md:text-2xl font-bold text-white">
-          Russian Market Video Library
+          Video Guides & Tutorials
         </h2>
-        <p className="text-xs text-slate-400 font-sans mt-1">
-          Explore executive demonstrations of our procedural guilloche micro-structures, digital vault custody tutorials, and collection heritage.
+        <p className="text-xs text-slate-400 font-sans mt-0.5">
+          Demonstrations, collector tutorials, and edition showcases.
         </p>
       </div>
 

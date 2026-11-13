@@ -3,7 +3,6 @@ import { Header } from '../components/Header'
 import { Navigation, type AppSection } from '../components/Navigation'
 import { CatalogPage } from '../features/catalog/CatalogPage'
 import { ProductDetailsDialog } from '../features/catalog/ProductDetailsDialog'
-import { CartDrawer } from '../features/commerce/CartDrawer'
 import { CheckoutModal } from '../features/commerce/CheckoutModal'
 import { MyOrdersModal } from '../features/orders/MyOrdersModal'
 import { DigitalVaultModal } from '../features/vault/DigitalVaultModal'
@@ -37,7 +36,6 @@ export function App() {
 
   // Modals & Drawers
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [isCartOpen, setIsCartOpen] = useState(false)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isOrdersOpen, setIsOrdersOpen] = useState(false)
   const [isVaultOpen, setIsVaultOpen] = useState(false)
@@ -81,45 +79,14 @@ export function App() {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
   }, [cartItems])
 
-  const cartTotalCount = useMemo(() => {
-    return Object.values(cartItems).reduce((sum, qty) => sum + qty, 0)
-  }, [cartItems])
-
   const unreadNotificationsCount = useMemo(() => {
     return notifications.filter((n) => !n.readAt).length
   }, [notifications])
 
-  // Cart operations
-  const handleAddToCart = (product: Product) => {
-    setCartItems((prev) => ({
-      ...prev,
-      [product.id]: (prev[product.id] || 0) + 1,
-    }))
-    setIsCartOpen(true)
-  }
-
   const handleQuickBuy = (product: Product) => {
-    setCartItems((prev) => ({
-      ...prev,
-      [product.id]: prev[product.id] ? prev[product.id] : 1,
-    }))
+    // Canonical single-purchase flow: exactly one product per checkout
+    setCartItems({ [product.id]: 1 })
     setIsCheckoutOpen(true)
-  }
-
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      handleRemoveFromCart(productId)
-    } else {
-      setCartItems((prev) => ({ ...prev, [productId]: quantity }))
-    }
-  }
-
-  const handleRemoveFromCart = (productId: string) => {
-    setCartItems((prev) => {
-      const copy = { ...prev }
-      delete copy[productId]
-      return copy
-    })
   }
 
   const handleClearCart = () => {
@@ -140,10 +107,11 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
-      {/* 1. Header (Mobile-first, sticky with search, orders, notifications, cart) */}
+    <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans overflow-x-hidden selection:bg-cyan-500 selection:text-black">
+      {/* 1. Header (Mobile-first, sticky with search, orders, notifications, cart, and desktop nav) */}
       <Header
-        cartCount={cartTotalCount}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
         unreadCount={unreadNotificationsCount}
         ordersCount={ordersCount}
         vaultCount={vaultCount}
@@ -151,7 +119,6 @@ export function App() {
         isAdmin={isAdmin}
         isAdminView={isAdminView}
         onToggleAdminView={() => setIsAdminView(true)}
-        onOpenCart={() => setIsCartOpen(true)}
         onOpenOrders={() => setIsOrdersOpen(true)}
         onOpenVault={() => setIsVaultOpen(true)}
         onSearchChange={setSearchQuery}
@@ -165,9 +132,7 @@ export function App() {
           <CatalogPage
             products={products}
             onSelectProduct={setSelectedProduct}
-            onAddToCart={handleAddToCart}
             onQuickBuy={handleQuickBuy}
-            onOpenSupport={() => setActiveSection('chat')}
             initialSearchQuery={searchQuery}
           />
         )}
@@ -197,33 +162,13 @@ export function App() {
         unreadChatCount={0}
       />
 
-      {/* Desktop Sticky Header Nav (shown inside header container on wide screens) */}
-      <div className="hidden md:flex justify-center pb-4">
-        <Navigation
-          activeSection={activeSection}
-          onChange={setActiveSection}
-          variant="desktop"
-        />
-      </div>
-
       {/* 4. Modals and Drawers */}
       {/* Product Details Dialog */}
       <ProductDetailsDialog
+        key={selectedProduct?.id ?? 'none'}
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
         onQuickBuy={handleQuickBuy}
-      />
-
-      {/* Shopping Cart Drawer */}
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
-        products={products}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemoveItem={handleRemoveFromCart}
-        onProceedToCheckout={() => setIsCheckoutOpen(true)}
       />
 
       {/* Checkout Modal */}

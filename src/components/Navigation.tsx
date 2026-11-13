@@ -1,116 +1,210 @@
-import React from 'react'
-import { Sparkles, Clapperboard, MessageCircle, Wallet, Settings } from 'lucide-react'
+import { LiquidNavbar, type LiquidNavItem } from '@/components/ui/liquid-glass-navbar'
 
 export type AppSection = 'cards' | 'video' | 'chat' | 'wallet' | 'settings'
 
-type NavigationProps = {
+export type NavigationProps = {
   activeSection: AppSection
   onChange: (section: AppSection) => void
   variant?: 'mobile' | 'desktop'
   unreadChatCount?: number
+  className?: string
 }
 
-const navItems: {
-  id: AppSection
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-}[] = [
-  { id: 'cards', label: 'CARDS', icon: Sparkles },
-  { id: 'video', label: 'VIDEO', icon: Clapperboard },
-  { id: 'chat', label: 'CHAT', icon: MessageCircle },
-  { id: 'wallet', label: 'WALLET', icon: Wallet },
-  { id: 'settings', label: 'SETTINGS', icon: Settings },
-]
+const SECTIONS: AppSection[] = ['cards', 'video', 'chat', 'wallet', 'settings']
 
 export function Navigation({
   activeSection,
   onChange,
-  variant = 'mobile',
+  variant,
   unreadChatCount = 0,
+  className = '',
 }: NavigationProps) {
+  const activeIndex = Math.max(0, SECTIONS.indexOf(activeSection))
+
+  const handleIndexChange = (index: number) => {
+    const nextSection = SECTIONS[index]
+    if (nextSection && nextSection !== activeSection) {
+      onChange(nextSection)
+    }
+  }
+
+  // Strictly the 5 requested navigation items with luxury icons and micro-fx
+  const items: LiquidNavItem[] = [
+    {
+      label: 'CARDS',
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="2" y="5" width="20" height="14" rx="3" />
+          <line x1="2" y1="10" x2="22" y2="10" />
+          <line x1="6" y1="15" x2="10" y2="15" />
+        </svg>
+      ),
+      fx: 'spin',
+    },
+    {
+      label: 'VIDEO',
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <polygon points="6 4 20 12 6 20 6 4" />
+        </svg>
+      ),
+      fx: 'pop',
+    },
+    {
+      label: 'CHAT',
+      icon: (
+        <span className="relative inline-flex items-center justify-center">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          {unreadChatCount > 0 && (
+            <span
+              className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse"
+              aria-label={`${unreadChatCount} unread message${unreadChatCount > 1 ? 's' : ''}`}
+            />
+          )}
+        </span>
+      ),
+      fx: 'drop',
+    },
+    {
+      label: 'WALLET',
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" />
+          <path d="M16 12a2 2 0 1 0 0 4h4v-4Z" />
+          <path d="M4 7V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3" />
+        </svg>
+      ),
+      fx: 'glow',
+    },
+    {
+      label: 'SETTINGS',
+      icon: (
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      ),
+      fx: 'spin',
+    },
+  ]
+
+  // Desktop Header variant (compact inline liquid-glass pill)
   if (variant === 'desktop') {
     return (
+      <div className={`hidden md:inline-flex items-center justify-center ${className}`}>
+        <LiquidNavbar
+          items={items}
+          active={activeIndex}
+          onChange={handleIndexChange}
+          tone="dark"
+          sound={false}
+          className="shadow-lg shadow-black/40"
+        />
+      </div>
+    )
+  }
+
+  // Mobile Bottom Floating variant (safe-area compliant, centered, touch-friendly)
+  if (variant === 'mobile') {
+    return (
       <nav
-        aria-label="Desktop Primary Navigation"
-        className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/10"
+        aria-label="Mobile Bottom Navigation"
+        className={`md:hidden fixed bottom-3 inset-x-0 z-50 flex justify-center pointer-events-none px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] ${className}`}
       >
-        {navItems.map(({ id, label, icon: IconComponent }) => {
-          const isActive = activeSection === id
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onChange(id)}
-              className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-space text-xs font-semibold tracking-wider transition-all duration-200 ${
-                isActive
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-              }`}
-            >
-              <IconComponent className={`w-4 h-4 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
-              <span>{label}</span>
-              {id === 'chat' && unreadChatCount > 0 && (
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              )}
-            </button>
-          )
-        })}
+        <div className="pointer-events-auto filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
+          <LiquidNavbar
+            items={items}
+            active={activeIndex}
+            onChange={handleIndexChange}
+            tone="dark"
+            sound={false}
+          />
+        </div>
       </nav>
     )
   }
 
-  // Mobile Bottom Navigation Bar (Fixed with Safe Area)
+  // Default adaptive variant (renders inline on desktop and floating at bottom on mobile)
   return (
-    <nav
-      aria-label="Mobile Bottom Navigation"
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 glass-panel-glow border-t border-white/10 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] px-3 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]"
-    >
-      <div className="max-w-md mx-auto grid grid-cols-5 gap-1 items-center">
-        {navItems.map(({ id, label, icon: IconComponent }) => {
-          const isActive = activeSection === id
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onChange(id)}
-              className={`relative flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-200 active:scale-90 ${
-                isActive ? 'text-cyan-400' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {/* Active ambient glow pill */}
-              {isActive && (
-                <span
-                  className="absolute inset-0 bg-cyan-500/15 rounded-xl border border-cyan-400/30 -z-10 shadow-[0_0_15px_rgba(0,240,255,0.25)]"
-                />
-              )}
-
-              <div className="relative">
-                <IconComponent
-                  className={`w-5 h-5 transition-transform ${
-                    isActive ? 'scale-110 drop-shadow-[0_0_8px_rgba(0,240,255,0.6)]' : ''
-                  }`}
-                />
-                {id === 'chat' && unreadChatCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-black" />
-                )}
-              </div>
-
-              <span
-                className={`font-space text-[10px] tracking-wider mt-1 font-bold ${
-                  isActive ? 'text-cyan-300' : 'text-slate-400'
-                }`}
-              >
-                {label}
-              </span>
-
-              {/* Cyan Indicator dot */}
-              {isActive && (
-                <span className="w-1 h-1 rounded-full bg-cyan-400 mt-0.5 shadow-[0_0_6px_#00f0ff]" />
-              )}
-            </button>
-          )
-        })}
+    <>
+      <div className={`hidden md:inline-flex items-center justify-center ${className}`}>
+        <LiquidNavbar
+          items={items}
+          active={activeIndex}
+          onChange={handleIndexChange}
+          tone="dark"
+          sound={false}
+          className="shadow-lg shadow-black/40"
+        />
       </div>
-    </nav>
+      <nav
+        aria-label="Mobile Bottom Navigation"
+        className={`md:hidden fixed bottom-3 inset-x-0 z-50 flex justify-center pointer-events-none px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] ${className}`}
+      >
+        <div className="pointer-events-auto filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
+          <LiquidNavbar
+            items={items}
+            active={activeIndex}
+            onChange={handleIndexChange}
+            tone="dark"
+            sound={false}
+          />
+        </div>
+      </nav>
+    </>
   )
 }
+
+export default Navigation

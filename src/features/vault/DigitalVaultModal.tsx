@@ -78,9 +78,9 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto glass-panel-glow rounded-3xl p-5 md:p-8 border border-white/15 shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto glass-panel-elevated rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/[0.12] shadow-2xl animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="vault-title"
@@ -89,38 +89,37 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full glass-input text-slate-400 hover:text-white"
+          className="absolute top-3.5 right-3.5 p-1.5 rounded-full glass-input text-slate-400 hover:text-white"
           aria-label="Close vault"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2.5 mb-2">
-          <ShieldAlert className="w-6 h-6 text-violet-400" />
-          <h2 id="vault-title" className="font-cinzel text-xl md:text-2xl font-bold text-white">
-            Encrypted Digital Vault
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldAlert className="w-5 h-5 text-violet-400" />
+          <h2 id="vault-title" className="font-cinzel text-lg sm:text-xl font-bold text-white">
+            Digital Vault
           </h2>
         </div>
 
-        <p className="text-xs text-slate-300 font-sans mb-6">
-          Authorized repository for your verified digital collectible master assets.
-          Every download is signed on-demand with asymmetric cryptographic credentials.
+        <p className="text-xs text-slate-400 font-sans mb-4">
+          Download high-resolution master asset files for your verified editions.
         </p>
 
         {/* Active Signed Token Alert (if generated) */}
         {activeDownload && (
-          <div className="mb-6 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/30 space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="mb-4 p-3.5 rounded-2xl bg-violet-500/10 border border-violet-500/30 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <span className="font-space font-bold text-xs text-violet-300 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-violet-400" />
-                SIGNED TOKEN ACTIVE
+                DOWNLOAD READY
               </span>
               <span className="text-[10px] font-mono-code text-slate-400">
-                EXPIRES AT: {activeDownload.expiresAt}
+                Expires: {activeDownload.expiresAt}
               </span>
             </div>
             <p className="text-xs text-slate-300 font-sans">
-              Your 15-minute download token for <strong>{activeDownload.filename}</strong> has been generated and logged.
+              Download link for <strong>{activeDownload.filename}</strong> is active.
             </p>
             <div className="pt-1">
               <a
@@ -130,7 +129,7 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl btn-violet text-xs font-bold active:scale-95 transition-all"
               >
                 <Download className="w-4 h-4" />
-                <span>Save Asset File (.ZIP)</span>
+                <span>Save Asset (.ZIP)</span>
               </a>
             </div>
           </div>
@@ -138,21 +137,20 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
 
         {loading ? (
           <div className="py-12 text-center text-slate-400 text-xs font-mono-code">
-            Verifying cryptographic entitlements...
+            Loading digital vault...
           </div>
         ) : entitlements.length === 0 ? (
-          <div className="py-16 text-center space-y-3">
-            <Lock className="w-12 h-12 text-slate-600 mx-auto" />
+          <div className="py-12 text-center space-y-2">
+            <Lock className="w-10 h-10 text-slate-600 mx-auto" />
             <h3 className="font-space font-semibold text-slate-300 text-sm">
-              Your Vault is Currently Empty
+              Vault is empty
             </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto font-sans leading-relaxed">
-              Digital master files unlock automatically as soon as your collectible orders are verified.
-              Initiate an order or verify pending orders in the Admin Control Room.
+              Master asset files unlock automatically once your orders are verified.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {entitlements.map((e) => {
               const formattedDate = new Date(e.grantedAt).toLocaleDateString(undefined, {
                 month: 'short',
@@ -164,9 +162,9 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
               return (
                 <div
                   key={e.id}
-                  className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-violet-500/30 transition-all space-y-3"
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-violet-500/30 transition-all space-y-2.5"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-space font-bold text-sm text-white">
@@ -177,33 +175,33 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
                         </span>
                       </div>
                       <span className="text-[10px] font-mono-code text-slate-400 block mt-0.5">
-                        SKU: {e.sku} • Granted: {formattedDate}
+                        {e.sku} • Granted {formattedDate}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-mono-code text-slate-400">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-[10px] font-mono-code text-slate-400">
                         Downloads: <strong className="text-cyan-300">{e.downloadCount}</strong>
                       </span>
                       <button
                         type="button"
                         disabled={isGenerating}
                         onClick={() => handleDownload(e)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl btn-cyan text-xs font-bold active:scale-95 disabled:opacity-50 transition-all shadow-[0_0_12px_rgba(0,240,255,0.25)]"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl btn-primary text-xs font-bold active:scale-95 disabled:opacity-50 transition-all"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>{isGenerating ? 'Signing...' : 'Request Download'}</span>
+                        <span>{isGenerating ? 'Preparing...' : 'Download'}</span>
                       </button>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs font-mono-code text-slate-400">
-                    <span className="flex items-center gap-1.5 truncate max-w-[280px]">
-                      <FileArchive className="w-4 h-4 text-violet-400" />
+                    <span className="flex items-center gap-1.5 truncate max-w-[200px] sm:max-w-[280px]">
+                      <FileArchive className="w-3.5 h-3.5 text-violet-400" />
                       {e.digitalAssetName}
                     </span>
                     <span className="text-[10px] text-emerald-400 font-semibold">
-                      VERIFIED ENTITLEMENT
+                      VERIFIED ASSET
                     </span>
                   </div>
                 </div>
@@ -212,9 +210,9 @@ export function DigitalVaultModal({ isOpen, onClose, userId }: DigitalVaultModal
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono-code text-slate-500">
-          <span>ZERO-KNOWLEDGE ARCHIVE VAULT</span>
-          <span>COMPLIANT WITH ASYMMETRIC KEY DELIVERY</span>
+        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[10px] font-mono-code text-slate-500">
+          <span>RUSSIAN MARKET DIGITAL VAULT</span>
+          <span>AUTHORIZED COLLECTOR ACCESS</span>
         </div>
       </div>
     </div>

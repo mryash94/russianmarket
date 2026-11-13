@@ -1,38 +1,35 @@
 # RUSSIAN MARKET — Haute Digital Collectibles & Artifacts
 
-RUSSIAN MARKET is an ultra-premium, mobile-first e-commerce platform and cryptographic digital vault. It provides collectors with an exclusive destination for acquiring original digital collectible artwork cards across six imperial editions with sovereign provenance, liquid-glass aesthetic design, real-time database reactivity, and secure asymmetric digital delivery.
+RUSSIAN MARKET is an ultra-premium, mobile-first e-commerce platform and cryptographic digital vault. It provides collectors with an exclusive destination for acquiring original digital collectible artwork cards across three standardized categories (`VISA`, `MASTERCARD`, `RUPAY`) with sovereign provenance, liquid-glass aesthetic design, real-time database reactivity, integer-paise INR currency formatting, and secure asymmetric digital delivery.
 
 ---
 
 ## 💎 Features & Architecture
 
 ### 1. Ultra-Premium Design System & Brand Identity
-- **Color Palette**: Deep obsidian (`#030712`), midnight navy (`#070B19`), electric cyan (`#00F0FF`), ice-blue, and imperial gold highlights.
+- **Color Palette**: Deep midnight obsidian (`#030712`), deep navy, electric cyan (`#00F0FF`), and ice-blue reflections.
 - **Glass Effects**: Multi-layer crystal and liquid-glass panels (`backdrop-filter: blur(24px) saturate(190%)`), translucent specular borders, and subtle glow flares.
-- **Holographic Collectible Cards**: Interactive 3D cards with simulated microchips, guilloche security patterns, procedural geometric vector artwork, and dynamic angle-dependent reflection glares.
-- **Brand Identity**: Original Russian Market heraldic crest, diamond-faceted emblem, and intertwined `RM` monogram.
+- **Universal Collectible Cards**: Standardized collectible cards with realistic metallic chip illustration, contactless waves, angle-dependent holographic foil shimmer, and smooth 3D front/back flip animation (`rotateY(180deg)`).
+- **Luxury Reverse Side**: Authentic collectible medallion, subtle guilloché pattern, metallic rim highlights, and clean edition metadata.
+- **Typography & Icons**: Professional Inter font stack and crisp Lucide SVG icons.
 
-### 2. Six Imperial Collectible Editions
-1. **Midnight Edition**: Deep obsidian carbon with ultraviolet corona and stealth cipher lore.
-2. **Royal Blue Edition**: Cobalt sapphire with electric ice cyan waveguides.
-3. **Crimson Edition**: Liquid ruby with rose-gold and molten copper filigree.
-4. **Titanium Edition**: Brushed Grade-5 aerospace platinum with optical prismatic diffraction.
-5. **Gold Edition**: 24-Karat imperial gold bars with double-eagle geometric crests.
-6. **Limited Edition**: Prismatic rainbow holographic foil with serialized founding provenance.
+### 2. Three Standardized Categories
+1. **VISA**: Royal blue, midnight navy, and electric cyan.
+2. **MASTERCARD**: Deep black, burgundy, and vibrant red/orange.
+3. **RUPAY**: Emerald green and dark jade.
 
-*Note: All products are fictional digital collectible artwork. They are NOT functional credit cards, bank cards, or financial credentials.*
+*Note: All products are fictional digital collectible artworks. They are NOT functional credit cards, bank cards, or financial credentials.*
 
-### 3. Mobile-First Customer Storefront (Android Chrome Optimized)
-- Precision layouts optimized for **360px, 390px, 412px, and 430px** screen widths as well as tablet and desktop viewports.
-- **Compact Header**: Brand logo, instant SKU/Collection search, notification center, My Orders shortcut, Digital Vault shortcut, and shopping bag drawer.
-- **Fixed Bottom Navigation**:
-  - `CARDS`: Featured 3D carousel, discovery catalogue, collection pills, How to Buy/Download guides.
-  - `VIDEO`: Curated video demonstrations, vault tutorials, and 4K media player.
-  - `CHAT`: Real-time 24/7 Concierge messaging with persistent database messages and curator replies.
-  - `WALLET`: Cryptographic transaction ledger and verified account balance.
-  - `SETTINGS`: Collector profile governance, notification toggles, and sovereign legal policies.
+### 3. Mobile-First Customer Storefront (Android Chrome & iOS Optimized)
+- Precision layouts optimized for **320px, 360px, 375px, 390px, 412px, 430px**, tablet, and desktop viewports.
+- **Floating Liquid-Glass Navbar**: Pill-shaped navigation (`CARDS`, `VIDEO`, `CHAT`, `WALLET`, `SETTINGS`) with WebGL fluid simulation, active drop physics, and mobile safe-area padding.
+- **Single Purchase Action (`BUY NOW →`)**: Clean, direct purchase flow without shopping cart friction. Creates one canonical order per purchase.
+- **Product Details**: Compact luxury dialog showing interactive 3D card, edition number, INR price, availability, and instant checkout.
+- **Concierge Chat**: 24/7 authenticated concierge interface with non-overlapping message composer, status checkmarks, attachment simulation, and clear history controls.
+- **Store Wallet**: INR balance ledger, transaction records, and 3D sovereign pass preview.
 
 ### 4. Robust Order Lifecycle & Idempotency
+- **INR Currency Consistency**: Integer-paise calculations and Indian numbering formatting (`₹` / `en-IN`) everywhere.
 - **Lifecycle States**:
   - `pending`: Registered order awaiting settlement.
   - `payment_verified`: Confirmed payment; unlocks digital vault assets.
@@ -41,32 +38,21 @@ RUSSIAN MARKET is an ultra-premium, mobile-first e-commerce platform and cryptog
   - `cancelled`, `refunded`, `failed`, `expired`.
 - **Integrity**: Server-calculated price totals, immutable item snapshots, unique order numbers (`RM-2026-XXXXXX`), and UUID idempotency keys to prevent duplicate submissions.
 
-### 5. Modular SunPay Payment Gateway Architecture
-- Prepared for seamless future SunPay merchant API activation.
-- Modular provider interface (`PaymentProvider.ts`) with payload generation, signature verification scaffolding, and idempotency tracking.
-- Does not expose payment secrets or invent unauthorized endpoints.
-- Includes `ManualAdminVerificationProvider` for instant admin verification in the Control Room.
-
-### 6. Secure Digital Delivery & Encrypted Vault
-- After payment verification, customer purchase entitlements are recorded in `customer_entitlements`.
-- Generates 15-minute short-lived signed download tokens (`DigitalDeliveryService`).
-- Full audit tracking of every download in `digital_downloads`.
-- Unpaid users are strictly blocked from digital asset master files.
-
-### 7. Separate Administrative Control Room (`/admin`)
-- Accessible via the topbar admin button or dedicated control view.
-- **Overview Metrics**: Total revenue, pending verifications, total orders, active inventory.
-- **Order Management**: Search, filter, inspect snapshots, and **Verify Payment & Release Assets** with one click.
-- **Product Management**: Add, edit, archive, change prices, configure discounts, and manage digital asset filenames.
-- **Collector Accounts**: Inspect registered customers and order frequency.
-- **Settings**: Configure SunPay Merchant ID, API endpoints, and sovereign policies.
+### 5. Administrative Control Room (`/admin`)
+- Accessible via the top-bar Admin button.
+- **Overview Metrics**: Total orders, pending orders, paid/verified orders, processing orders, completed orders, cancelled orders, and verified INR revenue.
+- **Product Management**: Add, edit, and delete products with confirmation dialogs; manage VISA, MASTERCARD, RUPAY categories; configure edition quantities and INR prices.
+- **Order Management**: Search by order number, customer name, email, or token; filter by payment status; verify payments and cancel orders.
+- **QR Scanner & Redemption**: Scan or look up order verification tokens to validate presentations and seal digital collectible redemptions with duplicate redemption prevention.
+- **Collector Accounts**: Inspect registered customers, order counts, and lifetime acquisition volume.
+- **Store Governance**: Configure policies, currency standard (`INR`), and SunPay gateway endpoints.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: React 19, TypeScript, Vite
-- **Styling**: Tailwind CSS v4, Custom Liquid Glass CSS tokens
+- **Frontend**: React 19, TypeScript, Vite 8.3
+- **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`), Custom Liquid Glass CSS tokens
 - **Animations & Icons**: Framer Motion, Lucide Icons
 - **Database & Auth**: Supabase PostgreSQL, Row Level Security (RLS), Supabase Auth, Realtime
 - **Resilient Offline / Demo Engine**: Built-in reactive store engine (`storeEngine.ts`) ensures the application is 100% operational, persistent, and testable both with and without Supabase credentials.
@@ -88,14 +74,19 @@ npm.cmd install
 ```powershell
 npm.cmd run dev
 ```
-Open `http://127.0.0.1:5173/` in your browser.
+Open [http://localhost:5173/](http://localhost:5173/) in your browser.
 
 ### 3. Build for Production
 ```powershell
 npm.cmd run build
 ```
 
-### 4. Code Quality & Linting
+### 4. Preview Production Build Locally
+```powershell
+npm.cmd run preview
+```
+
+### 5. Code Quality & Linting
 ```powershell
 npm.cmd run lint
 ```
@@ -123,6 +114,7 @@ npm.cmd run lint
 
 ## 🔐 Security & Compliance
 
-- **No Usable Payment Card Data**: RUSSIAN MARKET creates exclusively fictional collectible art cards. No bank account numbers, CVVs, or magnetic stripes are generated or accepted.
+- **No Usable Payment Card Data**: RUSSIAN MARKET creates exclusively fictional collectible art cards. No bank account numbers, CVVs, or magnetic stripes are generated, requested, or accepted.
 - **Row Level Security**: Every table enforces Postgres RLS policies. Unauthenticated or unpaid users cannot read administrative logs, other customers' orders, or digital vault files.
-- **No Leaked Secrets**: Only the public anonymous Supabase key is used client-side; service-role keys and payment secrets are strictly prohibited from frontend bundles.
+- **No Leaked Secrets**: Only the public anonymous Supabase key is used client-side; service-role keys, private webhook secrets, and payment signing credentials are strictly prohibited from frontend bundles.
+- **Clean Git Tracking**: `.env`, `.env.local`, `node_modules/`, and build artifacts are strictly excluded via `.gitignore`.

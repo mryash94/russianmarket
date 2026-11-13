@@ -1,7 +1,7 @@
 export type CartItems = Record<string, number>
 
-export function formatPrice(priceMinor: number, currency = 'USD'): string {
-  const formatter = new Intl.NumberFormat('en-US', {
+export function formatPrice(priceMinor: number, currency = 'INR'): string {
+  const formatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
   })

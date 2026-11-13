@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { Product } from '../types/product'
+import type { Product, CardCategory } from '../types/product'
 
 const PAGE_SIZE = 48
 
@@ -387,20 +387,36 @@ function mapProductRows(
     const available = inventory
       ? Math.max(0, inventory.available_quantity - inventory.reserved_quantity)
       : 0
-    const collectionName = (categoryLabelsById.get(row.category_id)?.name ?? 'Midnight Edition') as any
+    const rawCategory = categoryLabelsById.get(row.category_id)?.name ?? row.category_id ?? 'VISA'
+    let cardCat: CardCategory = 'MASTERCARD'
+    const upper = String(rawCategory).toUpperCase()
+    if (
+      upper.includes('VISA') ||
+      upper.includes('ROYAL') ||
+      upper.includes('AZURE') ||
+      upper.includes('TITANIUM') ||
+      upper.includes('PLATINUM')
+    ) {
+      cardCat = 'VISA'
+    } else if (
+      upper.includes('RUPAY') ||
+      upper.includes('EMERALD') ||
+      upper.includes('JADE') ||
+      upper.includes('GOLD')
+    ) {
+      cardCat = 'RUPAY'
+    }
     return {
       id: row.id,
       sku: `RM-${row.artwork_number.toString().padStart(3, '0')}`,
       slug: row.slug,
       name: row.name,
       description: row.description ?? '',
-      collection: collectionName,
-      category: categoryLabelsById.get(row.category_id)?.slug ?? row.category_id,
-      categoryLabel: (
-        categoryLabelsById.get(row.category_id)?.name ?? 'Digital Collectible'
-      ).toUpperCase(),
+      collection: cardCat,
+      category: cardCat,
+      categoryLabel: cardCat,
       priceMinor: row.price_minor,
-      currency: row.currency,
+      currency: 'INR',
       stockCount: available,
       stockLabel: inventory
         ? available > 0

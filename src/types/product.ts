@@ -1,12 +1,8 @@
-export type CollectibleCollection =
-  | 'Midnight Edition'
-  | 'Royal Blue Edition'
-  | 'Crimson Edition'
-  | 'Titanium Edition'
-  | 'Gold Edition'
-  | 'Limited Edition'
+export type CardCategory = 'VISA' | 'MASTERCARD' | 'RUPAY'
 
-export type ProductCategory = CollectibleCollection | string
+export type CollectibleCollection = CardCategory
+
+export type ProductCategory = CardCategory
 
 export type DigitalAssetInfo = {
   filename: string
@@ -21,13 +17,13 @@ export type Product = {
   slug: string
   name: string
   description: string
-  collection: CollectibleCollection
-  category: ProductCategory
+  collection: CardCategory
+  category: CardCategory
   categoryLabel: string
-  priceMinor: number
+  priceMinor: number // in INR integer paise (e.g. 39900 = ₹399)
   salePriceMinor?: number | null
   discountPercent?: number
-  currency: string
+  currency: 'INR'
   stockCount: number
   stockLabel: string
   availability: 'in_stock' | 'low_stock' | 'sold_out'

@@ -30,44 +30,44 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
   }
 
   return (
-    <div className="space-y-6 pb-16 max-w-4xl mx-auto">
+    <div className="space-y-5 pb-16 max-w-4xl mx-auto">
       <div>
         <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-cyan-400 block mb-1">
-          ACCOUNT GOVERNANCE
+          ACCOUNT
         </span>
         <h2 className="font-cinzel text-xl md:text-2xl font-bold text-white">
-          Settings & Privacy Controls
+          Account & Settings
         </h2>
         <p className="text-xs text-slate-400 font-sans mt-0.5">
-          Manage your collector identity, security credentials, and review sovereign legal disclosures.
+          Manage your collector profile, notifications, and policies.
         </p>
       </div>
 
       {/* Supabase Authentication Panel (if not signed in) */}
       {!user && (
-        <div className="glass-panel-glow rounded-3xl p-5 border border-cyan-500/30">
+        <div className="glass-panel-elevated rounded-3xl p-5 border border-cyan-500/30">
           <AuthPanel />
         </div>
       )}
 
       {/* Profile Overview Card */}
-      <div className="glass-panel rounded-3xl p-5 md:p-6 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 p-0.5 shadow-lg flex items-center justify-center">
-            <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center font-cinzel text-lg font-bold text-cyan-300">
+      <div className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 p-0.5 shadow-lg flex items-center justify-center">
+            <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center font-cinzel text-base font-bold text-cyan-300">
               {(user?.email?.[0] ?? displayName[0] ?? 'R').toUpperCase()}
             </div>
           </div>
 
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-space font-bold text-base text-white">{displayName}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-space font-bold text-sm sm:text-base text-white">{displayName}</h3>
               <span className="px-2 py-0.5 rounded-full font-mono-code text-[9px] uppercase font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                {isAdmin ? 'ADMINISTRATOR' : user ? 'VERIFIED COLLECTOR' : 'GUEST SESSION'}
+                {isAdmin ? 'ADMINISTRATOR' : user ? 'VERIFIED' : 'GUEST'}
               </span>
             </div>
-            <p className="text-xs font-mono-code text-slate-400 mt-0.5">
-              {user?.email || 'Authenticated as Local Collector Session'}
+            <p className="text-xs font-mono-code text-slate-400 mt-0.5 truncate max-w-[220px] sm:max-w-none">
+              {user?.email || 'Local Collector Session'}
             </p>
           </div>
         </div>
@@ -85,23 +85,23 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
       </div>
 
       {/* Profile Edit Form */}
-      <form onSubmit={handleSaveProfile} className="glass-panel rounded-3xl p-5 md:p-6 border border-white/10 space-y-4">
+      <form onSubmit={handleSaveProfile} className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 space-y-3.5">
         <div className="flex items-center justify-between">
           <h3 className="font-space font-bold text-sm text-white flex items-center gap-2">
             <User className="w-4 h-4 text-cyan-400" />
-            <span>Collector Profile Details</span>
+            <span>Profile Details</span>
           </h3>
           {savedSuccess && (
             <span className="text-xs font-mono-code text-emerald-400 flex items-center gap-1 animate-in fade-in">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Settings Saved
+              Saved
             </span>
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-mono-code text-slate-400 mb-1">
+            <label className="block text-[10px] font-mono-code text-slate-400 mb-1">
               DISPLAY NAME
             </label>
             <input
@@ -113,8 +113,8 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
           </div>
 
           <div>
-            <label className="block text-[11px] font-mono-code text-slate-400 mb-1">
-              PRIMARY EMAIL
+            <label className="block text-[10px] font-mono-code text-slate-400 mb-1">
+              EMAIL ADDRESS
             </label>
             <input
               type="email"
@@ -126,42 +126,42 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
         </div>
 
         <div className="pt-2 flex justify-end">
-          <button type="submit" className="px-5 py-2 rounded-xl btn-cyan text-xs font-bold active:scale-95 transition-all">
-            Update Profile
+          <button type="submit" className="px-5 py-2 rounded-xl btn-primary text-xs font-bold active:scale-95 transition-all">
+            Save Changes
           </button>
         </div>
       </form>
 
       {/* Preferences & Notifications */}
-      <div className="glass-panel rounded-3xl p-5 md:p-6 border border-white/10 space-y-3">
+      <div className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 space-y-3">
         <h3 className="font-space font-bold text-sm text-white flex items-center gap-2">
           <Bell className="w-4 h-4 text-cyan-400" />
-          <span>Notification Preferences</span>
+          <span>Notifications</span>
         </h3>
 
         <div className="flex items-center justify-between py-2 border-b border-white/5">
-          <div>
+          <div className="pr-4">
             <span className="font-space font-medium text-xs text-white block">
-              Cryptographic Vault Delivery Alerts
+              Digital Vault Delivery Alerts
             </span>
             <span className="text-[11px] text-slate-400 font-sans">
-              Instant alerts when your master file signed tokens are activated.
+              Instant notification when purchased collectible assets are ready.
             </span>
           </div>
           <input
             type="checkbox"
             checked={emailNotifications}
             onChange={(e) => setEmailNotifications(e.target.checked)}
-            className="w-4 h-4 accent-cyan-400 cursor-pointer"
+            className="w-4 h-4 accent-cyan-400 cursor-pointer flex-shrink-0"
           />
         </div>
       </div>
 
-      {/* Legal & Sovereign Policies */}
-      <div className="glass-panel rounded-3xl p-5 md:p-6 border border-white/10 space-y-3">
+      {/* Store Policies */}
+      <div className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 space-y-3">
         <h3 className="font-space font-bold text-sm text-white flex items-center gap-2">
           <FileText className="w-4 h-4 text-cyan-400" />
-          <span>Sovereign Policies & Disclosures</span>
+          <span>Store Policies</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -172,10 +172,10 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
           >
             <div>
               <span className="font-space font-bold text-xs text-white block">
-                Zero-Knowledge Privacy Policy
+                Privacy Policy
               </span>
               <span className="text-[10px] text-slate-400 font-mono-code">
-                Encrypted customer asset custody
+                Customer privacy and data security
               </span>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -188,10 +188,10 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
           >
             <div>
               <span className="font-space font-bold text-xs text-white block">
-                Refund & Settlement Policy
+                Refund & Delivery Policy
               </span>
               <span className="text-[10px] text-slate-400 font-mono-code">
-                Immutable digital delivery rules
+                Digital delivery and support terms
               </span>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -200,44 +200,43 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
       </div>
 
       {/* Admin Panel Access Shortcut */}
-      <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
+      <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-mono-code text-slate-400">
           <SlidersHorizontal className="w-4 h-4 text-amber-400" />
-          <span>ADMINISTRATIVE CONTROL ROOM</span>
+          <span>ADMIN CONTROL ROOM</span>
         </div>
         <button
           type="button"
           onClick={onToggleAdmin}
           className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 active:scale-95 transition-all"
         >
-          Open Admin Control Room
+          Open Admin Dashboard
         </button>
       </div>
 
       {/* Policy Viewer Dialog */}
       {activeModalPolicy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in">
-          <div className="relative w-full max-w-xl glass-panel-glow rounded-3xl p-6 border border-white/15 shadow-2xl">
+          <div className="relative w-full max-w-xl glass-panel-elevated rounded-3xl p-6 border border-white/15 shadow-2xl">
             <h3 className="font-cinzel text-lg font-bold text-white mb-3">
               {activeModalPolicy === 'privacy'
-                ? 'Zero-Knowledge Privacy Architecture'
-                : 'Immutable Settlement & Refund Policy'}
+                ? 'Privacy Policy'
+                : 'Refund & Delivery Policy'}
             </h3>
             <p className="text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-wrap mb-4">
               {activeModalPolicy === 'privacy'
-                ? `Russian Market operates under strict zero-knowledge principles.
-1. No functional bank credit card credentials, card numbers, or CVVs are ever requested, recorded, or processed.
-2. All customer acquisitions are registered under unique anonymized cryptographic identifiers.
-3. Your private master file download tokens are issued with 15-minute asymmetric signed keys and are never distributed to external data brokers.`
-                : `1. Due to the mathematically irreversible nature of cryptographic digital asset delivery, acquisitions are immutable upon verified payment settlement.
-2. In the verified event of an encrypted delivery disruption, our 24/7 Concierge will reissue a freshly signed ECDSA token or apply an immediate store credit balance adjustment.
-3. Unverified or cancelled order attempts do not result in digital asset entitlements.`}
+                ? `1. Russian Market respects customer privacy. We never store functional bank card credentials or CVVs.
+2. Orders and accounts are securely registered and protected under verified database encryption.
+3. High-resolution master asset downloads are delivered via secure on-demand download tokens.`
+                : `1. All collectible digital assets are delivered via the secure Digital Vault upon payment verification.
+2. Due to the digital nature of instant master file downloads, purchases are final once verified and unlocked.
+3. If you experience any delivery difficulty or corrupted downloads, our Concierge Support team will reissue your download or provide account credit.`}
             </p>
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => setActiveModalPolicy(null)}
-                className="px-4 py-2 rounded-xl btn-cyan text-xs font-bold"
+                className="px-4 py-2 rounded-xl btn-primary text-xs font-bold"
               >
                 Close
               </button>
