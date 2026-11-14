@@ -25,7 +25,12 @@ export function ChatSection({ userId }: ChatSectionProps) {
   const [isSending, setIsSending] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [attachmentName, setAttachmentName] = useState<string | null>(null)
+
+  // Scroll container and smart auto-scroll management
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isNearBottomRef = useRef(true)
+  const shouldAutoScrollRef = useRef(true)
 
   const reloadConversations = useCallback(async () => {
     const list = await storeEngine.getConversations(userId)
@@ -46,9 +51,22 @@ export function ChatSection({ userId }: ChatSectionProps) {
     return () => unsubscribe()
   }, [reloadConversations])
 
+  // Smart auto-scroll: Only scroll down if user is near bottom or just sent a message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (shouldAutoScrollRef.current || isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      shouldAutoScrollRef.current = false
+    }
   }, [conversations, isTyping])
+
+  // Track user scroll position in message list
+  const handleScroll = () => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    // Consider user "near bottom" if within 100px of bottom
+    isNearBottomRef.current = distanceFromBottom < 100
+  }
 
   const activeConv = conversations.find((c) => c.id === activeConvId) || conversations[0]
 
@@ -60,6 +78,7 @@ export function ChatSection({ userId }: ChatSectionProps) {
     setInputText('')
     setAttachmentName(null)
     setIsSending(true)
+    shouldAutoScrollRef.current = true
 
     try {
       await storeEngine.sendMessage({
@@ -85,6 +104,7 @@ export function ChatSection({ userId }: ChatSectionProps) {
           body: randomReply,
         })
         setIsTyping(false)
+        shouldAutoScrollRef.current = true
       }, 1400)
     } catch (err) {
       console.error('Send message error:', err)
@@ -112,7 +132,7 @@ export function ChatSection({ userId }: ChatSectionProps) {
   }
 
   return (
-    <div className="space-y-4 pb-20 max-w-4xl mx-auto">
+    <div className="space-y-4 max-w-4xl mx-auto">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
@@ -140,10 +160,10 @@ export function ChatSection({ userId }: ChatSectionProps) {
         )}
       </div>
 
-      {/* Main Chat Container (Responsive height on mobile) */}
-      <div className="glass-panel-elevated rounded-3xl border border-white/[0.12] flex flex-col h-[60vh] min-h-[440px] max-h-[640px] overflow-hidden shadow-2xl">
-        {/* Top Chat Bar */}
-        <div className="p-3.5 sm:p-4 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02] flex-shrink-0">
+      {/* Main Structured Chat Window: Header → Scrollable Messages → Fixed Composer */}
+      <div className="glass-panel-elevated rounded-3xl border border-white/[0.12] flex flex-col h-[calc(100dvh-13rem)] min-h-[460px] max-h-[680px] overflow-hidden shadow-2xl">
+        {/* 1. HEADER (Sticky top) */}
+        <div className="p-3.5 sm:p-4 border-b border-white/[0.08] flex items-center justify-between bg-black/40 backdrop-blur-md flex-shrink-0 z-10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
               <MessageCircle className="w-4 h-4" />
@@ -153,7 +173,7 @@ export function ChatSection({ userId }: ChatSectionProps) {
                 <h3 className="font-space font-bold text-xs sm:text-sm text-white">
                   Russian Market Curatorial Desk
                 </h3>
-                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-code text-[9px] font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-code text-[9px] font-bold">
                   24/7 LIVE
                 </span>
               </div>
@@ -170,8 +190,13 @@ export function ChatSection({ userId }: ChatSectionProps) {
           </div>
         </div>
 
-        {/* Scrollable Message List (min-h-0 prevents flexbox overflow glitch) */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
+        {/* 2. SCROLLABLE MESSAGES LIST (Fluid, smooth, overscroll-contain) */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {/* Quick Inquiries Strip */}
           <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
             <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block flex items-center gap-1.5">
@@ -196,6 +221,21 @@ export function ChatSection({ userId }: ChatSectionProps) {
               ))}
             </div>
           </div>
+
+          {/* Empty Conversation State */}
+          {(!activeConv || activeConv.messages.length === 0) && (
+            <div className="text-center py-10 px-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-3 text-cyan-400">
+                <MessageCircle className="w-6 h-6" />
+              </div>
+              <h4 className="font-space font-bold text-sm text-white mb-1">
+                Connected to Private Concierge
+              </h4>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto font-sans">
+                Our senior curatorial officer is on standby. Inquire regarding editions, custody verification, or order status.
+              </p>
+            </div>
+          )}
 
           {/* Messages */}
           {activeConv?.messages.map((msg) => {
@@ -224,7 +264,7 @@ export function ChatSection({ userId }: ChatSectionProps) {
                 </div>
 
                 <div
-                  className={`p-3.5 rounded-2xl text-xs leading-relaxed transition-all ${
+                  className={`p-3.5 rounded-2xl text-xs leading-relaxed transition-all break-words [overflow-wrap:anywhere] ${
                     isCustomer
                       ? 'bg-gradient-to-r from-cyan-500 to-sky-600 text-black font-medium shadow-[0_4px_16px_rgba(0,240,255,0.25)] rounded-tr-none'
                       : 'glass-panel text-slate-100 border border-white/[0.12] rounded-tl-none font-sans shadow-md'
@@ -280,15 +320,15 @@ export function ChatSection({ userId }: ChatSectionProps) {
           </div>
         )}
 
-        {/* Message Input Box (Fixed at Bottom, never clipped) */}
+        {/* 3. FIXED COMPOSER (Sticky at bottom, aligned touch controls) */}
         <form
           onSubmit={(e) => handleSendMessage(e)}
-          className="p-3 sm:p-3.5 border-t border-white/[0.08] bg-white/[0.02] flex items-center gap-2 flex-shrink-0"
+          className="p-3 sm:p-3.5 border-t border-white/[0.08] bg-[#090d16]/95 backdrop-blur-md flex items-center gap-2 flex-shrink-0 z-10"
         >
           <button
             type="button"
             onClick={handleAttachSim}
-            className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition-colors"
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition-colors flex-shrink-0"
             title="Attach cryptographic proof file"
             aria-label="Attach file"
           >
@@ -307,13 +347,13 @@ export function ChatSection({ userId }: ChatSectionProps) {
             }}
             placeholder="Type your inquiry for concierge..."
             disabled={isSending}
-            className="flex-1 glass-input px-3.5 py-2.5 rounded-xl text-xs placeholder:text-slate-500 focus:border-cyan-400"
+            className="flex-1 h-10 glass-input px-3.5 py-2 rounded-xl text-xs sm:text-sm placeholder:text-slate-500 focus:border-cyan-400"
           />
 
           <button
             type="submit"
             disabled={(!inputText.trim() && !attachmentName) || isSending}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl btn-primary text-black font-bold active:scale-95 disabled:opacity-40 transition-all text-xs"
+            className="h-10 flex items-center gap-1.5 px-4 rounded-xl btn-primary text-black font-bold active:scale-95 disabled:opacity-40 transition-all text-xs flex-shrink-0"
             aria-label="Send message"
           >
             <span>Send</span>

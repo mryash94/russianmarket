@@ -79,24 +79,31 @@ export function CatalogPage({
   }, [products, selectedCategory, searchQuery, sortBy, priceRange])
 
   return (
-    <div className="space-y-6">
-      {/* Featured 3D Showcase Carousel */}
-      <CollectibleCardCarousel
-        products={products}
-        onSelectProduct={onSelectProduct}
-        onQuickBuy={onQuickBuy}
-      />
+    <div className="space-y-5 sm:space-y-6">
+      {/* Featured 3D Showcase Carousel (Desktop and Wide Displays) */}
+      <div className="hidden lg:block">
+        <CollectibleCardCarousel
+          products={products}
+          onSelectProduct={onSelectProduct}
+          onQuickBuy={onQuickBuy}
+        />
+      </div>
 
-      {/* Product Discovery & Category Filters */}
-      <div id="catalogue-section" className="space-y-3.5 pt-2">
+      {/* Product Discovery & Category Filters (Mobile Starts Directly Below Header) */}
+      <div id="catalogue-section" className="space-y-3 pt-1">
         {/* Section Header */}
         <div className="flex items-center justify-between gap-2">
-          <h2 className="font-space text-lg sm:text-2xl font-bold text-white tracking-tight">
-            Collectible Catalogue
-          </h2>
+          <div>
+            <h2 className="font-space text-lg sm:text-2xl font-bold text-white tracking-tight">
+              Collectible Catalogue
+            </h2>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-sans mt-0.5">
+              Curated cryptographic digital editions • Sovereign vault settlement
+            </p>
+          </div>
 
-          <span className="font-mono-code text-[11px] sm:text-xs text-slate-400">
-            Showing <strong className="text-cyan-400">{filteredProducts.length}</strong> Editions
+          <span className="font-mono-code text-[11px] sm:text-xs text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/[0.06] whitespace-nowrap">
+            Showing <strong className="text-cyan-400 font-bold">{filteredProducts.length}</strong> Editions
           </span>
         </div>
 
@@ -131,19 +138,19 @@ export function CatalogPage({
         <div className="p-3 sm:p-4 rounded-2xl glass-panel border border-white/[0.08] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           {/* Quick Search */}
           <div className="relative flex-1 sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter by name..."
-              className="w-full glass-input pl-8 pr-7 py-2 rounded-xl text-xs sm:text-sm placeholder:text-slate-500 focus:border-cyan-400"
+              className="w-full h-10 glass-input pl-9 pr-8 py-2 rounded-xl text-xs sm:text-sm placeholder:text-slate-500 focus:border-cyan-400"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
                 aria-label="Clear filter"
               >
                 <X className="w-3.5 h-3.5" />
@@ -159,14 +166,14 @@ export function CatalogPage({
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value as any)}
                 aria-label="Filter by price range"
-                className="w-full appearance-none glass-input pl-3 pr-7 py-2 rounded-xl text-xs bg-[#090d16] text-slate-200 border-white/[0.1] focus:border-cyan-400 font-medium truncate cursor-pointer"
+                className="w-full h-10 appearance-none glass-input pl-3 pr-8 py-2 rounded-xl text-xs bg-[#090d16] text-slate-200 border-white/[0.1] focus:border-cyan-400 font-medium truncate cursor-pointer"
               >
                 <option value="all">All Prices</option>
                 <option value="under_1000">Under ₹1,000</option>
                 <option value="1000_1500">₹1,000 – ₹1,500</option>
                 <option value="above_1500">Above ₹1,500</option>
               </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
 
             {/* Sort Order — perfectly aligned */}
@@ -175,14 +182,14 @@ export function CatalogPage({
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 aria-label="Sort editions"
-                className="w-full appearance-none glass-input pl-3 pr-7 py-2 rounded-xl text-xs bg-[#090d16] text-slate-200 border-white/[0.1] focus:border-cyan-400 font-medium truncate cursor-pointer"
+                className="w-full h-10 appearance-none glass-input pl-3 pr-8 py-2 rounded-xl text-xs bg-[#090d16] text-slate-200 border-white/[0.1] focus:border-cyan-400 font-medium truncate cursor-pointer"
               >
                 <option value="newest">Newest</option>
                 <option value="popular">Popular</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
               </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
         </div>
@@ -225,7 +232,7 @@ export function CatalogPage({
             return (
               <div
                 key={product.id}
-                className="group rounded-3xl glass-panel hover:glass-panel-elevated border border-white/[0.08] hover:border-white/[0.18] p-4 transition-all duration-200 flex flex-col justify-between"
+                className="group rounded-3xl glass-panel hover:glass-panel-elevated border border-white/[0.08] hover:border-white/[0.18] p-4 sm:p-5 transition-all duration-200 flex flex-col justify-between scroll-mt-24"
               >
                 {/* 1. Universal Interactive 3D Collectible Card Visual */}
                 <div
@@ -267,7 +274,7 @@ export function CatalogPage({
                   </h3>
 
                   {/* Price & Action Row (Consistent button heights, never overlaps) */}
-                  <div className="pt-2.5 border-t border-white/[0.08] flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between gap-2">
                     <div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="font-space font-extrabold text-lg text-white">
@@ -285,7 +292,7 @@ export function CatalogPage({
                       <button
                         type="button"
                         onClick={() => onSelectProduct(product)}
-                        className="h-9 px-3 rounded-xl btn-ghost text-xs font-semibold flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+                        className="h-10 px-3 rounded-xl btn-ghost text-xs font-semibold flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
                         title="View details"
                       >
                         <Eye className="w-3.5 h-3.5" />
@@ -296,10 +303,10 @@ export function CatalogPage({
                         type="button"
                         disabled={!isAvailable}
                         onClick={() => onQuickBuy(product)}
-                        className="h-9 px-3.5 sm:px-4 rounded-xl btn-primary text-xs font-bold flex items-center gap-1.5 active:scale-95 disabled:opacity-50 transition-all shadow-md"
+                        className="h-10 px-4 rounded-xl btn-primary text-xs font-bold flex items-center gap-1.5 active:scale-95 disabled:opacity-50 transition-all shadow-md"
                       >
                         <span>BUY NOW</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>

@@ -14,7 +14,7 @@ export type RussianMarketCardProps = {
   showFlipHint?: boolean
 }
 
-// Curated fictional collector names for authenticity without real personal data
+// Curated fictional collector names for authenticity
 const FICTIONAL_COLLECTOR_NAMES = [
   'ALEXEI V. MOROZOV',
   'ELENA M. ROSTOVA',
@@ -128,14 +128,11 @@ export function RussianMarketCard({
 
   const holder = propHolder || FICTIONAL_COLLECTOR_NAMES[nameIndex]
 
-  // Stable fictional decorative card number
+  // Stable fictional decorative card number for front
   const last4 =
     propLast4 ||
     (product?.sku ? product.sku.replace(/\D/g, '').slice(-4) : '') ||
     String(1000 + (editionNumber * 73) % 9000).padStart(4, '0')
-
-  // Fictional collectible serial code for the back
-  const collectibleSerial = `RM-${category.slice(0, 2)}-${String(editionNumber).padStart(3, '0')}/${String(editionTotal).padStart(3, '0')}-X${last4.slice(0, 2)}`
 
   // 3D Flip state
   const [isFlipped, setIsFlipped] = useState(false)
@@ -149,8 +146,8 @@ export function RussianMarketCard({
       const rect = cardRef.current.getBoundingClientRect()
       const px = (e.clientX - rect.left) / rect.width
       const py = (e.clientY - rect.top) / rect.height
-      const rotY = (px - 0.5) * 20
-      const rotX = -(py - 0.5) * 14
+      const rotY = (px - 0.5) * 16
+      const rotX = -(py - 0.5) * 12
       setTilt({ x: rotX, y: rotY })
     },
     [interactive],
@@ -165,7 +162,7 @@ export function RussianMarketCard({
     setIsFlipped((prev) => !prev)
   }, [interactive])
 
-  // Mobile swipe to flip
+  // Non-blocking mobile touch handling (respects vertical scroll)
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!interactive) return
     const touch = e.touches[0]
@@ -177,7 +174,8 @@ export function RussianMarketCard({
     const touch = e.changedTouches[0]
     const dx = touch.clientX - touchStartRef.current.x
     const dy = touch.clientY - touchStartRef.current.y
-    if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
+    // Only trigger flip on clear horizontal swipe; vertical motion scrolls page naturally
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       setIsFlipped((prev) => !prev)
     }
     touchStartRef.current = null
@@ -186,7 +184,7 @@ export function RussianMarketCard({
   return (
     <div
       className={`relative w-full select-none ${className}`}
-      style={{ perspective: 1200 }}
+      style={{ perspective: 1200, touchAction: 'pan-y' }}
     >
       <div
         ref={cardRef}
@@ -203,27 +201,28 @@ export function RussianMarketCard({
         onPointerLeave={handlePointerLeave}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        aria-label={`${category} collectible card: ${name}. Tap or click to flip.`}
-        className={`relative w-full rounded-[20px] transition-transform duration-500 ease-out cursor-pointer shadow-2xl ${
+        aria-label={`${category} collectible card: ${name}. Tap to flip.`}
+        className={`relative w-full rounded-[20px] transition-transform duration-500 ease-out cursor-pointer shadow-xl ${
           interactive ? 'active:scale-[0.98]' : ''
         }`}
         style={{
           aspectRatio: '1.586 / 1',
           transformStyle: 'preserve-3d',
           transform: `rotateY(${isFlipped ? 180 : 0 + tilt.y}deg) rotateX(${tilt.x}deg)`,
+          touchAction: 'pan-y',
         }}
       >
-        {/* Soft realistic drop shadow under card */}
+        {/* Soft shadow */}
         <div
-          className="absolute -bottom-3 left-[5%] right-[5%] h-8 rounded-[50%] blur-xl pointer-events-none opacity-70"
-          style={{ background: 'rgba(0, 0, 0, 0.9)' }}
+          className="absolute -bottom-3 left-[6%] right-[6%] h-8 rounded-[50%] blur-xl pointer-events-none opacity-60"
+          style={{ background: 'rgba(0, 0, 0, 0.85)' }}
         />
 
         {/* ======================================================== */}
         {/* FRONT FACE                                              */}
         {/* ======================================================== */}
         <div
-          className="absolute inset-0 rounded-[20px] overflow-hidden p-3.5 sm:p-5 flex flex-col justify-between border border-white/[0.14]"
+          className="absolute inset-0 rounded-[20px] overflow-hidden p-3.5 sm:p-5 flex flex-col justify-between border border-white/[0.12]"
           style={{
             background: catStyle.bgGradient,
             backfaceVisibility: 'hidden',
@@ -232,7 +231,7 @@ export function RussianMarketCard({
         >
           {/* Metallic rim reflection */}
           <div
-            className="absolute inset-0 rounded-[20px] pointer-events-none p-[1px] opacity-80"
+            className="absolute inset-0 rounded-[20px] pointer-events-none p-[1px] opacity-75"
             style={{
               background: catStyle.rimGradient,
               WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
@@ -319,11 +318,10 @@ export function RussianMarketCard({
             </svg>
           </div>
 
-          {/* FRONT DECORATIVE CARD NUMBER: Fictional & Non-functional */}
+          {/* FRONT DECORATIVE CARD NUMBER */}
           <div className="relative z-10 my-0.5 sm:my-1">
             <div
               className="font-mono-code text-[14px] sm:text-[17px] tracking-[0.16em] sm:tracking-[0.18em] text-white/95 font-semibold tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.1)' }}
             >
               <span>{catStyle.prefix}</span>
               <span className="mx-1 sm:mx-2 text-white/40">••••</span>
@@ -382,10 +380,12 @@ export function RussianMarketCard({
         </div>
 
         {/* ======================================================== */}
-        {/* BACK FACE — Polished Authentic Collectible Card Reverse */}
+        {/* BACK FACE — Minimal Premium Collectible Design          */}
+        {/* Strictly: Russian Market Identity, Collector Name,       */}
+        {/* Edition Number, Small Pattern, Digital Collectible Label */}
         {/* ======================================================== */}
         <div
-          className="absolute inset-0 rounded-[20px] overflow-hidden flex flex-col justify-between shadow-2xl border border-white/[0.14]"
+          className="absolute inset-0 rounded-[20px] overflow-hidden flex flex-col justify-between p-4 sm:p-5 shadow-xl border border-white/[0.12]"
           style={{
             background: catStyle.backBgGradient,
             backfaceVisibility: 'hidden',
@@ -395,7 +395,7 @@ export function RussianMarketCard({
         >
           {/* Metallic rim reflection */}
           <div
-            className="absolute inset-0 rounded-[20px] pointer-events-none p-[1px] opacity-80"
+            className="absolute inset-0 rounded-[20px] pointer-events-none p-[1px] opacity-75"
             style={{
               background: catStyle.rimGradient,
               WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
@@ -404,84 +404,74 @@ export function RussianMarketCard({
             }}
           />
 
-          {/* Decorative Non-functional Magnetic Stripe Strip */}
-          <div className="w-full mt-3 sm:mt-4 h-9 sm:h-11 bg-gradient-to-r from-[#03060a] via-[#10141d] to-[#03060a] border-y border-white/[0.08] relative flex items-center px-4 overflow-hidden">
-            <span className="font-mono-code text-[8px] sm:text-[9px] tracking-[0.25em] text-white/20 uppercase whitespace-nowrap select-none">
-              RUSSIAN MARKET DIGITAL COLLECTIBLE • ENCRYPTED EDITION VAULT • NON-PAYMENT ASSET
+          {/* Small subtle decorative guilloché rosette */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.06]">
+            <svg viewBox="0 0 100 100" className="w-36 h-36 text-white stroke-current fill-none stroke-[0.5]">
+              <circle cx="50" cy="50" r="45" />
+              <circle cx="50" cy="50" r="35" />
+              <circle cx="50" cy="50" r="25" />
+              <polygon points="50,5 90,75 10,75" />
+              <polygon points="50,95 90,25 10,25" />
+            </svg>
+          </div>
+
+          {/* BACK TOP ROW: Russian Market Brand & Category */}
+          <div className="relative z-10 flex items-center justify-between border-b border-white/[0.08] pb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-5 h-5 rounded-[5px] bg-white/10 border border-white/20 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-3 h-3 text-white fill-current" aria-hidden="true">
+                  <path d="M12 2L3 7V12C3 17.5 7 21.5 12 22C17 21.5 21 17.5 21 12V7L12 2Z" />
+                </svg>
+              </div>
+              <span className="font-space font-bold text-[11px] sm:text-xs tracking-[0.14em] text-white uppercase">
+                RUSSIAN MARKET
+              </span>
+            </div>
+
+            <div
+              className="px-2 py-0.5 rounded-full font-mono-code text-[9px] font-bold tracking-widest uppercase border"
+              style={{
+                background: catStyle.badgeBg,
+                color: catStyle.badgeText,
+                borderColor: catStyle.badgeBorder,
+              }}
+            >
+              {category}
+            </div>
+          </div>
+
+          {/* BACK CENTER: Fictional Collector Name & Clean Collectible Label */}
+          <div className="relative z-10 flex flex-col items-center justify-center my-auto py-1 text-center">
+            <span className="font-mono-code text-[8px] sm:text-[9px] uppercase tracking-[0.2em] text-white/40 mb-1">
+              COLLECTOR
             </span>
-            <div className="absolute inset-0 opacity-10 bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,rgba(255,255,255,0.1)_6px,rgba(255,255,255,0.1)_12px)] pointer-events-none" />
-          </div>
-
-          {/* Middle Body: Authentic Signature / Collector Authentication Panel */}
-          <div className="px-3.5 sm:px-5 py-1.5 sm:py-2 flex flex-col justify-center space-y-2">
-            <div className="flex items-center gap-2">
-              {/* White frosted collector signature strip */}
-              <div className="flex-1 h-7 sm:h-8 rounded-lg bg-white/[0.08] border border-white/[0.15] px-2.5 sm:px-3 flex items-center justify-between">
-                <span className="font-mono-code text-[9px] sm:text-[10px] text-white/90 font-medium tracking-wider truncate">
-                  {holder}
-                </span>
-                <span className="font-mono-code text-[8px] text-cyan-300 font-semibold tracking-widest uppercase">
-                  VERIFIED
-                </span>
-              </div>
-
-              {/* Holographic Collectible Seal */}
-              <div
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full p-[1.5px] flex-shrink-0 shadow-md"
-                style={{ background: catStyle.foilGradient }}
-              >
-                <div className="w-full h-full rounded-full bg-[#050b14] flex items-center justify-center">
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-3.5 h-3.5 text-white/90 fill-current"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 2L3 7V12C3 17.5 7 21.5 12 22C17 21.5 21 17.5 21 12V7L12 2Z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Fictional Collectible Metadata & Mandatory Legal Disclaimer */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between font-mono-code text-[8px] sm:text-[9px] text-white/60">
-                <span className="truncate max-w-[200px] text-white/80 font-medium">
-                  {name}
-                </span>
-                <span className="text-cyan-400 font-bold tracking-wider">
-                  {collectibleSerial}
-                </span>
-              </div>
-
-              <p className="font-mono-code text-[7px] sm:text-[8px] leading-tight text-white/40 tracking-tight">
-                AUTHENTIC CRYPTOGRAPHIC DIGITAL COLLECTIBLE. FOR ART & COLLECTION ONLY. NOT A FUNCTIONAL PAYMENT CARD, NO MONETARY VALUE, NEVER DISCLOSES CREDENTIALS.
-              </p>
+            <h4 className="font-space font-bold text-sm sm:text-base text-white tracking-wide truncate max-w-[240px]">
+              {holder}
+            </h4>
+            <div className="mt-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
+              <span className="font-mono-code text-[8px] sm:text-[9px] tracking-widest uppercase text-cyan-400 font-medium">
+                AUTHENTIC DIGITAL COLLECTIBLE
+              </span>
             </div>
           </div>
 
-          {/* BACK BOTTOM ROW: Edition Specification & Flip Indicator */}
-          <div className="px-3.5 sm:px-5 pb-3 sm:pb-4 pt-1 border-t border-white/[0.08] flex items-center justify-between text-white/60">
-            <div className="flex items-center gap-2">
-              <span className="font-mono-code text-[9px] sm:text-[10px] font-semibold text-white/80">
-                EDITION #{String(editionNumber).padStart(3, '0')} / {String(editionTotal).padStart(3, '0')}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="font-mono-code text-[8px] sm:text-[9px] text-emerald-400">
-                VAULT SEALED
-              </span>
-            </div>
+          {/* BACK BOTTOM ROW: Edition Specification & Flip Prompt */}
+          <div className="relative z-10 pt-2 border-t border-white/[0.08] flex items-center justify-between text-white/60">
+            <span className="font-mono-code text-[9px] sm:text-[10px] font-semibold text-white/80">
+              EDITION #{String(editionNumber).padStart(3, '0')} / {String(editionTotal).padStart(3, '0')}
+            </span>
 
             <div className="flex items-center gap-1 font-mono-code text-[9px] text-cyan-400 hover:text-cyan-300 font-medium">
-              <span>↻ Tap to Flip</span>
+              <span>↻ Flip</span>
             </div>
           </div>
         </div>
       </div>
 
       {showFlipHint && (
-        <div className="text-center mt-2.5">
+        <div className="text-center mt-2">
           <span className="text-[10px] font-mono-code text-slate-400 bg-white/[0.04] px-3 py-1 rounded-full border border-white/[0.06]">
-            ↻ 3D Collectible • Tap or swipe to inspect reverse
+            ↻ 3D Collectible • Tap to inspect reverse
           </span>
         </div>
       )}
