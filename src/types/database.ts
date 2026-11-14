@@ -81,6 +81,7 @@ export type Database = {
       }>
       profiles: Table<{
         id: string
+        email?: string | null
         display_name: string | null
         avatar_url: string | null
         created_at: string
@@ -285,6 +286,57 @@ export type Database = {
         payload?: Json
         details?: Json
         ip_address?: string | null
+        created_at: string
+      }>
+      automation_rules: Table<{
+        id: string
+        name: string
+        description: string
+        event_trigger: string
+        is_enabled: boolean
+        action_type: string
+        action_config: Json
+        last_executed_at: string | null
+        last_status: 'success' | 'failed' | 'idle' | null
+        execution_count: number
+        created_at: string
+        updated_at: string
+      }>
+      automation_logs: Table<{
+        id: string
+        rule_id: string
+        event_type: string
+        status: 'success' | 'failed' | 'retrying'
+        details: Json
+        error_message: string | null
+        retry_count: number
+        created_at: string
+      }>
+      notification_templates: Table<{
+        id: string
+        name: string
+        title_template: string
+        body_template: string
+        category: 'order' | 'wallet' | 'support' | 'system'
+        is_active: boolean
+        created_at: string
+        updated_at: string
+      }>
+      financial_reconciliation_snapshots: Table<{
+        id: string
+        snapshot_date: string
+        total_orders_count: number
+        total_orders_minor: number
+        total_settled_minor: number
+        total_wallet_credits_minor: number
+        total_wallet_debits_minor: number
+        unmatched_orders_count: number
+        duplicate_references_count: number
+        amount_mismatch_count: number
+        pending_audit_count: number
+        discrepancies_detail: Json
+        auditor_notes: string | null
+        audited_by: string
         created_at: string
       }>
     }

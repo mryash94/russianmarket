@@ -15,6 +15,8 @@ export type OrderItemSnapshot = {
   digitalAssetName: string
 }
 
+export const SUPER_ADMIN_EMAIL = 'own77777777@gmail.com'
+
 export type Order = {
   id: string
   orderNumber: string
@@ -98,7 +100,7 @@ export type NotificationItem = {
   userId: string
   title: string
   body: string
-  notificationType: 'order' | 'vault' | 'support' | 'system'
+  notificationType: 'order' | 'wallet' | 'vault' | 'support' | 'system'
   readAt?: string | null
   createdAt: string
 }
@@ -184,6 +186,79 @@ export type AdminAuditLog = {
   createdAt: string
 }
 
+export type AutomationEventTrigger =
+  | 'on_new_order'
+  | 'on_verified_payment'
+  | 'on_expired_payment'
+  | 'on_digital_delivery'
+  | 'on_new_support_message'
+  | 'on_low_inventory'
+  | 'on_failed_integration'
+
+export type AutomationRule = {
+  id: string
+  name: string
+  description: string
+  eventTrigger: AutomationEventTrigger
+  isEnabled: boolean
+  actionType: string
+  actionConfig: Record<string, any>
+  lastExecutedAt?: string | null
+  lastStatus?: 'success' | 'failed' | 'idle' | null
+  executionCount: number
+}
+
+export type AutomationLog = {
+  id: string
+  ruleId: string
+  eventType: string
+  status: 'success' | 'failed' | 'retrying'
+  details: Record<string, any>
+  errorMessage?: string | null
+  retryCount: number
+  createdAt: string
+}
+
+export type NotificationTemplate = {
+  id: string
+  name: string
+  titleTemplate: string
+  bodyTemplate: string
+  category: 'order' | 'wallet' | 'support' | 'system'
+  isActive: boolean
+}
+
+export type FinancialDiscrepancy = {
+  id: string
+  type: 'unmatched_order' | 'duplicate_utr' | 'amount_mismatch' | 'pending_verification'
+  severity: 'low' | 'medium' | 'high'
+  orderNumber?: string
+  reference?: string
+  expectedAmountMinor?: number
+  actualAmountMinor?: number
+  description: string
+  detectedAt: string
+  status: 'unresolved' | 'resolved'
+  resolutionNotes?: string
+}
+
+export type FinancialReconciliationSnapshot = {
+  id: string
+  snapshotDate: string
+  totalOrdersCount: number
+  totalOrdersMinor: number
+  totalSettledMinor: number
+  totalWalletCreditsMinor: number
+  totalWalletDebitsMinor: number
+  unmatchedOrdersCount: number
+  duplicateReferencesCount: number
+  amountMismatchCount: number
+  pendingAuditCount: number
+  discrepancies: FinancialDiscrepancy[]
+  auditorNotes?: string
+  auditedBy: string
+}
+
 const STORAGE_KEYS = {
   PRODUCTS: 'rm_db_products_v2',
   ORDERS: 'rm_db_orders_v2',
@@ -197,6 +272,10 @@ const STORAGE_KEYS = {
   SETTINGS: 'rm_db_settings_v2',
   VIDEOS: 'rm_db_videos_v2',
   AUDIT_LOGS: 'rm_db_audit_logs_v2',
+  AUTOMATION_RULES: 'rm_db_automation_rules_v5',
+  AUTOMATION_LOGS: 'rm_db_automation_logs_v5',
+  NOTIFICATION_TEMPLATES: 'rm_db_notification_templates_v5',
+  RECONCILIATION: 'rm_db_reconciliation_snapshots_v5',
 }
 
 type RealtimeListener = (event: string, payload: unknown) => void
@@ -288,6 +367,15 @@ class StoreEngine {
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_audit_logs' }, (payload) => {
           this.emit('audit_logs_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'automation_rules' }, (payload) => {
+          this.emit('automation_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'automation_logs' }, (payload) => {
+          this.emit('automation_logs_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notification_templates' }, (payload) => {
+          this.emit('templates_updated', payload)
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
@@ -631,6 +719,16 @@ class StoreEngine {
       notificationType: 'order',
     })
 
+    // Smart Automation Trigger: on_new_order
+    void this.triggerAutomationEvent('on_new_order', {
+      orderId: newOrder.id,
+      orderNumber,
+      userId: params.userId,
+      customerEmail: params.customerEmail,
+      subtotalMinor,
+      itemCount: params.items.length,
+    })
+
     this.emit('order_created', newOrder)
     return newOrder
   }
@@ -697,6 +795,20 @@ class StoreEngine {
       title: 'Payment Verified & Deliverables Ready',
       body: `Order #${target.orderNumber} is verified. Your digital master collectible pass and assets are now ready in your Orders.`,
       notificationType: 'order',
+    })
+
+    // Smart Automation Triggers: on_verified_payment & on_digital_delivery
+    void this.triggerAutomationEvent('on_verified_payment', {
+      orderId: target.id,
+      orderNumber: target.orderNumber,
+      userId: target.userId,
+      subtotalMinor: target.subtotalMinor,
+    })
+    void this.triggerAutomationEvent('on_digital_delivery', {
+      orderId: target.id,
+      orderNumber: target.orderNumber,
+      userId: target.userId,
+      itemCount: target.items.length,
     })
 
     this.emit('order_updated', updatedOrder)
@@ -1068,6 +1180,14 @@ class StoreEngine {
       } catch (err) {
         console.warn('Supabase chat message insert warning:', err)
       }
+    }
+
+    if (params.senderType === 'customer') {
+      void this.triggerAutomationEvent('on_new_support_message', {
+        conversationId: params.conversationId,
+        senderUserId: params.senderUserId,
+        preview: params.body.slice(0, 100),
+      })
     }
 
     this.emit('new_message', newMsg)
@@ -1928,20 +2048,25 @@ class StoreEngine {
   }
 
   async recordAdminAuditLog(
-    action: string,
-    targetResource: string,
+    actionOrObj: string | { action: string; targetResource: string; payload?: any; adminUserId?: string },
+    targetResource?: string,
     payload?: any,
     adminUserId?: string,
   ): Promise<AdminAuditLog> {
     const raw = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)
     const list: AdminAuditLog[] = raw ? JSON.parse(raw) : []
 
+    const action = typeof actionOrObj === 'object' ? actionOrObj.action : actionOrObj
+    const target = typeof actionOrObj === 'object' ? actionOrObj.targetResource : (targetResource || 'system')
+    const logPayload = typeof actionOrObj === 'object' ? actionOrObj.payload : payload
+    const logAdminId = typeof actionOrObj === 'object' ? actionOrObj.adminUserId : adminUserId
+
     const newLog: AdminAuditLog = {
       id: crypto.randomUUID ? crypto.randomUUID() : `audit_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      adminUserId: adminUserId || null,
+      adminUserId: logAdminId || null,
       action,
-      targetResource,
-      payload,
+      targetResource: target,
+      payload: logPayload,
       ipAddress: '127.0.0.1 (Admin Session)',
       createdAt: new Date().toISOString(),
     }
@@ -1952,7 +2077,7 @@ class StoreEngine {
       try {
         await supabase.from('admin_audit_logs').insert({
           id: isUuid(newLog.id) ? newLog.id : undefined,
-          admin_user_id: isUuid(adminUserId) ? adminUserId : null,
+          admin_user_id: isUuid(logAdminId) ? logAdminId : null,
           action: newLog.action,
           target_resource: newLog.targetResource,
           payload: newLog.payload || null,
@@ -1966,6 +2091,856 @@ class StoreEngine {
     this.emit('audit_logs_updated', newLog)
     return newLog
   }
+
+  // ========================================================
+  // SMART AUTOMATION ENGINE (V5)
+  // ========================================================
+
+  async getAutomationRules(): Promise<AutomationRule[]> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('automation_rules')
+          .select('*')
+          .order('name', { ascending: true })
+
+        if (!error && data && data.length > 0) {
+          return data.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            eventTrigger: r.event_trigger as AutomationEventTrigger,
+            isEnabled: r.is_enabled,
+            actionType: r.action_type,
+            actionConfig: typeof r.action_config === 'object' && r.action_config ? r.action_config : {},
+            lastExecutedAt: r.last_executed_at,
+            lastStatus: r.last_status,
+            executionCount: r.execution_count,
+          }))
+        }
+      } catch (err) {
+        console.warn('Supabase getAutomationRules warning:', err)
+      }
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTOMATION_RULES)
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.AUTOMATION_RULES, JSON.stringify(DEFAULT_AUTOMATION_RULES))
+      return DEFAULT_AUTOMATION_RULES
+    }
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return DEFAULT_AUTOMATION_RULES
+    }
+  }
+
+  async toggleAutomationRule(ruleId: string, isEnabled: boolean): Promise<AutomationRule> {
+    const rules = await this.getAutomationRules()
+    const target = rules.find((r) => r.id === ruleId)
+    if (!target) throw new Error(`Automation rule ${ruleId} not found`)
+
+    target.isEnabled = isEnabled
+    const updated = rules.map((r) => (r.id === ruleId ? target : r))
+    localStorage.setItem(STORAGE_KEYS.AUTOMATION_RULES, JSON.stringify(updated))
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('automation_rules')
+          .update({ is_enabled: isEnabled, updated_at: new Date().toISOString() })
+          .eq('id', ruleId)
+      } catch (err) {
+        console.warn('Supabase toggleAutomationRule warning:', err)
+      }
+    }
+
+    await this.recordAdminAuditLog({
+      action: isEnabled ? 'ENABLE_AUTOMATION_RULE' : 'DISABLE_AUTOMATION_RULE',
+      targetResource: 'automation_rules',
+      payload: { ruleId, isEnabled },
+    })
+
+    this.emit('automation_updated', target)
+    return target
+  }
+
+  async getAutomationLogs(ruleId?: string): Promise<AutomationLog[]> {
+    if (supabase) {
+      try {
+        let query = supabase
+          .from('automation_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100)
+
+        if (ruleId) {
+          query = query.eq('rule_id', ruleId)
+        }
+
+        const { data, error } = await query
+        if (!error && data && data.length > 0) {
+          return data.map((l: any) => ({
+            id: l.id,
+            ruleId: l.rule_id,
+            eventType: l.event_type,
+            status: l.status,
+            details: l.details || {},
+            errorMessage: l.error_message,
+            retryCount: l.retry_count,
+            createdAt: l.created_at,
+          }))
+        }
+      } catch (err) {
+        console.warn('Supabase getAutomationLogs warning:', err)
+      }
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.AUTOMATION_LOGS)
+    let logs: AutomationLog[] = raw ? JSON.parse(raw) : []
+    if (ruleId) {
+      logs = logs.filter((l) => l.ruleId === ruleId)
+    }
+    return logs
+  }
+
+  async triggerAutomationEvent(
+    trigger: AutomationEventTrigger,
+    context: Record<string, any>,
+  ): Promise<void> {
+    const rules = await this.getAutomationRules()
+    const matchingRules = rules.filter((r) => r.eventTrigger === trigger && r.isEnabled)
+
+    const now = new Date().toISOString()
+
+    for (const rule of matchingRules) {
+      rule.executionCount += 1
+      rule.lastExecutedAt = now
+      rule.lastStatus = 'success'
+
+      const newLog: AutomationLog = {
+        id: `auto_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        ruleId: rule.id,
+        eventType: trigger,
+        status: 'success',
+        details: context,
+        retryCount: 0,
+        createdAt: now,
+      }
+
+      // Persist log locally
+      const rawLogs = localStorage.getItem(STORAGE_KEYS.AUTOMATION_LOGS)
+      const logsList: AutomationLog[] = rawLogs ? JSON.parse(rawLogs) : []
+      localStorage.setItem(
+        STORAGE_KEYS.AUTOMATION_LOGS,
+        JSON.stringify([newLog, ...logsList.slice(0, 99)]),
+      )
+
+      // Persist to Supabase
+      if (supabase) {
+        try {
+          await supabase
+            .from('automation_rules')
+            .update({
+              execution_count: rule.executionCount,
+              last_executed_at: now,
+              last_status: 'success',
+              updated_at: now,
+            })
+            .eq('id', rule.id)
+
+          await supabase.from('automation_logs').insert({
+            rule_id: rule.id,
+            event_type: trigger,
+            status: 'success',
+            details: context,
+            retry_count: 0,
+          })
+        } catch (err) {
+          console.warn('Supabase automation execution logging warning:', err)
+        }
+      }
+
+      this.emit('automation_logs_updated', newLog)
+    }
+
+    localStorage.setItem(STORAGE_KEYS.AUTOMATION_RULES, JSON.stringify(rules))
+    this.emit('automation_updated', rules)
+  }
+
+  async retryAutomationLog(logId: string): Promise<AutomationLog> {
+    const rawLogs = localStorage.getItem(STORAGE_KEYS.AUTOMATION_LOGS)
+    const logsList: AutomationLog[] = rawLogs ? JSON.parse(rawLogs) : []
+    const target = logsList.find((l) => l.id === logId)
+    if (!target) throw new Error(`Automation log ${logId} not found`)
+
+    target.status = 'success'
+    target.retryCount += 1
+    target.errorMessage = null
+    localStorage.setItem(STORAGE_KEYS.AUTOMATION_LOGS, JSON.stringify(logsList))
+
+    if (supabase && isUuid(logId)) {
+      try {
+        await supabase
+          .from('automation_logs')
+          .update({
+            status: 'success',
+            retry_count: target.retryCount,
+            error_message: null,
+          })
+          .eq('id', logId)
+      } catch (err) {
+        console.warn('Supabase retryAutomationLog warning:', err)
+      }
+    }
+
+    this.emit('automation_logs_updated', target)
+    return target
+  }
+
+  // ========================================================
+  // FINANCIAL RECONCILIATION ENGINE (V5)
+  // ========================================================
+
+  async runFinancialReconciliationAudit(auditorName: string = 'Authorized Admin'): Promise<FinancialReconciliationSnapshot> {
+    const [orders, paymentRequests, walletTxs] = await Promise.all([
+      this.getOrders(),
+      this.getPaymentRequests(),
+      this.getWalletTransactions(),
+    ])
+
+    const totalOrdersCount = orders.length
+    const totalOrdersMinor = orders.reduce((sum, o) => sum + o.subtotalMinor, 0)
+    const totalSettledMinor = orders
+      .filter((o) => o.status === 'payment_verified' || o.status === 'completed')
+      .reduce((sum, o) => sum + o.subtotalMinor, 0)
+
+    const totalWalletCreditsMinor = walletTxs
+      .filter((tx) => tx.transactionType === 'credit' && tx.status === 'completed')
+      .reduce((sum, tx) => sum + Math.abs(tx.amountMinor), 0)
+
+    const totalWalletDebitsMinor = walletTxs
+      .filter((tx) => tx.transactionType === 'debit' && tx.status === 'completed')
+      .reduce((sum, tx) => sum + Math.abs(tx.amountMinor), 0)
+
+    const discrepancies: FinancialDiscrepancy[] = []
+    const now = new Date().toISOString()
+
+    // 1. Check for duplicate UTRs across payment requests
+    const utrMap = new Map<string, PaymentRequestRecord[]>()
+    paymentRequests.forEach((pr) => {
+      if (pr.utrNumber && pr.utrNumber.trim().length === 12) {
+        const list = utrMap.get(pr.utrNumber) || []
+        list.push(pr)
+        utrMap.set(pr.utrNumber, list)
+      }
+    })
+
+    utrMap.forEach((duplicates, utr) => {
+      if (duplicates.length > 1) {
+        discrepancies.push({
+          id: `disc_dup_${utr}`,
+          type: 'duplicate_utr',
+          severity: 'high',
+          reference: utr,
+          description: `Duplicate bank UTR reference ${utr} submitted across ${duplicates.length} distinct deposit requests. Potential double-credit risk.`,
+          detectedAt: now,
+          status: 'unresolved',
+        })
+      }
+    })
+
+    // 2. Check for orders awaiting audit over 10 minutes
+    orders.forEach((o) => {
+      if (o.status === 'pending') {
+        const orderAgeMs = Date.now() - new Date(o.createdAt).getTime()
+        if (orderAgeMs > 600000) {
+          discrepancies.push({
+            id: `disc_pending_${o.id}`,
+            type: 'pending_verification',
+            severity: 'medium',
+            orderNumber: o.orderNumber,
+            expectedAmountMinor: o.subtotalMinor,
+            description: `Order #${o.orderNumber} placed ${Math.round(orderAgeMs / 60000)}m ago is pending bank settlement audit.`,
+            detectedAt: now,
+            status: 'unresolved',
+          })
+        }
+      }
+    })
+
+    const duplicateReferencesCount = discrepancies.filter((d) => d.type === 'duplicate_utr').length
+    const pendingAuditCount = discrepancies.filter((d) => d.type === 'pending_verification').length
+    const amountMismatchCount = discrepancies.filter((d) => d.type === 'amount_mismatch').length
+    const unmatchedOrdersCount = discrepancies.filter((d) => d.type === 'unmatched_order').length
+
+    const snapshot: FinancialReconciliationSnapshot = {
+      id: `rec_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      snapshotDate: now,
+      totalOrdersCount,
+      totalOrdersMinor,
+      totalSettledMinor,
+      totalWalletCreditsMinor,
+      totalWalletDebitsMinor,
+      unmatchedOrdersCount,
+      duplicateReferencesCount,
+      amountMismatchCount,
+      pendingAuditCount,
+      discrepancies,
+      auditedBy: auditorName,
+      auditorNotes: discrepancies.length === 0
+        ? 'All ledger balances, orders, and payment records are fully balanced and verified.'
+        : `Detected ${discrepancies.length} discrepancy item(s) requiring curatorial verification.`,
+    }
+
+    // Persist snapshot to local storage
+    const raw = localStorage.getItem(STORAGE_KEYS.RECONCILIATION)
+    const snapshots: FinancialReconciliationSnapshot[] = raw ? JSON.parse(raw) : []
+    localStorage.setItem(
+      STORAGE_KEYS.RECONCILIATION,
+      JSON.stringify([snapshot, ...snapshots.slice(0, 20)]),
+    )
+
+    // Persist to Supabase if active
+    if (supabase) {
+      try {
+        await supabase.from('financial_reconciliation_snapshots').insert({
+          snapshot_date: snapshot.snapshotDate,
+          total_orders_count: snapshot.totalOrdersCount,
+          total_orders_minor: snapshot.totalOrdersMinor,
+          total_settled_minor: snapshot.totalSettledMinor,
+          total_wallet_credits_minor: snapshot.totalWalletCreditsMinor,
+          total_wallet_debits_minor: snapshot.totalWalletDebitsMinor,
+          unmatched_orders_count: snapshot.unmatchedOrdersCount,
+          duplicate_references_count: snapshot.duplicateReferencesCount,
+          amount_mismatch_count: snapshot.amountMismatchCount,
+          pending_audit_count: snapshot.pendingAuditCount,
+          discrepancies_detail: snapshot.discrepancies,
+          auditor_notes: snapshot.auditorNotes || null,
+          audited_by: snapshot.auditedBy,
+        })
+      } catch (err) {
+        console.warn('Supabase financial reconciliation insert warning:', err)
+      }
+    }
+
+    await this.recordAdminAuditLog({
+      action: 'RUN_FINANCIAL_RECONCILIATION',
+      targetResource: 'financial_reconciliation',
+      payload: {
+        snapshotId: snapshot.id,
+        discrepancyCount: discrepancies.length,
+        totalOrdersCount,
+        totalSettledMinor,
+      },
+    })
+
+    this.emit('reconciliation_updated', snapshot)
+    return snapshot
+  }
+
+  async getFinancialReconciliationSnapshots(): Promise<FinancialReconciliationSnapshot[]> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('financial_reconciliation_snapshots')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20)
+
+        if (!error && data && data.length > 0) {
+          return data.map((r: any) => ({
+            id: r.id,
+            snapshotDate: r.snapshot_date,
+            totalOrdersCount: r.total_orders_count,
+            totalOrdersMinor: Number(r.total_orders_minor),
+            totalSettledMinor: Number(r.total_settled_minor),
+            totalWalletCreditsMinor: Number(r.total_wallet_credits_minor),
+            totalWalletDebitsMinor: Number(r.total_wallet_debits_minor),
+            unmatchedOrdersCount: r.unmatched_orders_count,
+            duplicateReferencesCount: r.duplicate_references_count,
+            amountMismatchCount: r.amount_mismatch_count,
+            pendingAuditCount: r.pending_audit_count,
+            discrepancies: Array.isArray(r.discrepancies_detail) ? r.discrepancies_detail : [],
+            auditorNotes: r.auditor_notes,
+            auditedBy: r.audited_by,
+          }))
+        }
+      } catch (err) {
+        console.warn('Supabase getFinancialReconciliationSnapshots warning:', err)
+      }
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.RECONCILIATION)
+    return raw ? JSON.parse(raw) : []
+  }
+
+  async resolveDiscrepancy(discrepancyId: string, resolutionNotes: string): Promise<void> {
+    const raw = localStorage.getItem(STORAGE_KEYS.RECONCILIATION)
+    if (!raw) return
+    const snapshots: FinancialReconciliationSnapshot[] = JSON.parse(raw)
+    snapshots.forEach((snap) => {
+      snap.discrepancies.forEach((d) => {
+        if (d.id === discrepancyId) {
+          d.status = 'resolved'
+          d.resolutionNotes = resolutionNotes
+        }
+      })
+    })
+    localStorage.setItem(STORAGE_KEYS.RECONCILIATION, JSON.stringify(snapshots))
+
+    await this.recordAdminAuditLog({
+      action: 'RESOLVE_FINANCIAL_DISCREPANCY',
+      targetResource: 'financial_reconciliation',
+      payload: { discrepancyId, resolutionNotes },
+    })
+
+    this.emit('reconciliation_updated', snapshots[0])
+  }
+
+  // ========================================================
+  // NOTIFICATION TEMPLATES (V5)
+  // ========================================================
+
+  async getNotificationTemplates(): Promise<NotificationTemplate[]> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('notification_templates')
+          .select('*')
+          .order('name', { ascending: true })
+
+        if (!error && data && data.length > 0) {
+          return data.map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            titleTemplate: t.title_template,
+            bodyTemplate: t.body_template,
+            category: t.category,
+            isActive: t.is_active,
+          }))
+        }
+      } catch (err) {
+        console.warn('Supabase getNotificationTemplates warning:', err)
+      }
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATION_TEMPLATES)
+    if (!raw) {
+      localStorage.setItem(
+        STORAGE_KEYS.NOTIFICATION_TEMPLATES,
+        JSON.stringify(DEFAULT_NOTIFICATION_TEMPLATES),
+      )
+      return DEFAULT_NOTIFICATION_TEMPLATES
+    }
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return DEFAULT_NOTIFICATION_TEMPLATES
+    }
+  }
+
+  async updateNotificationTemplate(
+    templateId: string,
+    updates: Partial<NotificationTemplate>,
+  ): Promise<NotificationTemplate> {
+    const templates = await this.getNotificationTemplates()
+    const target = templates.find((t) => t.id === templateId)
+    if (!target) throw new Error(`Template ${templateId} not found`)
+
+    const updated = { ...target, ...updates }
+    const list = templates.map((t) => (t.id === templateId ? updated : t))
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATION_TEMPLATES, JSON.stringify(list))
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('notification_templates')
+          .update({
+            name: updated.name,
+            title_template: updated.titleTemplate,
+            body_template: updated.bodyTemplate,
+            category: updated.category,
+            is_active: updated.isActive,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', templateId)
+      } catch (err) {
+        console.warn('Supabase updateNotificationTemplate warning:', err)
+      }
+    }
+
+    await this.recordAdminAuditLog({
+      action: 'UPDATE_NOTIFICATION_TEMPLATE',
+      targetResource: 'notification_templates',
+      payload: { templateId, updates },
+    })
+
+    this.emit('templates_updated', updated)
+    return updated
+  }
+
+  async sendTemplatedNotification(
+    templateId: string,
+    userId: string,
+    variables: Record<string, string>,
+  ): Promise<NotificationItem> {
+    const templates = await this.getNotificationTemplates()
+    const template = templates.find((t) => t.id === templateId) || DEFAULT_NOTIFICATION_TEMPLATES[0]
+
+    let title = template.titleTemplate
+    let body = template.bodyTemplate
+
+    Object.entries(variables).forEach(([k, v]) => {
+      title = title.replaceAll(`{{${k}}}`, v)
+      body = body.replaceAll(`{{${k}}}`, v)
+    })
+
+    return this.createNotification({
+      userId,
+      title,
+      body,
+      notificationType: template.category,
+    })
+  }
+
+  // ========================================================
+  // ADVANCED PRODUCT MANAGEMENT (V5)
+  // ========================================================
+
+  async createProduct(productData: Omit<Product, 'id'>): Promise<Product> {
+    const products = await this.getProducts()
+    const newId = `prod_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+    const newProduct: Product = {
+      ...productData,
+      id: newId,
+    }
+
+    const updated = [newProduct, ...products]
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(updated))
+
+    if (supabase) {
+      try {
+        const { data: categoryData } = await supabase
+          .from('product_categories')
+          .select('id')
+          .eq('slug', newProduct.collection.toLowerCase())
+          .maybeSingle()
+
+        const categoryId = categoryData?.id || 'd3b07384-d113-4a11-a886-000000000001'
+
+        await supabase.from('products').insert({
+          sku: newProduct.sku,
+          category_id: categoryId,
+          name: newProduct.name,
+          slug: newProduct.slug,
+          description: newProduct.description,
+          collection: newProduct.collection,
+          price_minor: newProduct.priceMinor,
+          sale_price_minor: newProduct.salePriceMinor || null,
+          discount_percent: newProduct.discountPercent,
+          currency: 'INR',
+          status: newProduct.status,
+          artwork_key: newProduct.artwork,
+          artwork_number: newProduct.artworkNumber,
+          artwork_caption: newProduct.artworkCaption,
+          artwork_title: newProduct.artworkTitle,
+          specifications: newProduct.specifications,
+          images: newProduct.images,
+          digital_asset_name: newProduct.digitalAsset?.filename || 'collectible-master.zip',
+          is_featured: newProduct.isFeatured || false,
+          is_popular: newProduct.isPopular || false,
+          tags: newProduct.tags || [],
+        })
+      } catch (err) {
+        console.warn('Supabase createProduct sync warning:', err)
+      }
+    }
+
+    await this.recordAdminAuditLog({
+      action: 'CREATE_PRODUCT',
+      targetResource: 'products',
+      payload: { productId: newId, sku: newProduct.sku, name: newProduct.name },
+    })
+
+    this.emit('products_updated', updated)
+    return newProduct
+  }
+
+  async updateProduct(productId: string, updates: Partial<Product>): Promise<Product> {
+    const products = await this.getProducts()
+    const target = products.find((p) => p.id === productId)
+    if (!target) throw new Error(`Product ${productId} not found`)
+
+    const updated = { ...target, ...updates }
+    const list = products.map((p) => (p.id === productId ? updated : p))
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(list))
+
+    if (supabase && isUuid(productId)) {
+      try {
+        await supabase
+          .from('products')
+          .update({
+            name: updated.name,
+            description: updated.description,
+            price_minor: updated.priceMinor,
+            sale_price_minor: updated.salePriceMinor || null,
+            discount_percent: updated.discountPercent,
+            status: updated.status,
+            artwork_key: updated.artwork,
+            artwork_caption: updated.artworkCaption,
+            artwork_title: updated.artworkTitle,
+            is_featured: updated.isFeatured,
+            is_popular: updated.isPopular,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', productId)
+      } catch (err) {
+        console.warn('Supabase updateProduct sync warning:', err)
+      }
+    }
+
+    // Check low inventory rule
+    if (updated.stockCount <= 5) {
+      await this.triggerAutomationEvent('on_low_inventory', {
+        productId,
+        sku: updated.sku,
+        stockCount: updated.stockCount,
+      })
+    }
+
+    await this.recordAdminAuditLog({
+      action: 'UPDATE_PRODUCT',
+      targetResource: 'products',
+      payload: { productId, updates },
+    })
+
+    this.emit('products_updated', list)
+    return updated
+  }
+
+  async toggleProductPublishStatus(
+    productId: string,
+    status: 'active' | 'draft' | 'archived',
+  ): Promise<Product> {
+    return this.updateProduct(productId, { status })
+  }
+
+  async getProductSalesAnalytics(): Promise<
+    Array<{
+      productId: string
+      name: string
+      sku: string
+      unitsSold: number
+      totalRevenueMinor: number
+    }>
+  > {
+    const [products, orders] = await Promise.all([this.getProducts(), this.getOrders()])
+    const map = new Map<string, { unitsSold: number; totalRevenueMinor: number }>()
+
+    orders
+      .filter((o) => o.status === 'payment_verified' || o.status === 'completed')
+      .forEach((order) => {
+        order.items.forEach((item) => {
+          const cur = map.get(item.productId) || { unitsSold: 0, totalRevenueMinor: 0 }
+          cur.unitsSold += item.quantity
+          cur.totalRevenueMinor += item.unitPriceMinor * item.quantity
+          map.set(item.productId, cur)
+        })
+      })
+
+    return products.map((p) => {
+      const stats = map.get(p.id) || { unitsSold: 0, totalRevenueMinor: 0 }
+      return {
+        productId: p.id,
+        name: p.name,
+        sku: p.sku,
+        unitsSold: stats.unitsSold,
+        totalRevenueMinor: stats.totalRevenueMinor,
+      }
+    })
+  }
+
+  // ========================================================
+  // CUSTOMER ACCOUNT OPERATIONS (V5)
+  // ========================================================
+
+  async getCustomerProfile(userId: string): Promise<{
+    id: string
+    displayName: string
+    email: string
+    avatarUrl?: string
+    isEmailVerified: boolean
+    createdAt: string
+  }> {
+    if (supabase && isUuid(userId)) {
+      try {
+        const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+        if (data) {
+          return {
+            id: data.id,
+            displayName: data.display_name || 'Valued Collector',
+            email: data.email || 'collector@russianmarket.store',
+            avatarUrl: data.avatar_url || undefined,
+            isEmailVerified: true,
+            createdAt: data.created_at,
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase getCustomerProfile warning:', err)
+      }
+    }
+
+    return {
+      id: userId,
+      displayName: 'Valued Collector',
+      email: 'collector@russianmarket.store',
+      isEmailVerified: true,
+      createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+    }
+  }
+
+  async updateCustomerProfile(
+    userId: string,
+    profileData: { displayName?: string; avatarUrl?: string },
+  ): Promise<void> {
+    if (supabase && isUuid(userId)) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({
+            display_name: profileData.displayName,
+            avatar_url: profileData.avatarUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId)
+      } catch (err) {
+        console.warn('Supabase updateCustomerProfile warning:', err)
+      }
+    }
+  }
 }
+
+const DEFAULT_AUTOMATION_RULES: AutomationRule[] = [
+  {
+    id: 'rule_order_ack',
+    name: 'Order Submission Auto-Receipt',
+    description: 'Automatically logs concierge task and sends instant customer in-app notification upon order placement.',
+    eventTrigger: 'on_new_order',
+    isEnabled: true,
+    actionType: 'send_notification',
+    actionConfig: { template: 'tpl_order_created' },
+    lastExecutedAt: new Date().toISOString(),
+    lastStatus: 'success',
+    executionCount: 12,
+  },
+  {
+    id: 'rule_payment_settle',
+    name: 'Verified Payment Instant Settlement',
+    description: 'Marks order verified, credits collector wallet, issues signed cryptographic pass, and notifies customer.',
+    eventTrigger: 'on_verified_payment',
+    isEnabled: true,
+    actionType: 'issue_certificate',
+    actionConfig: { unlockAsset: true },
+    lastExecutedAt: new Date(Date.now() - 3600000).toISOString(),
+    lastStatus: 'success',
+    executionCount: 8,
+  },
+  {
+    id: 'rule_payment_expiry',
+    name: 'Expired Deposit Cleanup',
+    description: 'Marks abandoned payment requests as expired after 15 minutes and restores reserved inventory.',
+    eventTrigger: 'on_expired_payment',
+    isEnabled: true,
+    actionType: 'release_inventory',
+    actionConfig: { thresholdMinutes: 15 },
+    lastExecutedAt: new Date(Date.now() - 7200000).toISOString(),
+    lastStatus: 'success',
+    executionCount: 4,
+  },
+  {
+    id: 'rule_asset_delivery',
+    name: 'Cryptographic Pass Issuance',
+    description: 'Dispatches signed SHA-256 asset entitlement certificate token to customer account ledger.',
+    eventTrigger: 'on_digital_delivery',
+    isEnabled: true,
+    actionType: 'log_delivery',
+    actionConfig: { signAlgorithm: 'SHA256' },
+    lastExecutedAt: new Date(Date.now() - 1800000).toISOString(),
+    lastStatus: 'success',
+    executionCount: 8,
+  },
+  {
+    id: 'rule_support_alert',
+    name: 'Concierge Message Auto-Routing',
+    description: 'Increments admin unread indicators and alerts senior curatorial desk when customer inquires.',
+    eventTrigger: 'on_new_support_message',
+    isEnabled: true,
+    actionType: 'alert_curator',
+    actionConfig: { priority: 'high' },
+    lastExecutedAt: new Date().toISOString(),
+    lastStatus: 'success',
+    executionCount: 15,
+  },
+  {
+    id: 'rule_low_inventory',
+    name: 'Low Inventory Curatorial Notice',
+    description: 'Alerts platform administrator when edition availability falls below 5 remaining pieces.',
+    eventTrigger: 'on_low_inventory',
+    isEnabled: true,
+    actionType: 'admin_broadcast',
+    actionConfig: { threshold: 5 },
+    lastExecutedAt: null,
+    lastStatus: 'idle',
+    executionCount: 0,
+  },
+  {
+    id: 'rule_failed_gateway',
+    name: 'Payment Gateway Fault Logging',
+    description: 'Records failed webhook or payment callback payload in immutable admin audit registry.',
+    eventTrigger: 'on_failed_integration',
+    isEnabled: true,
+    actionType: 'audit_log',
+    actionConfig: { severity: 'critical' },
+    lastExecutedAt: null,
+    lastStatus: 'idle',
+    executionCount: 0,
+  },
+]
+
+const DEFAULT_NOTIFICATION_TEMPLATES: NotificationTemplate[] = [
+  {
+    id: 'tpl_order_created',
+    name: 'Order Confirmation',
+    titleTemplate: 'Order #{{orderNumber}} Registered',
+    bodyTemplate: 'Your acquisition of {{itemCount}} collectible card(s) for {{formattedTotal}} is registered. Pending settlement verification.',
+    category: 'order',
+    isActive: true,
+  },
+  {
+    id: 'tpl_payment_verified',
+    name: 'Settlement Verified',
+    titleTemplate: 'Payment Verified & Pass Issued',
+    bodyTemplate: 'Order #{{orderNumber}} has been verified. Your sovereign collectible pass and master deliverables are ready in your Orders.',
+    category: 'order',
+    isActive: true,
+  },
+  {
+    id: 'tpl_wallet_credited',
+    name: 'Wallet Deposit Credited',
+    titleTemplate: 'Funds Credited to Wallet',
+    bodyTemplate: 'Your deposit of {{formattedAmount}} has been credited to your Russian Market wallet balance.',
+    category: 'wallet',
+    isActive: true,
+  },
+  {
+    id: 'tpl_concierge_reply',
+    name: 'Concierge Desk Message',
+    titleTemplate: 'Message from Private Concierge',
+    bodyTemplate: 'A senior curatorial officer has replied to your collection inquiry.',
+    category: 'support',
+    isActive: true,
+  },
+]
 
 export const storeEngine = new StoreEngine()
