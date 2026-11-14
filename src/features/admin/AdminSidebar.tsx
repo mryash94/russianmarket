@@ -20,17 +20,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Store,
+  Zap,
+  Scale,
 } from 'lucide-react'
 
 export type AdminTab =
   | 'overview'
   | 'analytics'
+  | 'automation'
   | 'products'
   | 'inventory'
   | 'orders'
   | 'customers'
   | 'wallet'
   | 'deposits'
+  | 'reconciliation'
   | 'upi_settings'
   | 'payment_verification'
   | 'qr_scanner'
@@ -81,6 +85,7 @@ export function AdminSidebar({
       items: [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
         { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        { id: 'automation', label: 'Smart Automation', icon: Zap },
         {
           id: 'inbox',
           label: 'Live Chat Inbox',
@@ -117,6 +122,7 @@ export function AdminSidebar({
           badge: pendingDepositsCount > 0 ? pendingDepositsCount : undefined,
           badgeVariant: 'rose',
         },
+        { id: 'reconciliation', label: 'Financial Audit', icon: Scale },
         { id: 'upi_settings', label: 'UPI Configuration', icon: QrCode },
         { id: 'payment_verification', label: 'Payment Verification', icon: ShieldCheck },
       ],

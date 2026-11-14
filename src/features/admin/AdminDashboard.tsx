@@ -26,13 +26,17 @@ import {
   type WalletTx,
   type AdminAuditLog,
 } from '../../services/storeEngine'
-import type { Product, CardCategory } from '../../types/product'
+import type { Product } from '../../types/product'
 import { formatINR } from '../../lib/currency'
 import type { OrderStatus } from '../../types/database'
 import { AdminChatInbox } from './AdminChatInbox'
 import { AdminWalletManager } from './AdminWalletManager'
 import { AdminSidebar, type AdminTab } from './AdminSidebar'
 import { CustomerDrilldownModal } from './CustomerDrilldownModal'
+import { AdminAutomationCenter } from './AdminAutomationCenter'
+import { AdminReconciliationDashboard } from './AdminReconciliationDashboard'
+import { AdminProductManager } from './AdminProductManager'
+import { AdminCommandPalette } from './AdminCommandPalette'
 import {
   type CustomerCRMRecord,
   exportOrdersToCSV,
@@ -68,8 +72,6 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
   // Filters & Searches
   const [orderSearch, setOrderSearch] = useState('')
   const [orderFilter, setOrderFilter] = useState<OrderStatus | 'all'>('all')
-  const [productSearch, setProductSearch] = useState('')
-  const [productCategoryFilter, setProductCategoryFilter] = useState<CardCategory | 'all'>('all')
   const [verificationQuery, setVerificationQuery] = useState('')
   const [verificationResult, setVerificationResult] = useState<any | null>(null)
 
@@ -86,8 +88,21 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
     { time: new Date().toLocaleTimeString(), message: 'Diagnostic engine initialized. Realtime stream verified.', type: 'info' }
   ])
 
-  // Modals
+  // Modals & Command Palette
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+
+  // Listen for Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsCommandPaletteOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   // QR Scanner State
   const [qrInput, setQrInput] = useState('')
@@ -324,13 +339,6 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
     return matchesFilter && matchesSearch
   })
 
-  const filteredProducts = products.filter((p) => {
-    const matchesCategory = productCategoryFilter === 'all' || p.category === productCategoryFilter
-    const q = productSearch.toLowerCase()
-    const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
-    return matchesCategory && matchesSearch
-  })
-
   // Wallet Map
   const walletMap = useMemo(() => {
     const m = new Map<string, { balanceMinor: number; txCount: number }>()
@@ -511,6 +519,20 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Global Search / Command Palette Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/10 text-xs font-mono transition-colors"
+              title="Global Search (Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Search</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-black/50 text-[10px] text-white/40 border border-white/10 font-mono">
+                Ctrl+K
+              </kbd>
+            </button>
+
             {actionSuccess && (
               <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 flex items-center gap-1.5 animate-in fade-in">
                 <CheckCircle2 className="w-4 h-4" />
@@ -717,59 +739,21 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           )}
 
           {/* ======================================================== */}
+          {/* SMART AUTOMATION CENTER                                  */}
+          {/* ======================================================== */}
+          {activeTab === 'automation' && (
+            <AdminAutomationCenter onNotify={notifySuccess} />
+          )}
+
+          {/* ======================================================== */}
           {/* 3. PRODUCTS & INVENTORY MODULES                          */}
           {/* ======================================================== */}
           {activeTab === 'products' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {(['all', 'VISA', 'MASTERCARD', 'RUPAY'] as const).map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setProductCategoryFilter(c)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-colors ${
-                        productCategoryFilter === c
-                          ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                          : 'bg-white/5 text-white/60 hover:text-white'
-                      }`}
-                    >
-                      {c.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                  <input
-                    type="text"
-                    placeholder="Search SKU or name..."
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    className="h-9 pl-9 pr-4 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProducts.map((p) => (
-                  <div key={p.id} className="p-4 rounded-2xl bg-[#0c0e12] border border-white/5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-cyan-400 font-bold">{p.category}</span>
-                      <span className="text-[10px] font-mono text-white/40">#{p.editionNumber} / {p.editionTotal}</span>
-                    </div>
-                    <h3 className="text-sm font-bold text-white truncate">{p.name}</h3>
-                    <p className="text-xs text-white/60 line-clamp-2">{p.description}</p>
-                    <div className="flex items-center justify-between pt-2 border-t border-white/5 font-mono">
-                      <span className="text-sm font-bold text-white">{formatINR(p.priceMinor)}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        {p.stockLabel}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <AdminProductManager
+              products={products}
+              onReload={reloadData}
+              onNotify={notifySuccess}
+            />
           )}
 
           {activeTab === 'inventory' && (
@@ -1171,6 +1155,13 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
 
           {activeTab === 'deposits' && (
             <AdminWalletManager onNotify={notifySuccess} />
+          )}
+
+          {/* ======================================================== */}
+          {/* FINANCIAL RECONCILIATION AUDIT CENTER                    */}
+          {/* ======================================================== */}
+          {activeTab === 'reconciliation' && (
+            <AdminReconciliationDashboard onNotify={notifySuccess} />
           )}
 
           {/* ======================================================== */}
@@ -1763,6 +1754,21 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           </div>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* GLOBAL COMMAND PALETTE (CTRL+K / CMD+K)                  */}
+      {/* ======================================================== */}
+      <AdminCommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onSelectTab={setActiveTab}
+        onSelectOrder={(order) => setSelectedOrder(order)}
+        onSelectCustomer={(customer) => setSelectedCrmCustomer(customer)}
+        products={products}
+        orders={orders}
+        transactions={transactions}
+        customers={crmCustomers}
+      />
     </div>
   )
 }
