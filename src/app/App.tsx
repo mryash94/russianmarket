@@ -150,21 +150,31 @@ export function App() {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
   }, [cartItems])
 
-  // Resume Pending Checkout after Guest Logs In
+  // Resume Pending Checkout or Admin Route after Login
   useEffect(() => {
-    if (user && products.length > 0) {
-      const pendingProductId = getPendingCheckoutProduct()
-      if (pendingProductId) {
-        clearPendingCheckoutProduct()
-        const targetProduct = products.find((p) => p.id === pendingProductId)
-        if (targetProduct) {
-          setCartItems({ [pendingProductId]: 1 })
-          setIsAuthModalOpen(false)
-          setIsCheckoutOpen(true)
+    if (user) {
+      const returnUrl = sessionStorage.getItem('rm_auth_return_url')
+      if (returnUrl) {
+        sessionStorage.removeItem('rm_auth_return_url')
+        if (returnUrl.startsWith('/admin')) {
+          navigateToAdmin()
+        }
+      }
+
+      if (products.length > 0) {
+        const pendingProductId = getPendingCheckoutProduct()
+        if (pendingProductId) {
+          clearPendingCheckoutProduct()
+          const targetProduct = products.find((p) => p.id === pendingProductId)
+          if (targetProduct) {
+            setCartItems({ [pendingProductId]: 1 })
+            setIsAuthModalOpen(false)
+            setIsCheckoutOpen(true)
+          }
         }
       }
     }
-  }, [user, products, getPendingCheckoutProduct, clearPendingCheckoutProduct])
+  }, [user, products, getPendingCheckoutProduct, clearPendingCheckoutProduct, navigateToAdmin])
 
   const unreadNotificationsCount = useMemo(() => {
     return notifications.filter((n) => !n.readAt).length
