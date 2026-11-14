@@ -961,42 +961,55 @@ class StoreEngine {
       try {
         let query = supabase
           .from('support_conversations')
-          .select('*, messages:support_messages(*)')
+          .select('*')
           .order('updated_at', { ascending: false })
 
         if (userId && isUuid(userId)) {
           query = query.eq('user_id', userId)
         }
 
-        const { data, error } = await query
-        if (!error && data && data.length > 0) {
-          const mapped: SupportConversation[] = data.map((c: any) => ({
-            id: c.id,
-            userId: c.user_id,
-            userEmail: c.user_email,
-            subject: c.subject,
-            status: c.status,
-            unreadAdminCount: c.unread_admin_count || 0,
-            unreadCustomerCount: c.unread_customer_count || 0,
-            internalNotes: c.internal_notes || c.internalNotes || undefined,
-            createdAt: c.created_at,
-            updatedAt: c.updated_at,
-            messages: Array.isArray(c.messages)
-              ? c.messages
-                  .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                  .map((m: any) => ({
-                    id: m.id,
-                    conversationId: m.conversation_id,
-                    senderUserId: m.sender_user_id,
-                    senderType: m.sender_type,
-                    body: m.body,
-                    attachmentName: m.attachment_name,
-                    attachmentUrl: m.attachment_url,
-                    createdAt: m.created_at,
-                    status: 'delivered',
-                  }))
-              : [],
-          }))
+        const { data: convData, error: convError } = await query
+        if (!convError && convData && convData.length > 0) {
+          const convIds = convData.map((c: any) => c.id)
+          const { data: msgData } = await supabase
+            .from('support_messages')
+            .select('*')
+            .in('conversation_id', convIds)
+            .order('created_at', { ascending: true })
+
+          const msgsByConv = new Map<string, any[]>()
+          for (const m of (msgData || [])) {
+            const arr = msgsByConv.get(m.conversation_id) || []
+            arr.push(m)
+            msgsByConv.set(m.conversation_id, arr)
+          }
+
+          const mapped: SupportConversation[] = convData.map((c: any) => {
+            const rawMsgs = msgsByConv.get(c.id) || []
+            return {
+              id: c.id,
+              userId: c.user_id,
+              userEmail: c.user_email,
+              subject: c.subject,
+              status: c.status,
+              unreadAdminCount: c.unread_admin_count || 0,
+              unreadCustomerCount: c.unread_customer_count || 0,
+              internalNotes: c.internal_notes || c.internalNotes || undefined,
+              createdAt: c.created_at,
+              updatedAt: c.updated_at,
+              messages: rawMsgs.map((m: any) => ({
+                id: m.id,
+                conversationId: m.conversation_id,
+                senderUserId: m.sender_user_id || m.sender_id,
+                senderType: m.sender_type || m.sender_role || 'customer',
+                body: m.body || m.content || '',
+                attachmentName: m.attachment_name,
+                attachmentUrl: m.attachment_url,
+                createdAt: m.created_at,
+                status: 'delivered',
+              })),
+            }
+          })
           localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(mapped))
           return mapped
         }
@@ -1157,25 +1170,30 @@ class StoreEngine {
           }
         }
 
-        if (isUuid(targetConvId)) {
+        if (targetConvId) {
           await supabase.from('support_messages').insert({
             conversation_id: targetConvId,
             sender_user_id: isUuid(params.senderUserId) ? params.senderUserId : null,
+            sender_id: isUuid(params.senderUserId) ? params.senderUserId : null,
             sender_type: params.senderType,
+            sender_role: params.senderType,
             body: params.body,
+            content: params.body,
             attachment_name: params.attachmentName || null,
             attachment_url: params.attachmentUrl || null,
           })
 
-          await supabase
-            .from('support_conversations')
-            .update({
-              updated_at: new Date().toISOString(),
-              ...(params.senderType === 'customer'
-                ? { unread_admin_count: (conv.unreadAdminCount || 0) + 1 }
-                : { unread_customer_count: (conv.unreadCustomerCount || 0) + 1 }),
-            })
-            .eq('id', targetConvId)
+          if (isUuid(targetConvId)) {
+            await supabase
+              .from('support_conversations')
+              .update({
+                updated_at: new Date().toISOString(),
+                ...(params.senderType === 'customer'
+                  ? { unread_admin_count: (conv.unreadAdminCount || 0) + 1 }
+                  : { unread_customer_count: (conv.unreadCustomerCount || 0) + 1 }),
+              })
+              .eq('id', targetConvId)
+          }
         }
       } catch (err) {
         console.warn('Supabase chat message insert warning:', err)

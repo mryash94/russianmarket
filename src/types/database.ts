@@ -258,9 +258,12 @@ export type Database = {
       support_messages: Table<{
         id: string
         conversation_id: string
-        sender_user_id: string | null
-        sender_type: 'customer' | 'admin' | 'system'
-        body: string
+        sender_user_id?: string | null
+        sender_id?: string | null
+        sender_type?: 'customer' | 'admin' | 'system' | string
+        sender_role?: string
+        body?: string
+        content?: string
         attachment_name?: string | null
         attachment_url?: string | null
         idempotency_key?: string | null
