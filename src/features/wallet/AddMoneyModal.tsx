@@ -70,10 +70,10 @@ export function AddMoneyModal({
       )}&am=${amountRupees}&cu=INR&tn=${encodeURIComponent(note)}`
 
       QRCode.toDataURL(upiUri, {
-        width: 280,
+        width: 260,
         margin: 1.5,
         color: {
-          dark: '#000000',
+          dark: '#060709',
           light: '#ffffff',
         },
       })
@@ -126,7 +126,7 @@ export function AddMoneyModal({
     e.preventDefault()
     const cleanUtr = utrNumber.trim()
     if (!cleanUtr || cleanUtr.length < 8) {
-      setErrorMessage('Please enter a valid 12-digit UPI transaction reference / UTR number.')
+      setErrorMessage('Please enter a valid 12-digit UPI transaction reference / UTR number')
       return
     }
 
@@ -160,17 +160,17 @@ export function AddMoneyModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby={`${modalId}-title`}
     >
-      <div className="relative w-full max-w-lg rounded-3xl glass-panel-elevated border border-white/[0.14] shadow-2xl p-5 sm:p-7 overflow-hidden my-auto">
+      <div className="relative w-full max-w-lg rounded-2xl bg-[#0c0e13] border border-white/[0.1] shadow-2xl p-5 sm:p-7 overflow-hidden my-auto">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-xl text-slate-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-all"
+          className="absolute right-4 top-4 p-2 rounded-lg text-slate-400 hover:text-white bg-[#181c25] border border-white/[0.08] transition-colors"
           aria-label="Close modal"
         >
           <X className="w-4 h-4" />
@@ -180,26 +180,26 @@ export function AddMoneyModal({
         {step === 'amount' && (
           <div className="space-y-5">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
-                  <QrCode className="w-4 h-4" />
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-7 h-7 rounded-lg bg-[#181c25] border border-white/[0.1] flex items-center justify-center text-white">
+                  <QrCode className="w-3.5 h-3.5" />
                 </div>
-                <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-cyan-400">
-                  SOVEREIGN DEPOSIT
+                <span className="font-mono-code text-[10px] uppercase font-medium tracking-wider text-[#9499a6]">
+                  Wallet deposit
                 </span>
               </div>
-              <h3 id={`${modalId}-title`} className="font-space text-xl sm:text-2xl font-bold text-white">
-                Add Money via UPI QR
+              <h3 id={`${modalId}-title`} className="font-space text-xl font-semibold text-[#ededed]">
+                Add money via UPI QR
               </h3>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">
-                Instant UPI QR generation. Verified curatorial deposit credit.
+              <p className="text-xs text-[#9499a6] font-sans mt-0.5">
+                Instant UPI QR generation with curatorial audit verification
               </p>
             </div>
 
             {/* Quick Presets */}
             <div className="space-y-2">
-              <label className="block text-xs font-mono-code text-slate-300 font-medium">
-                Select Amount (INR):
+              <label className="block text-xs font-sans text-[#9499a6]">
+                Select amount:
               </label>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {PRESET_AMOUNTS.map((amt) => {
@@ -209,10 +209,10 @@ export function AddMoneyModal({
                       key={amt}
                       type="button"
                       onClick={() => handleSelectPreset(amt)}
-                      className={`py-2 px-2.5 rounded-xl font-mono-code text-xs font-bold transition-all border ${
+                      className={`py-2 px-2.5 rounded-lg font-space text-xs font-medium transition-colors border tabular-nums ${
                         isSelected
-                          ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
-                          : 'bg-white/[0.03] text-slate-300 hover:text-white border-white/[0.08] hover:bg-white/[0.06]'
+                          ? 'bg-white text-black border-white'
+                          : 'bg-[#181c25] text-[#ededed] hover:text-white border-white/[0.08] hover:border-white/20'
                       }`}
                     >
                       {formatINR(amt)}
@@ -224,11 +224,11 @@ export function AddMoneyModal({
 
             {/* Custom Amount Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono-code text-slate-300 font-medium">
+              <label className="block text-xs font-sans text-[#9499a6]">
                 Or enter custom amount (₹):
               </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-space font-bold text-slate-400 text-base">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-space font-semibold text-[#666b7a] text-sm">
                   ₹
                 </span>
                 <input
@@ -237,17 +237,17 @@ export function AddMoneyModal({
                   max="50000"
                   value={customAmountStr}
                   onChange={(e) => handleCustomChange(e.target.value)}
-                  className="w-full h-11 glass-input pl-8 pr-4 rounded-xl text-sm font-space font-bold text-white focus:border-cyan-400"
+                  className="w-full h-11 bg-[#181c25] border border-white/[0.08] focus:border-white/30 pl-8 pr-4 rounded-lg text-sm font-space font-semibold text-[#ededed] tabular-nums"
                   placeholder="1000"
                 />
               </div>
-              <span className="text-[10px] font-mono-code text-slate-400 block">
+              <span className="text-[11px] font-mono-code text-[#666b7a] block">
                 Permitted range: {formatINR(minMinor)} – {formatINR(maxMinor)}
               </span>
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[#f87171] text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{errorMessage}</span>
               </div>
@@ -256,9 +256,9 @@ export function AddMoneyModal({
             <button
               type="button"
               onClick={handleProceedToQR}
-              className="w-full h-11 rounded-xl btn-primary text-xs font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md mt-2"
+              className="w-full h-11 rounded-lg btn-primary text-xs font-semibold flex items-center justify-center gap-2 active:scale-98 transition-all mt-2"
             >
-              <span>Generate UPI QR Code</span>
+              <span>Generate UPI QR code</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -268,25 +268,25 @@ export function AddMoneyModal({
         {step === 'pay' && (
           <div className="space-y-4">
             <div className="text-center">
-              <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-cyan-400 block mb-0.5">
-                SCAN & PAY
+              <span className="font-mono-code text-[10px] uppercase font-medium tracking-wider text-[#9499a6] block mb-0.5">
+                Scan & pay
               </span>
-              <h3 className="font-space text-lg sm:text-xl font-bold text-white">
+              <h3 className="font-space text-lg sm:text-xl font-semibold text-[#ededed] tabular-nums">
                 Pay {formatINR(amountMinor)}
               </h3>
-              <p className="text-[11px] text-slate-400 font-sans mt-0.5">
-                Scan using any UPI App (Google Pay, PhonePe, Paytm, BHIM, Cred)
+              <p className="text-xs text-[#9499a6] font-sans mt-0.5">
+                Scan using Google Pay, PhonePe, Paytm, BHIM, or Cred
               </p>
             </div>
 
             {/* Scannable High-Contrast QR Code */}
-            <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/[0.08]">
+            <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-[#12151c] border border-white/[0.07]">
               {qrDataUrl ? (
-                <div className="p-2.5 bg-white rounded-xl shadow-lg border border-black/10">
+                <div className="p-3 bg-white rounded-lg shadow border border-black/10">
                   <img
                     src={qrDataUrl}
                     alt={`UPI QR Code for ${formatINR(amountMinor)}`}
-                    className="w-48 h-48 sm:w-56 sm:h-56 object-contain"
+                    className="w-48 h-48 sm:w-52 sm:h-52 object-contain"
                   />
                 </div>
               ) : (
@@ -299,40 +299,40 @@ export function AddMoneyModal({
               <div className="mt-3 flex items-center gap-2">
                 <a
                   href={upiUri}
-                  className="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-xs font-mono-code font-bold flex items-center gap-1.5 hover:bg-cyan-500/30 transition-all"
+                  className="px-3.5 py-1.5 rounded-lg btn-ghost text-xs font-mono-code font-medium flex items-center gap-1.5 transition-colors"
                 >
-                  <span>Open in UPI App</span>
+                  <span>Open in UPI app</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
             </div>
 
             {/* Merchant Details & One-Click Copy */}
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5 text-xs font-mono-code">
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="text-slate-400 text-[11px]">Merchant UPI ID:</span>
+            <div className="p-3 rounded-lg bg-[#12151c] border border-white/[0.06] space-y-1.5 text-xs font-mono-code">
+              <div className="flex items-center justify-between text-[#ededed]">
+                <span className="text-[#9499a6] text-[11px]">Merchant UPI ID:</span>
                 <button
                   type="button"
                   onClick={handleCopyUPI}
-                  className="flex items-center gap-1 font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+                  className="flex items-center gap-1 font-medium text-white hover:text-slate-300 transition-colors"
                   title="Copy UPI ID"
                 >
                   <span>{settings?.upiMerchantId || 'russianmarket@icici'}</span>
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? <Check className="w-3.5 h-3.5 text-[#34d399]" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
 
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="text-slate-400 text-[11px]">Order Reference:</span>
-                <span className="font-bold text-white">{depositRef}</span>
+              <div className="flex items-center justify-between text-[#ededed]">
+                <span className="text-[#9499a6] text-[11px]">Reference:</span>
+                <span className="font-medium text-white">{depositRef}</span>
               </div>
             </div>
 
             {/* UTR Input Form */}
             <form onSubmit={handleSubmitUTR} className="space-y-3 pt-1">
               <div className="space-y-1">
-                <label className="block text-xs font-mono-code text-slate-300 font-medium">
-                  Enter 12-Digit UPI Transaction ID / UTR:
+                <label className="block text-xs font-sans text-[#9499a6]">
+                  Enter 12-digit bank UTR / transaction ID:
                 </label>
                 <input
                   type="text"
@@ -340,16 +340,16 @@ export function AddMoneyModal({
                   value={utrNumber}
                   onChange={(e) => setUtrNumber(e.target.value.replace(/[^0-9A-Za-z]/g, ''))}
                   placeholder="e.g. 431902847192"
-                  className="w-full h-11 glass-input px-3.5 rounded-xl text-xs sm:text-sm font-mono-code placeholder:text-slate-500 focus:border-cyan-400 tracking-wider font-semibold"
+                  className="w-full h-10 bg-[#181c25] border border-white/[0.08] focus:border-white/30 px-3.5 rounded-lg text-xs sm:text-sm font-mono-code placeholder:text-slate-500 tracking-wider tabular-nums"
                   required
                 />
-                <span className="text-[10px] font-mono-code text-slate-400 block">
-                  Find the 12-digit UTR in your payment details screen in GPay, PhonePe, or Paytm.
+                <span className="text-[10px] font-mono-code text-[#666b7a] block">
+                  Find the 12-digit UTR in your payment details screen in your UPI app.
                 </span>
               </div>
 
               {errorMessage && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[#f87171] text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -359,16 +359,16 @@ export function AddMoneyModal({
                 <button
                   type="button"
                   onClick={() => setStep('amount')}
-                  className="h-10 rounded-xl btn-ghost text-xs font-semibold"
+                  className="h-10 rounded-lg btn-ghost text-xs font-medium"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !utrNumber.trim()}
-                  className="h-10 rounded-xl btn-primary text-xs font-bold disabled:opacity-40 transition-all shadow-md"
+                  className="h-10 rounded-lg btn-primary text-xs font-semibold disabled:opacity-40 transition-all"
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit for Verification'}
+                  {isSubmitting ? 'Submitting...' : 'Submit for verification'}
                 </button>
               </div>
             </form>
@@ -378,47 +378,48 @@ export function AddMoneyModal({
         {/* STEP 3: Submitted Confirmation State */}
         {step === 'submitted' && (
           <div className="text-center py-4 space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center mx-auto text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-              <Clock className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center mx-auto text-white">
+              <Clock className="w-6 h-6 text-[#fbbf24]" />
             </div>
 
             <div className="space-y-1">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono-code text-[10px] font-bold">
-                AUDIT VERIFICATION PENDING
-              </span>
-              <h3 className="font-space text-xl font-bold text-white pt-1">
-                Deposit Submitted Successfully
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-[#fbbf24] font-mono-code text-[10px] font-medium">
+                <span className="status-beacon pending" />
+                <span>Audit verification pending</span>
+              </div>
+              <h3 className="font-space text-lg font-semibold text-[#ededed] pt-1">
+                Deposit submitted successfully
               </h3>
-              <p className="text-xs text-slate-400 font-sans max-w-sm mx-auto">
-                Your deposit request for <strong className="text-white">{formatINR(amountMinor)}</strong> has been registered in the ledger.
+              <p className="text-xs text-[#9499a6] font-sans max-w-sm mx-auto">
+                Your deposit request for <strong className="text-white">{formatINR(amountMinor)}</strong> has been registered in the audit queue.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-left text-xs font-mono-code space-y-1">
+            <div className="p-3.5 rounded-lg bg-[#12151c] border border-white/[0.07] text-left text-xs font-mono-code space-y-1">
               <div className="flex justify-between">
-                <span className="text-slate-400">Reference:</span>
-                <span className="font-bold text-white">{depositRef}</span>
+                <span className="text-[#9499a6]">Reference:</span>
+                <span className="font-medium text-white">{depositRef}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Submitted UTR:</span>
-                <span className="font-bold text-cyan-400">{utrNumber}</span>
+                <span className="text-[#9499a6]">Submitted UTR:</span>
+                <span className="font-medium text-white tabular-nums">{utrNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Status:</span>
-                <span className="text-amber-400 font-bold">Pending Admin Audit</span>
+                <span className="text-[#9499a6]">Status:</span>
+                <span className="text-[#fbbf24] font-medium">Pending admin audit</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400 font-sans">
+            <p className="text-[11px] text-[#9499a6] font-sans">
               Balances are credited immediately once curatorial verification matches your transaction reference.
             </p>
 
             <button
               type="button"
               onClick={onClose}
-              className="w-full h-11 rounded-xl btn-primary text-xs font-bold"
+              className="w-full h-11 rounded-lg btn-primary text-xs font-semibold"
             >
-              Done & Return to Wallet
+              Done & return to wallet
             </button>
           </div>
         )}

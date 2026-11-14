@@ -296,31 +296,32 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
   const customers = Array.from(customerMap.values())
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 p-3 sm:p-6 md:p-8 space-y-6">
+    <div className="min-h-screen bg-[#060709] text-[#ededed] p-3 sm:p-6 md:p-8 space-y-6">
       {/* Top Admin Header Bar */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel-elevated p-4 md:p-6 rounded-3xl border border-amber-500/30 shadow-2xl">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex-shrink-0">
-            <LayoutDashboard className="w-6 h-6" />
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#0c0e13] p-4 md:p-6 rounded-2xl border border-white/[0.07]">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-[#181c25] border border-white/[0.08] flex items-center justify-center text-[#ededed] flex-shrink-0">
+            <LayoutDashboard className="w-5 h-5 text-zinc-300" />
           </div>
           <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-space text-xl md:text-2xl font-bold text-white tracking-tight">
-                RUSSIAN MARKET CONTROL ROOM
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="font-space text-lg md:text-xl font-semibold text-[#ededed] tracking-tight">
+                Control Room
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full font-mono-code text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                ADMIN SECURE
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono-code text-[11px] bg-[#12151c] text-[#9499a6] border border-white/[0.08]">
+                <span className="status-beacon active" />
+                <span>Admin Secure</span>
               </span>
             </div>
-            <p className="text-xs font-mono-code text-slate-400 mt-0.5">
-              Haute Collectible Operations • Order Verification • Sovereign Catalog Management
+            <p className="text-xs font-sans text-[#9499a6] mt-0.5">
+              Haute collectible operations • Order verification • Sovereign catalog management
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {actionSuccess && (
-            <span className="text-xs font-mono-code text-emerald-400 bg-emerald-500/15 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 animate-in fade-in">
+            <span className="text-xs font-mono-code text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 flex items-center gap-1.5 animate-in fade-in">
               <CheckCircle2 className="w-4 h-4" />
               {actionSuccess}
             </span>
@@ -329,39 +330,39 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           <button
             type="button"
             onClick={onExitAdmin}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 transition-all active:scale-95 shadow-md"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#181c25] hover:bg-[#202530] text-[#ededed] text-xs font-medium border border-white/[0.08] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Return to Storefront</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to storefront</span>
           </button>
         </div>
       </div>
 
       {/* Admin Tabs */}
-      <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="max-w-7xl mx-auto flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {(
           [
-            { id: 'overview', label: 'Overview Metrics', icon: TrendingUp },
-            { id: 'inbox', label: 'Support Inbox', icon: MessageCircle },
-            { id: 'wallet', label: 'Wallet & UPI Audit', icon: Wallet },
+            { id: 'overview', label: 'Overview', icon: TrendingUp },
+            { id: 'inbox', label: 'Support inbox', icon: MessageCircle },
+            { id: 'wallet', label: 'Wallet & UPI audit', icon: Wallet },
             { id: 'orders', label: `Orders (${orders.length})`, icon: FileCheck },
             { id: 'products', label: `Products (${products.length})`, icon: Package },
-            { id: 'qr_scanner', label: 'QR Scanner & Redeem', icon: QrCode },
+            { id: 'qr_scanner', label: 'QR scanner', icon: QrCode },
             { id: 'customers', label: `Collectors (${customers.length})`, icon: Users },
-            { id: 'settings', label: 'Store Governance', icon: Settings },
+            { id: 'settings', label: 'Store governance', icon: Settings },
           ] as const
         ).map(({ id, label, icon: IconComponent }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-space text-xs font-bold tracking-wider transition-all border flex-shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-space text-xs font-medium tracking-wide transition-colors border flex-shrink-0 whitespace-nowrap ${
               activeTab === id
-                ? 'bg-amber-500/20 text-amber-300 border-amber-400/40 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                : 'bg-white/[0.03] text-slate-400 hover:text-white border-white/[0.08] hover:bg-white/[0.06]'
+                ? 'bg-[#181c25] text-white border-white/[0.14]'
+                : 'bg-[#0c0e13] text-[#9499a6] hover:text-[#ededed] border-white/[0.05] hover:bg-[#12151c]'
             }`}
           >
-            <IconComponent className="w-4 h-4" />
+            <IconComponent className="w-3.5 h-3.5" />
             <span>{label}</span>
           </button>
         ))}
@@ -374,84 +375,99 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Metrics Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-            <div className="p-4 rounded-2xl glass-panel border border-white/[0.08] space-y-1">
-              <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
-                Total Orders
+            <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                Total orders
               </span>
-              <span className="font-space text-2xl font-bold text-white block">{totalOrders}</span>
+              <span className="font-space text-2xl font-semibold text-[#ededed] tabular-nums block">{totalOrders}</span>
             </div>
 
-            <div className="p-4 rounded-2xl glass-panel border border-amber-500/30 bg-amber-500/5 space-y-1">
-              <span className="text-[10px] font-mono-code text-amber-400 uppercase tracking-wider block">
-                Pending
-              </span>
-              <span className="font-space text-2xl font-bold text-amber-300 block">{pendingOrders}</span>
+            <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                  Pending
+                </span>
+                <span className="status-beacon pending" />
+              </div>
+              <span className="font-space text-2xl font-semibold text-amber-400 tabular-nums block">{pendingOrders}</span>
             </div>
 
-            <div className="p-4 rounded-2xl glass-panel border border-cyan-500/30 bg-cyan-500/5 space-y-1">
-              <span className="text-[10px] font-mono-code text-cyan-400 uppercase tracking-wider block">
-                Paid / Verified
-              </span>
-              <span className="font-space text-2xl font-bold text-cyan-300 block">{paidOrders}</span>
+            <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                  Paid / verified
+                </span>
+                <span className="status-beacon active" />
+              </div>
+              <span className="font-space text-2xl font-semibold text-emerald-400 tabular-nums block">{paidOrders}</span>
             </div>
 
-            <div className="p-4 rounded-2xl glass-panel border border-blue-500/30 bg-blue-500/5 space-y-1">
-              <span className="text-[10px] font-mono-code text-blue-400 uppercase tracking-wider block">
-                Processing
-              </span>
-              <span className="font-space text-2xl font-bold text-blue-300 block">{processingOrders}</span>
+            <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                  Processing
+                </span>
+                <span className="status-beacon pending" />
+              </div>
+              <span className="font-space text-2xl font-semibold text-[#00f0ff] tabular-nums block">{processingOrders}</span>
             </div>
 
-            <div className="p-4 rounded-2xl glass-panel border border-emerald-500/30 bg-emerald-500/5 space-y-1">
-              <span className="text-[10px] font-mono-code text-emerald-400 uppercase tracking-wider block">
-                Completed
-              </span>
-              <span className="font-space text-2xl font-bold text-emerald-300 block">{completedOrders}</span>
+            <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                  Completed
+                </span>
+                <span className="status-beacon active" />
+              </div>
+              <span className="font-space text-2xl font-semibold text-emerald-400 tabular-nums block">{completedOrders}</span>
             </div>
 
-            <div className="p-4 rounded-2xl glass-panel border border-rose-500/30 bg-rose-500/5 space-y-1">
-              <span className="text-[10px] font-mono-code text-rose-400 uppercase tracking-wider block">
-                Cancelled
-              </span>
-              <span className="font-space text-2xl font-bold text-rose-300 block">{cancelledOrders}</span>
+            <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                  Cancelled
+                </span>
+                <span className="status-beacon idle" />
+              </div>
+              <span className="font-space text-2xl font-semibold text-rose-400 tabular-nums block">{cancelledOrders}</span>
             </div>
 
-            <div className="col-span-2 sm:col-span-3 lg:col-span-1 p-4 rounded-2xl glass-panel border border-emerald-500/40 bg-emerald-500/10 space-y-1">
-              <span className="text-[10px] font-mono-code text-emerald-300 uppercase tracking-wider block">
-                Verified Revenue
+            <div className="col-span-2 sm:col-span-3 lg:col-span-1 p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+              <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                Verified revenue
               </span>
-              <span className="font-space text-xl font-bold text-emerald-400 block truncate">
+              <span className="font-space text-lg font-semibold text-[#ededed] tabular-nums block truncate">
                 {formattedRevenue}
               </span>
             </div>
           </div>
 
           {/* Recent Activity Feed */}
-          <div className="glass-panel-elevated rounded-3xl p-5 border border-white/[0.1] space-y-4 shadow-xl">
+          <div className="bg-[#0c0e13] rounded-2xl p-5 border border-white/[0.07] space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-space text-base font-bold text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-cyan-400" />
-                <span>Recent System Activity</span>
+              <h2 className="font-space text-sm font-semibold text-[#ededed] flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[#9499a6]" />
+                <span>Recent system activity</span>
               </h2>
               <button
                 type="button"
                 onClick={reloadData}
-                className="p-1.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white transition-colors"
+                className="p-1.5 rounded-md bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] transition-colors"
                 title="Refresh Activity"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {orders.slice(0, 6).map((o) => (
                 <div
                   key={o.id}
-                  className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between gap-3 text-xs font-mono-code"
+                  className="p-3 rounded-lg bg-[#12151c] border border-white/[0.05] flex items-center justify-between gap-3 text-xs font-mono-code"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                         o.status === 'payment_verified' || o.status === 'completed'
                           ? 'bg-emerald-400'
                           : o.status === 'cancelled'
@@ -460,20 +476,20 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                       }`}
                     />
                     <div className="truncate">
-                      <span className="font-bold text-white">Order #{o.orderNumber}</span>
-                      <span className="text-slate-400 ml-2">by {o.customerEmail}</span>
+                      <span className="font-medium text-[#ededed]">Order #{o.orderNumber}</span>
+                      <span className="text-[#9499a6] ml-2">by {o.customerEmail}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="font-bold text-white">{formatINR(o.subtotalMinor)}</span>
+                    <span className="font-medium text-[#ededed] tabular-nums">{formatINR(o.subtotalMinor)}</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                         o.status === 'payment_verified' || o.status === 'completed'
-                          ? 'bg-emerald-500/20 text-emerald-300'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                           : o.status === 'cancelled'
-                          ? 'bg-rose-500/20 text-rose-300'
-                          : 'bg-amber-500/20 text-amber-300'
+                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                       }`}
                     >
                       {o.status}
@@ -485,7 +501,6 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           </div>
         </div>
       )}
-
       {/* ======================================================== */}
       {/* TAB: SUPPORT INBOX                                       */}
       {/* ======================================================== */}
@@ -503,8 +518,8 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="font-space text-lg font-bold text-white">Order Management</h2>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">
+              <h2 className="font-space text-base font-semibold text-[#ededed]">Order management</h2>
+              <p className="text-xs text-[#9499a6] font-sans mt-0.5">
                 Verify settlements, unlock digital vault deliverables, and approve collectible acquisitions.
               </p>
             </div>
@@ -512,24 +527,24 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
             {/* Search & Status Filter */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative w-48 sm:w-60">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9499a6]" />
                 <input
                   type="text"
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
                   placeholder="Order #, email, token..."
-                  className="w-full glass-input pl-8 pr-3 py-1.5 rounded-xl text-xs placeholder:text-slate-500"
+                  className="w-full bg-[#0c0e13] border border-white/[0.08] focus:border-white/20 pl-8 pr-3 py-1.5 rounded-lg text-xs text-[#ededed] placeholder:text-[#666b7a] outline-none"
                 />
               </div>
 
               <select
                 value={orderFilter}
                 onChange={(e) => setOrderFilter(e.target.value as any)}
-                className="glass-input px-3 py-1.5 rounded-xl text-xs font-mono-code"
+                className="bg-[#0c0e13] border border-white/[0.08] px-3 py-1.5 rounded-lg text-xs font-mono-code text-[#ededed] outline-none"
               >
-                <option value="all">All Statuses ({orders.length})</option>
+                <option value="all">All statuses ({orders.length})</option>
                 <option value="pending">Pending ({pendingOrders})</option>
-                <option value="payment_verified">Paid / Verified ({paidOrders})</option>
+                <option value="payment_verified">Paid / verified ({paidOrders})</option>
                 <option value="processing">Processing ({processingOrders})</option>
                 <option value="completed">Completed ({completedOrders})</option>
                 <option value="cancelled">Cancelled ({cancelledOrders})</option>
@@ -538,24 +553,24 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           </div>
 
           {/* Orders Table */}
-          <div className="glass-panel-elevated rounded-3xl border border-white/[0.1] overflow-hidden shadow-xl">
+          <div className="bg-[#0c0e13] rounded-2xl border border-white/[0.07] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono-code">
-                <thead className="bg-white/[0.04] border-b border-white/[0.08] text-slate-400 uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#12151c] border-b border-white/[0.06] text-[#9499a6] text-[11px]">
                   <tr>
-                    <th className="p-3.5">Order</th>
-                    <th className="p-3.5">Collector</th>
-                    <th className="p-3.5">Items</th>
-                    <th className="p-3.5">Total (INR)</th>
-                    <th className="p-3.5">Status</th>
-                    <th className="p-3.5">Redemption</th>
-                    <th className="p-3.5 text-right">Actions</th>
+                    <th className="p-3.5 font-medium">Order</th>
+                    <th className="p-3.5 font-medium">Collector</th>
+                    <th className="p-3.5 font-medium">Items</th>
+                    <th className="p-3.5 font-medium">Total (INR)</th>
+                    <th className="p-3.5 font-medium">Status</th>
+                    <th className="p-3.5 font-medium">Redemption</th>
+                    <th className="p-3.5 text-right font-medium">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.06]">
+                <tbody className="divide-y divide-white/[0.05]">
                   {filteredOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-slate-500 font-sans text-xs">
+                      <td colSpan={7} className="p-8 text-center text-[#666b7a] font-sans text-xs">
                         No orders match the current filter criteria.
                       </td>
                     </tr>
@@ -566,43 +581,43 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
 
                       return (
                         <tr key={order.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="p-3.5 font-bold text-white whitespace-nowrap">
+                          <td className="p-3.5 font-medium text-[#ededed] whitespace-nowrap">
                             #{order.orderNumber}
-                            <span className="block text-[10px] text-slate-400 font-normal">
+                            <span className="block text-[11px] text-[#9499a6] font-normal">
                               {new Date(order.createdAt).toLocaleDateString()}
                             </span>
                           </td>
 
                           <td className="p-3.5 whitespace-nowrap">
-                            <span className="text-white block font-sans font-medium">
+                            <span className="text-[#ededed] block font-sans font-medium">
                               {order.customerName || 'Valued Collector'}
                             </span>
-                            <span className="text-slate-400 text-[10px] block truncate max-w-[150px]">
+                            <span className="text-[#9499a6] text-[11px] block truncate max-w-[150px]">
                               {order.customerEmail}
                             </span>
                           </td>
 
                           <td className="p-3.5">
-                            <span className="text-slate-300 block truncate max-w-[140px]">
+                            <span className="text-[#9499a6] block truncate max-w-[140px]">
                               {order.items.map((i) => i.productName).join(', ')}
                             </span>
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-[#666b7a]">
                               Qty: {order.items.reduce((s, i) => s + i.quantity, 0)}
                             </span>
                           </td>
 
-                          <td className="p-3.5 font-bold text-white whitespace-nowrap">
+                          <td className="p-3.5 font-medium text-[#ededed] tabular-nums whitespace-nowrap">
                             {formatINR(order.subtotalMinor)}
                           </td>
 
                           <td className="p-3.5 whitespace-nowrap">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                              className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                                 isVerified
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                   : order.status === 'cancelled'
-                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                               }`}
                             >
                               {order.status}
@@ -611,11 +626,11 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
 
                           <td className="p-3.5 whitespace-nowrap">
                             {order.isRedeemed ? (
-                              <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[9px] font-bold border border-cyan-500/30">
+                              <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-[#00f0ff] text-[10px] font-medium border border-cyan-500/20">
                                 Redeemed
                               </span>
                             ) : (
-                              <span className="text-[10px] text-slate-500">Unredeemed</span>
+                              <span className="text-[11px] text-[#666b7a]">Unredeemed</span>
                             )}
                           </td>
 
@@ -623,7 +638,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                             <button
                               type="button"
                               onClick={() => setSelectedOrder(order)}
-                              className="px-2.5 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white transition-colors"
+                              className="px-2.5 py-1 rounded-md bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] transition-colors"
                               title="View Details"
                             >
                               <Eye className="w-3.5 h-3.5 inline mr-1" />
@@ -634,7 +649,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                               <button
                                 type="button"
                                 onClick={() => handleVerifyOrder(order.id)}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-colors font-bold"
+                                className="px-2.5 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-colors font-medium"
                               >
                                 <Check className="w-3.5 h-3.5 inline mr-1" />
                                 Verify
@@ -645,7 +660,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                               <button
                                 type="button"
                                 onClick={() => handleUpdateStatus(order.id, 'cancelled')}
-                                className="px-2 py-1 rounded-lg bg-white/[0.03] hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+                                className="px-2 py-1 rounded-md bg-white/[0.03] hover:bg-rose-500/20 text-[#666b7a] hover:text-rose-400 transition-colors"
                                 title="Cancel Order"
                               >
                                 <Ban className="w-3.5 h-3.5 inline" />
@@ -670,21 +685,21 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="font-space text-lg font-bold text-white">Product Catalog Management</h2>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">
-                Manage the 3 canonical categories (VISA, MASTERCARD, RUPAY), edition pricing in INR, and digital asset packages.
+              <h2 className="font-space text-base font-semibold text-[#ededed]">Product catalog management</h2>
+              <p className="text-xs text-[#9499a6] font-sans mt-0.5">
+                Manage the 3 canonical categories (Visa, Mastercard, RuPay), edition pricing in INR, and digital asset packages.
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative w-40 sm:w-52">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9499a6]" />
                 <input
                   type="text"
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
                   placeholder="Search products..."
-                  className="w-full glass-input pl-8 pr-3 py-1.5 rounded-xl text-xs placeholder:text-slate-500"
+                  className="w-full bg-[#0c0e13] border border-white/[0.08] focus:border-white/20 pl-8 pr-3 py-1.5 rounded-lg text-xs text-[#ededed] placeholder:text-[#666b7a] outline-none"
                 />
               </div>
 
@@ -692,12 +707,12 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
               <select
                 value={productCategoryFilter}
                 onChange={(e) => setProductCategoryFilter(e.target.value as any)}
-                className="glass-input px-3 py-1.5 rounded-xl text-xs font-mono-code"
+                className="bg-[#0c0e13] border border-white/[0.08] px-3 py-1.5 rounded-lg text-xs font-mono-code text-[#ededed] outline-none"
               >
-                <option value="all">All Categories</option>
-                <option value="VISA">VISA</option>
-                <option value="MASTERCARD">MASTERCARD</option>
-                <option value="RUPAY">RUPAY</option>
+                <option value="all">All categories</option>
+                <option value="VISA">Visa</option>
+                <option value="MASTERCARD">Mastercard</option>
+                <option value="RUPAY">RuPay</option>
               </select>
 
               <button
@@ -706,10 +721,10 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                   setEditingProduct(null)
                   setIsAddingProduct(true)
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl btn-primary text-black font-bold text-xs active:scale-95 transition-all shadow-md"
+                className="btn-primary flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium"
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Product</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add product</span>
               </button>
             </div>
           </div>
@@ -719,65 +734,57 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
             {filteredProducts.map((p) => (
               <div
                 key={p.id}
-                className="glass-panel-elevated rounded-2xl border border-white/[0.1] p-4 flex flex-col justify-between space-y-3 shadow-xl"
+                className="bg-[#0c0e13] rounded-xl border border-white/[0.07] p-4 flex flex-col justify-between space-y-3"
               >
-                {/* 3D Visual Preview */}
+                {/* Visual Preview */}
                 <div className="w-full max-w-[260px] mx-auto py-1">
                   <RussianMarketCard product={p} interactive={false} />
                 </div>
 
-                <div className="space-y-2 border-t border-white/[0.08] pt-2">
+                <div className="space-y-2 border-t border-white/[0.06] pt-2">
                   <div className="flex items-center justify-between">
-                    <span
-                      className={`px-2 py-0.5 rounded-full font-mono-code text-[9px] font-bold uppercase border ${
-                        p.category === 'VISA'
-                          ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/40'
-                          : p.category === 'MASTERCARD'
-                          ? 'bg-rose-500/15 text-rose-300 border-rose-400/40'
-                          : 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40'
-                      }`}
-                    >
+                    <span className="px-2 py-0.5 rounded font-mono-code text-[10px] font-medium bg-[#181c25] text-[#ededed] border border-white/[0.08]">
                       {p.category}
                     </span>
 
-                    <span className="font-mono-code text-[10px] text-slate-400">
+                    <span className="font-mono-code text-[11px] text-[#9499a6] tabular-nums">
                       ED. #{p.editionNumber || 1} / {p.editionTotal || 50}
                     </span>
                   </div>
 
-                  <h3 className="font-space font-bold text-sm text-white truncate" title={p.name}>
+                  <h3 className="font-space font-medium text-sm text-[#ededed] truncate" title={p.name}>
                     {p.name}
                   </h3>
 
                   <div className="flex items-center justify-between text-xs font-mono-code">
-                    <span className="font-bold text-white">{formatINR(p.priceMinor)}</span>
+                    <span className="font-medium text-[#ededed] tabular-nums">{formatINR(p.priceMinor)}</span>
                     <span
                       className={
-                        p.availability === 'in_stock' ? 'text-emerald-400' : 'text-slate-500'
+                        p.availability === 'in_stock' ? 'text-emerald-400' : 'text-[#666b7a]'
                       }
                     >
-                      {p.availability === 'in_stock' ? 'In Stock' : 'Sold Out'}
+                      {p.availability === 'in_stock' ? 'In stock' : 'Sold out'}
                     </span>
                   </div>
 
                   {/* Product Action Buttons */}
-                  <div className="pt-2 flex items-center justify-end gap-1.5 border-t border-white/[0.06]">
+                  <div className="pt-2 flex items-center justify-end gap-1.5 border-t border-white/[0.05]">
                     <button
                       type="button"
                       onClick={() => {
                         setEditingProduct(p)
                         setIsAddingProduct(true)
                       }}
-                      className="px-3 py-1 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white text-xs font-mono-code transition-colors flex items-center gap-1"
+                      className="px-3 py-1 rounded-md bg-[#181c25] hover:bg-[#202530] text-[#ededed] text-xs font-mono-code transition-colors flex items-center gap-1"
                     >
-                      <Edit className="w-3 h-3" />
+                      <Edit className="w-3 h-3 text-[#9499a6]" />
                       <span>Edit</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleDeleteProduct(p.id)}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.03] hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition-colors"
+                      className="px-2.5 py-1 rounded-md bg-white/[0.03] hover:bg-rose-500/20 text-[#666b7a] hover:text-rose-400 text-xs transition-colors"
                       title="Archive Product"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -796,20 +803,20 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
       {activeTab === 'qr_scanner' && (
         <div className="max-w-4xl mx-auto space-y-6">
           <div>
-            <h2 className="font-space text-lg font-bold text-white flex items-center gap-2">
-              <QrCode className="w-5 h-5 text-cyan-400" />
-              <span>QR Scanner & Digital Collectible Redemption</span>
+            <h2 className="font-space text-base font-semibold text-[#ededed] flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-[#9499a6]" />
+              <span>QR scanner & digital collectible redemption</span>
             </h2>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
+            <p className="text-xs text-[#9499a6] font-sans mt-0.5">
               Scan or enter order QR verification tokens to look up purchases and seal digital collectible redemption.
             </p>
           </div>
 
           {/* Scanner Input Box */}
-          <div className="glass-panel-elevated rounded-3xl p-6 border border-white/[0.12] space-y-4 shadow-xl">
+          <div className="bg-[#0c0e13] rounded-2xl p-5 sm:p-6 border border-white/[0.07] space-y-4">
             <form onSubmit={handleScanLookup} className="space-y-3">
-              <label className="block text-xs font-mono-code text-slate-300 uppercase tracking-wider">
-                Enter QR Token / Order Number / Idempotency Key:
+              <label className="block text-xs font-mono-code text-[#9499a6]">
+                Enter QR token / order number / idempotency key:
               </label>
               <div className="flex gap-2">
                 <input
@@ -817,26 +824,26 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                   value={qrInput}
                   onChange={(e) => setQrInput(e.target.value)}
                   placeholder="e.g. RM-QR-XXXXX or RM-2026-XXXXXX"
-                  className="flex-1 glass-input px-4 py-2.5 rounded-xl font-mono-code text-xs placeholder:text-slate-500 focus:border-cyan-400"
+                  className="flex-1 bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3.5 py-2 rounded-lg font-mono-code text-xs text-[#ededed] placeholder:text-[#666b7a] outline-none"
                 />
                 <button
                   type="submit"
-                  className="px-5 py-2.5 rounded-xl btn-primary text-black font-bold text-xs active:scale-95 transition-all"
+                  className="btn-primary px-4 py-2 rounded-lg text-xs font-medium"
                 >
-                  Lookup Order
+                  Lookup order
                 </button>
               </div>
             </form>
 
-            <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-400/20 flex items-start gap-2.5 text-xs font-mono-code text-cyan-300">
-              <ShieldCheck className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3 rounded-lg bg-[#12151c] border border-white/[0.06] flex items-start gap-2.5 text-xs font-mono-code text-[#9499a6]">
+              <ShieldCheck className="w-4 h-4 text-[#00f0ff] flex-shrink-0 mt-0.5" />
               <div>
-                <strong>Cryptographic Verification Notice:</strong> QR scanning confirms legitimate token presentation. Order payment status is verified separately through our financial ledger.
+                <strong className="text-[#ededed]">Cryptographic verification notice:</strong> QR scanning confirms legitimate token presentation. Order payment status is verified separately through our financial ledger.
               </div>
             </div>
 
             {qrError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-400/30 text-rose-300 text-xs font-mono-code flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono-code flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>{qrError}</span>
               </div>
@@ -845,26 +852,26 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
 
           {/* Scanned Order Display */}
           {scannedOrder && (
-            <div className="glass-panel-elevated rounded-3xl p-6 border border-cyan-400/40 space-y-5 shadow-2xl animate-in fade-in">
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+            <div className="bg-[#0c0e13] rounded-2xl p-5 sm:p-6 border border-white/[0.08] space-y-5 animate-in fade-in">
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                 <div>
-                  <span className="font-mono-code text-[10px] text-cyan-400 uppercase tracking-widest block">
-                    VERIFIED TOKEN MATCH
+                  <span className="font-mono-code text-[10px] text-[#00f0ff] uppercase tracking-wider block">
+                    Verified token match
                   </span>
-                  <h3 className="font-space text-lg font-bold text-white">
+                  <h3 className="font-space text-base font-semibold text-[#ededed]">
                     Order #{scannedOrder.orderNumber}
                   </h3>
                 </div>
 
                 <div className="text-right">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-mono-code font-bold uppercase border ${
+                    className={`px-2.5 py-1 rounded-full text-xs font-mono-code font-medium border ${
                       scannedOrder.isRedeemed
-                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                     }`}
                   >
-                    {scannedOrder.isRedeemed ? 'Already Redeemed' : 'Valid for Redemption'}
+                    {scannedOrder.isRedeemed ? 'Already redeemed' : 'Valid for redemption'}
                   </span>
                 </div>
               </div>
@@ -872,44 +879,44 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
               {/* Order Info Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono-code">
                 <div className="space-y-1">
-                  <span className="text-slate-400 block">Collector Email:</span>
-                  <span className="text-white font-bold block">{scannedOrder.customerEmail}</span>
+                  <span className="text-[#9499a6] block">Collector email:</span>
+                  <span className="text-[#ededed] font-medium block">{scannedOrder.customerEmail}</span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-slate-400 block">Total Settlement:</span>
-                  <span className="text-white font-bold block">
+                  <span className="text-[#9499a6] block">Total settlement:</span>
+                  <span className="text-[#ededed] font-medium tabular-nums block">
                     {formatINR(scannedOrder.subtotalMinor)}
                   </span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-slate-400 block">Payment Status:</span>
-                  <span className="text-cyan-300 uppercase block font-bold">
+                  <span className="text-[#9499a6] block">Payment status:</span>
+                  <span className="text-emerald-400 block font-medium">
                     {scannedOrder.status}
                   </span>
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-slate-400 block">Redemption Token:</span>
-                  <span className="text-slate-200 block truncate">
+                  <span className="text-[#9499a6] block">Redemption token:</span>
+                  <span className="text-[#ededed] block truncate">
                     {scannedOrder.redemptionToken || 'N/A'}
                   </span>
                 </div>
               </div>
 
               {/* Items List */}
-              <div className="space-y-2 border-t border-white/[0.08] pt-3">
-                <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
-                  Purchased Collectible Editions:
+              <div className="space-y-2 border-t border-white/[0.06] pt-3">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
+                  Purchased collectible editions:
                 </span>
                 {scannedOrder.items.map((it, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between text-xs font-mono-code"
+                    className="p-3 rounded-lg bg-[#12151c] border border-white/[0.05] flex items-center justify-between text-xs font-mono-code"
                   >
-                    <span className="text-white font-medium">{it.productName}</span>
-                    <span className="text-slate-400">{formatINR(it.unitPriceMinor)}</span>
+                    <span className="text-[#ededed] font-medium">{it.productName}</span>
+                    <span className="text-[#9499a6] tabular-nums">{formatINR(it.unitPriceMinor)}</span>
                   </div>
                 ))}
               </div>
@@ -929,9 +936,9 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                     type="button"
                     disabled={isRedeeming}
                     onClick={handleRedeemCollectible}
-                    className="px-6 py-2.5 rounded-xl btn-primary text-black font-bold text-xs active:scale-95 disabled:opacity-50 transition-all shadow-lg"
+                    className="btn-primary px-5 py-2.5 rounded-lg text-xs font-medium disabled:opacity-50"
                   >
-                    {isRedeeming ? 'Redeeming...' : 'Confirm & Redeem Collectible'}
+                    {isRedeeming ? 'Redeeming...' : 'Confirm & redeem collectible'}
                   </button>
                 )}
               </div>
@@ -946,43 +953,43 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
       {activeTab === 'customers' && (
         <div className="max-w-7xl mx-auto space-y-4">
           <div>
-            <h2 className="font-space text-lg font-bold text-white">Collector Accounts & History</h2>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
+            <h2 className="font-space text-base font-semibold text-[#ededed]">Collector accounts & history</h2>
+            <p className="text-xs text-[#9499a6] font-sans mt-0.5">
               Verified collector profiles, lifetime acquisition volume, and custodial status.
             </p>
           </div>
 
-          <div className="glass-panel-elevated rounded-3xl border border-white/[0.1] overflow-hidden shadow-xl">
+          <div className="bg-[#0c0e13] rounded-2xl border border-white/[0.07] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono-code">
-                <thead className="bg-white/[0.04] border-b border-white/[0.08] text-slate-400 uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#12151c] border-b border-white/[0.06] text-[#9499a6] text-[11px]">
                   <tr>
-                    <th className="p-3.5">Collector Name</th>
-                    <th className="p-3.5">Email</th>
-                    <th className="p-3.5">Total Orders</th>
-                    <th className="p-3.5">Lifetime Spend (INR)</th>
-                    <th className="p-3.5">Status</th>
+                    <th className="p-3.5 font-medium">Collector name</th>
+                    <th className="p-3.5 font-medium">Email</th>
+                    <th className="p-3.5 font-medium">Total orders</th>
+                    <th className="p-3.5 font-medium">Lifetime spend (INR)</th>
+                    <th className="p-3.5 font-medium">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.06]">
+                <tbody className="divide-y divide-white/[0.05]">
                   {customers.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-6 text-center text-slate-500 font-sans text-xs">
+                      <td colSpan={5} className="p-6 text-center text-[#666b7a] font-sans text-xs">
                         No customer accounts registered yet.
                       </td>
                     </tr>
                   ) : (
                     customers.map((c, i) => (
                       <tr key={i} className="hover:bg-white/[0.02]">
-                        <td className="p-3.5 font-bold text-white font-sans">{c.name}</td>
-                        <td className="p-3.5 text-slate-300">{c.email}</td>
-                        <td className="p-3.5 font-bold text-cyan-300">{c.orders.length}</td>
-                        <td className="p-3.5 font-bold text-emerald-400">
+                        <td className="p-3.5 font-medium text-[#ededed] font-sans">{c.name}</td>
+                        <td className="p-3.5 text-[#9499a6]">{c.email}</td>
+                        <td className="p-3.5 font-medium text-[#ededed] tabular-nums">{c.orders.length}</td>
+                        <td className="p-3.5 font-medium text-emerald-400 tabular-nums">
                           {formatINR(c.totalSpentMinor)}
                         </td>
                         <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30">
-                            Active Collector
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            Active collector
                           </span>
                         </td>
                       </tr>
@@ -1001,114 +1008,114 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
       {activeTab === 'settings' && (
         <div className="max-w-4xl mx-auto space-y-6">
           <div>
-            <h2 className="font-space text-lg font-bold text-white">Store Governance & Policies</h2>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
+            <h2 className="font-space text-base font-semibold text-[#ededed]">Store governance & policies</h2>
+            <p className="text-xs text-[#9499a6] font-sans mt-0.5">
               Russian Market operational parameters, currency standardization, and gateway endpoints.
             </p>
           </div>
 
-          <div className="glass-panel-elevated rounded-3xl p-6 border border-white/[0.1] space-y-6 shadow-xl">
+          <div className="bg-[#0c0e13] rounded-2xl p-5 sm:p-6 border border-white/[0.07] space-y-6">
             {/* General Settings */}
             <div className="space-y-3">
-              <h3 className="font-space font-bold text-sm text-white">General Parameters</h3>
+              <h3 className="font-space font-medium text-sm text-[#ededed]">General parameters</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono-code">
                 <div>
-                  <label className="block text-slate-400 mb-1">STORE BRAND</label>
+                  <label className="block text-[#9499a6] mb-1">Store brand</label>
                   <input
                     type="text"
                     disabled
                     defaultValue={settings?.storeName || 'RUSSIAN MARKET'}
-                    className="w-full glass-input px-3 py-2 rounded-xl opacity-80"
+                    className="w-full bg-[#12151c] border border-white/[0.08] px-3 py-2 rounded-lg text-[#ededed] opacity-80"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">PRIMARY CURRENCY</label>
+                  <label className="block text-[#9499a6] mb-1">Primary currency</label>
                   <input
                     type="text"
                     disabled
                     defaultValue="INR (₹)"
-                    className="w-full glass-input px-3 py-2 rounded-xl opacity-80 font-bold text-cyan-400"
+                    className="w-full bg-[#12151c] border border-white/[0.08] px-3 py-2 rounded-lg font-medium text-[#ededed] opacity-80"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">CONCIERGE DESK EMAIL</label>
+                  <label className="block text-[#9499a6] mb-1">Concierge desk email</label>
                   <input
                     id="supportEmailInput"
                     type="email"
                     defaultValue={settings?.supportEmail || 'concierge@russianmarket.store'}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">GATEWAY STATUS</label>
-                  <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-400 font-bold flex items-center gap-1.5">
+                  <label className="block text-[#9499a6] mb-1">Gateway status</label>
+                  <div className="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4" />
-                    <span>MODULAR PRODUCTION READY</span>
+                    <span>Modular production ready</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* UPI QR & Payment Gateway Settings */}
-            <div className="space-y-3 pt-4 border-t border-white/[0.08]">
+            <div className="space-y-3 pt-4 border-t border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-cyan-400" />
-                <h3 className="font-space font-bold text-sm text-white">UPI QR Add-Money Settings</h3>
+                <QrCode className="w-4 h-4 text-[#9499a6]" />
+                <h3 className="font-space font-medium text-sm text-[#ededed]">UPI QR add-money settings</h3>
               </div>
-              <p className="text-xs text-slate-400 font-sans">
+              <p className="text-xs text-[#9499a6] font-sans">
                 Configure your verified merchant UPI VPA and parameters used for scannable QR generation.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono-code">
                 <div>
-                  <label className="block text-slate-400 mb-1">MERCHANT UPI ID (VPA) *</label>
+                  <label className="block text-[#9499a6] mb-1">Merchant UPI ID (VPA) *</label>
                   <input
                     id="upiMerchantIdInput"
                     type="text"
                     defaultValue={settings?.upiMerchantId || 'russianmarket@icici'}
                     placeholder="e.g. merchant@upi"
-                    className="w-full glass-input px-3 py-2 rounded-xl font-bold text-cyan-300"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] font-medium outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">MERCHANT DISPLAY NAME *</label>
+                  <label className="block text-[#9499a6] mb-1">Merchant display name *</label>
                   <input
                     id="upiMerchantNameInput"
                     type="text"
                     defaultValue={settings?.upiMerchantName || 'Russian Market Collectibles'}
                     placeholder="e.g. Russian Market"
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">MINIMUM PERMITTED DEPOSIT (₹)</label>
+                  <label className="block text-[#9499a6] mb-1">Minimum permitted deposit (₹)</label>
                   <input
                     id="upiMinAmountInput"
                     type="number"
                     min="1"
                     defaultValue={settings?.upiMinAmountMinor ? settings.upiMinAmountMinor / 100 : 100}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">MAXIMUM PERMITTED DEPOSIT (₹)</label>
+                  <label className="block text-[#9499a6] mb-1">Maximum permitted deposit (₹)</label>
                   <input
                     id="upiMaxAmountInput"
                     type="number"
                     min="100"
                     defaultValue={settings?.upiMaxAmountMinor ? settings.upiMaxAmountMinor / 100 : 50000}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-slate-400 mb-1">PAYMENT INSTRUCTIONS</label>
+                  <label className="block text-[#9499a6] mb-1">Payment instructions</label>
                   <textarea
                     id="upiInstructionsInput"
                     rows={2}
@@ -1116,7 +1123,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                       settings?.upiInstructions ||
                       'Scan with any UPI App (Google Pay, PhonePe, Paytm, BHIM, Cred). Enter your 12-digit UPI UTR number after completing payment for manual curatorial verification.'
                     }
-                    className="w-full glass-input p-3 rounded-xl font-sans"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 p-3 rounded-lg font-sans text-xs text-[#ededed] outline-none"
                   />
                 </div>
               </div>
@@ -1143,9 +1150,9 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                   })
                   notifySuccess('Store governance and UPI parameters persisted successfully.')
                 }}
-                className="px-4 py-2 rounded-xl btn-primary text-black font-bold text-xs shadow-md"
+                className="btn-primary px-4 py-2 rounded-lg text-xs font-medium"
               >
-                Save Settings
+                Save settings
               </button>
             </div>
           </div>
@@ -1156,63 +1163,63 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
       {/* MODAL: ADD / EDIT PRODUCT                                */}
       {/* ======================================================== */}
       {isAddingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto glass-panel-elevated rounded-3xl p-6 border border-white/[0.14] shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#0c0e13] rounded-2xl p-6 border border-white/[0.1] shadow-2xl">
             <button
               type="button"
               onClick={() => setIsAddingProduct(false)}
-              className="absolute top-4 right-4 p-2 rounded-full glass-input text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 p-1.5 rounded-md bg-[#181c25] text-[#9499a6] hover:text-[#ededed] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <h3 className="font-space text-lg font-bold text-white mb-4">
+            <h3 className="font-space text-base font-semibold text-[#ededed] mb-4">
               {editingProduct ? 'Edit Collectible Edition' : 'Add New Collectible Edition'}
             </h3>
 
             <form onSubmit={handleSaveProduct} className="space-y-4 text-xs font-mono-code">
               <div>
-                <label className="block text-slate-400 mb-1">COLLECTIBLE NAME *</label>
+                <label className="block text-[#9499a6] mb-1">Collectible name *</label>
                 <input
                   name="name"
                   type="text"
                   required
                   defaultValue={editingProduct?.name || ''}
                   placeholder="e.g. Russian Market Sovereignty #001"
-                  className="w-full glass-input px-3 py-2 rounded-xl"
+                  className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">CATEGORY (STRICTLY 3) *</label>
+                  <label className="block text-[#9499a6] mb-1">Category (strictly 3) *</label>
                   <select
                     name="category"
                     defaultValue={editingProduct?.category || 'VISA'}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   >
-                    <option value="VISA">VISA</option>
-                    <option value="MASTERCARD">MASTERCARD</option>
-                    <option value="RUPAY">RUPAY</option>
+                    <option value="VISA">Visa</option>
+                    <option value="MASTERCARD">Mastercard</option>
+                    <option value="RUPAY">RuPay</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">SKU *</label>
+                  <label className="block text-[#9499a6] mb-1">SKU *</label>
                   <input
                     name="sku"
                     type="text"
                     required
                     defaultValue={editingProduct?.sku || ''}
                     placeholder="e.g. RM-SOVEREIGN-001"
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">PRICE IN INR (₹) *</label>
+                  <label className="block text-[#9499a6] mb-1">Price in INR (₹) *</label>
                   <input
                     name="price"
                     type="number"
@@ -1221,65 +1228,65 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                     defaultValue={
                       editingProduct ? Math.round(editingProduct.priceMinor / 100) : 1500
                     }
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">DISCOUNT %</label>
+                  <label className="block text-[#9499a6] mb-1">Discount %</label>
                   <input
                     name="discount"
                     type="number"
                     min="0"
                     max="99"
                     defaultValue={editingProduct?.discountPercent || 0}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">EDITION NUMBER</label>
+                  <label className="block text-[#9499a6] mb-1">Edition number</label>
                   <input
                     name="editionNumber"
                     type="number"
                     defaultValue={editingProduct?.editionNumber || 1}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">TOTAL EDITIONS</label>
+                  <label className="block text-[#9499a6] mb-1">Total editions</label>
                   <input
                     name="editionTotal"
                     type="number"
                     defaultValue={editingProduct?.editionTotal || 50}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">STOCK QUANTITY</label>
+                  <label className="block text-[#9499a6] mb-1">Stock quantity</label>
                   <input
                     name="stock"
                     type="number"
                     defaultValue={editingProduct?.stockCount ?? 10}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">AVAILABILITY</label>
+                  <label className="block text-[#9499a6] mb-1">Availability</label>
                   <select
                     name="availability"
                     defaultValue={editingProduct?.availability || 'in_stock'}
-                    className="w-full glass-input px-3 py-2 rounded-xl"
+                    className="w-full bg-[#12151c] border border-white/[0.08] focus:border-white/20 px-3 py-2 rounded-lg text-[#ededed] outline-none"
                   >
-                    <option value="in_stock">In Stock</option>
-                    <option value="sold_out">Sold Out</option>
+                    <option value="in_stock">In stock</option>
+                    <option value="sold_out">Sold out</option>
                   </select>
                 </div>
               </div>
@@ -1288,15 +1295,15 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                 <button
                   type="button"
                   onClick={() => setIsAddingProduct(false)}
-                  className="px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 text-xs"
+                  className="px-3.5 py-2 rounded-lg bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] text-xs transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl btn-primary text-black font-bold text-xs"
+                  className="btn-primary px-4 py-2 rounded-lg text-xs font-medium"
                 >
-                  Save Product
+                  Save product
                 </button>
               </div>
             </form>
@@ -1308,94 +1315,94 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
       {/* MODAL: ORDER DETAILS                                     */}
       {/* ======================================================== */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto glass-panel-elevated rounded-3xl p-6 border border-white/[0.14] shadow-2xl space-y-4 text-xs font-mono-code">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#0c0e13] rounded-2xl p-6 border border-white/[0.1] shadow-2xl space-y-4 text-xs font-mono-code">
             <button
               type="button"
               onClick={() => setSelectedOrder(null)}
-              className="absolute top-4 right-4 p-2 rounded-full glass-input text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 p-1.5 rounded-md bg-[#181c25] text-[#9499a6] hover:text-[#ededed] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div>
-              <span className="text-[10px] text-cyan-400 uppercase tracking-widest block mb-0.5">
-                ORDER AUDIT RECORD
+              <span className="text-[11px] text-[#00f0ff] uppercase tracking-wider block mb-0.5">
+                Order audit record
               </span>
-              <h3 className="font-space text-lg font-bold text-white">
+              <h3 className="font-space text-base font-semibold text-[#ededed]">
                 #{selectedOrder.orderNumber}
               </h3>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#12151c] border border-white/[0.05] space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-400">Customer:</span>
-                <span className="text-white font-bold">{selectedOrder.customerName}</span>
+                <span className="text-[#9499a6]">Customer:</span>
+                <span className="text-[#ededed] font-medium">{selectedOrder.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Email:</span>
-                <span className="text-slate-200">{selectedOrder.customerEmail}</span>
+                <span className="text-[#9499a6]">Email:</span>
+                <span className="text-[#ededed]">{selectedOrder.customerEmail}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Total Settlement:</span>
-                <span className="text-emerald-400 font-bold">
+                <span className="text-[#9499a6]">Total settlement:</span>
+                <span className="text-emerald-400 font-medium tabular-nums">
                   {formatINR(selectedOrder.subtotalMinor)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Status:</span>
-                <span className="text-cyan-300 uppercase font-bold">{selectedOrder.status}</span>
+                <span className="text-[#9499a6]">Status:</span>
+                <span className="text-emerald-400 font-medium">{selectedOrder.status}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Redemption Token:</span>
-                <span className="text-white truncate max-w-[200px]">
+                <span className="text-[#9499a6]">Redemption token:</span>
+                <span className="text-[#ededed] truncate max-w-[200px]">
                   {selectedOrder.redemptionToken || 'N/A'}
                 </span>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <span className="text-slate-400 text-[10px] uppercase tracking-wider block">
-                Acquired Items:
+              <span className="text-[#9499a6] text-[11px] block">
+                Acquired items:
               </span>
               {selectedOrder.items.map((it, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between"
+                  className="p-3 rounded-lg bg-[#12151c] border border-white/[0.05] flex items-center justify-between"
                 >
                   <div>
-                    <span className="font-bold text-white block">{it.productName}</span>
-                    <span className="text-[10px] text-slate-500">
-                      Digital Asset: {it.digitalAssetName}
+                    <span className="font-medium text-[#ededed] block">{it.productName}</span>
+                    <span className="text-[10px] text-[#666b7a]">
+                      Digital asset: {it.digitalAssetName}
                     </span>
                   </div>
-                  <span className="text-white font-bold">{formatINR(it.unitPriceMinor)}</span>
+                  <span className="text-[#ededed] font-medium tabular-nums">{formatINR(it.unitPriceMinor)}</span>
                 </div>
               ))}
             </div>
 
             {/* Actions in Order Dialog */}
-            <div className="pt-2 flex justify-between items-center border-t border-white/[0.08]">
+            <div className="pt-2 flex justify-between items-center border-t border-white/[0.06]">
               {selectedOrder.status === 'pending' ? (
                 <button
                   type="button"
                   onClick={() => handleVerifyOrder(selectedOrder.id)}
-                  className="px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold border border-emerald-500/40 text-xs flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-medium border border-emerald-500/20 text-xs flex items-center gap-1.5"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>Verify Settlement & Unlock Assets</span>
+                  <span>Verify settlement & unlock assets</span>
                 </button>
               ) : (
-                <span className="text-emerald-400 text-[11px] flex items-center gap-1">
+                <span className="text-emerald-400 text-xs flex items-center gap-1 font-medium">
                   <ShieldCheck className="w-4 h-4" />
-                  <span>Settlement Verified</span>
+                  <span>Settlement verified</span>
                 </span>
               )}
 
               <button
                 type="button"
                 onClick={() => setSelectedOrder(null)}
-                className="px-4 py-2 rounded-xl btn-primary text-black font-bold text-xs"
+                className="btn-primary px-4 py-2 rounded-lg text-xs font-medium"
               >
                 Close
               </button>

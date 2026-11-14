@@ -89,7 +89,7 @@ export function Navigation({
           </svg>
           {unreadChatCount > 0 && (
             <span
-              className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse"
+              className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400"
               aria-label={`${unreadChatCount} unread message${unreadChatCount > 1 ? 's' : ''}`}
             />
           )}
@@ -163,7 +163,7 @@ export function Navigation({
         aria-label="Mobile Bottom Navigation"
         className={`md:hidden fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-3 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
       >
-        <div className="pointer-events-auto filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)]">
+        <div className="pointer-events-auto filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
           <LiquidNavbar
             items={items}
             active={activeIndex}
@@ -193,7 +193,7 @@ export function Navigation({
         aria-label="Mobile Bottom Navigation"
         className={`md:hidden fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-3 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
       >
-        <div className="pointer-events-auto filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)]">
+        <div className="pointer-events-auto filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
           <LiquidNavbar
             items={items}
             active={activeIndex}

@@ -66,25 +66,25 @@ const NIMBUS_CSS = `
 .nimbus-nav{--n-tint:rgba(255,255,255,.14);--n-fg:#0B132B;--n-fg-soft:rgba(11,19,43,.6);--n-rim:rgba(255,255,255,.7);
   position:relative;display:inline-flex;align-items:center;gap:4px;padding:7px 10px;border-radius:999px;isolation:isolate;
   font-family:ui-sans-serif,-apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-tap-highlight-color:transparent}
-.nimbus-nav[data-tone="dark"]{--n-tint:rgba(6,12,24,.78);--n-fg:#F8FAFC;--n-fg-soft:rgba(148,163,184,.85);--n-rim:rgba(0,240,255,.5)}
+.nimbus-nav[data-tone="dark"]{--n-tint:rgba(12,14,19,.9);--n-fg:#ededed;--n-fg-soft:rgba(148,153,166,.85);--n-rim:rgba(255,255,255,.3)}
 .nimbus-glass{position:absolute;inset:0;border-radius:inherit;z-index:-2;overflow:hidden;background:var(--n-tint);
-  -webkit-backdrop-filter:blur(22px) saturate(1.6) brightness(1.12);backdrop-filter:blur(22px) saturate(1.6) brightness(1.12);
-  box-shadow:inset 0 1px 1.5px var(--n-rim),inset 0 0 0 1px rgba(255,255,255,.16),0 20px 40px -10px rgba(0,0,0,.95),0 0 24px -2px rgba(0,240,255,.25)}
-.nimbus-nav[data-refract="on"] .nimbus-glass{-webkit-backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2) brightness(1.08);backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2) brightness(1.08)}
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);
+  box-shadow:inset 0 1px 1px var(--n-rim),inset 0 0 0 1px rgba(255,255,255,.08),0 16px 36px -8px rgba(0,0,0,.85)}
+.nimbus-nav[data-refract="on"] .nimbus-glass{-webkit-backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2);backdrop-filter:url(#nimbus-refract) blur(2px) saturate(1.2)}
 .nimbus-water{position:absolute;left:${-PAD}px;top:${-PAD}px;z-index:-1;pointer-events:none}
 .nimbus-nav[data-gl="off"] .nimbus-water{display:none}
 .nimbus-drop{display:none;position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;z-index:-1;pointer-events:none;will-change:transform,width;
-  background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.75),rgba(255,255,255,0) 55%),rgba(255,255,255,.38);
-  box-shadow:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -2px 6px rgba(0,162,255,.22),inset 0 0 0 1px rgba(255,255,255,.55),0 6px 16px -6px rgba(0,70,140,.45)}
+  background:rgba(255,255,255,.08);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.4),inset 0 0 0 1px rgba(255,255,255,.12),0 4px 12px rgba(0,0,0,.4)}
 .nimbus-nav[data-tone="dark"] .nimbus-drop{
-  background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.28),rgba(0,240,255,.12) 60%),rgba(255,255,255,.16);
-  box-shadow:inset 0 1px 1.5px rgba(255,255,255,.75),inset 0 -2px 6px rgba(0,240,255,.4),inset 0 0 0 1px rgba(255,255,255,.3),0 6px 20px -2px rgba(0,240,255,.45)}
+  background:rgba(255,255,255,.1);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,255,255,.15),0 4px 14px rgba(0,0,0,.5)}
 .nimbus-nav[data-gl="off"] .nimbus-drop{display:block}
-.nimbus-item{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;min-width:48px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--n-fg-soft);
-  font-family:inherit;font-weight:600;font-size:12px;line-height:1;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:color .25s,transform .15s}
+.nimbus-item{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:44px;min-width:48px;padding:0 16px;border:0;border-radius:999px;background:none;color:var(--n-fg-soft);
+  font-family:inherit;font-weight:600;font-size:12px;line-height:1;letter-spacing:0.04em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:color .2s,transform .12s}
 .nimbus-item:hover{color:var(--n-fg)}
-.nimbus-item[aria-current="page"]{color:#38bdf8;text-shadow:0 0 12px rgba(56,189,248,.6)}
-.nimbus-item:focus-visible{outline:2px solid #00F0FF;outline-offset:2px}
+.nimbus-item[aria-current="page"]{color:#ededed}
+.nimbus-item:focus-visible{outline:2px solid rgba(255,255,255,.4);outline-offset:2px}
 .nv-ico{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .nv-ico svg{transition:transform .45s cubic-bezier(.3,1.6,.5,1)}
 .nimbus-item[aria-current="page"] .nv-ico svg{transform:translateY(-1px) scale(1.15)}

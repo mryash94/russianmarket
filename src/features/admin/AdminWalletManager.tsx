@@ -136,10 +136,10 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
       {/* 1. Header & Quick Refresh */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="font-space text-xl font-bold text-white tracking-tight">
-            Store Wallet & UPI Payment Audit
+          <h2 className="font-space text-base font-semibold text-[#ededed] tracking-tight">
+            Store wallet & UPI payment audit
           </h2>
-          <p className="text-xs text-slate-400 font-sans mt-0.5">
+          <p className="text-xs text-[#9499a6] font-sans mt-0.5">
             Audit and approve UPI add-money requests, review UTR reference numbers, and manage platform balances.
           </p>
         </div>
@@ -147,83 +147,89 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
         <button
           type="button"
           onClick={() => void reloadData()}
-          className="self-start sm:self-auto h-9 px-3 rounded-xl glass-panel hover:bg-white/[0.08] text-slate-300 hover:text-white text-xs font-mono-code flex items-center gap-1.5 transition-colors border border-white/[0.08]"
+          className="self-start sm:self-auto h-8 px-3 rounded-lg bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] text-xs font-mono-code flex items-center gap-1.5 transition-colors border border-white/[0.08]"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>Refresh Data</span>
+          <span>Refresh data</span>
         </button>
       </div>
 
       {/* 2. Top Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-2xl glass-panel border border-white/[0.08] space-y-1">
-          <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
-            Platform Wallet Balances
+        <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+          <span className="text-[11px] font-mono-code text-[#9499a6] block">
+            Platform wallet balances
           </span>
-          <span className="font-space text-xl sm:text-2xl font-extrabold text-cyan-400 block">
+          <span className="font-space text-xl font-semibold text-[#ededed] tabular-nums block">
             {formatINR(totalPlatformBalanceMinor)}
           </span>
-          <span className="text-[10px] font-mono-code text-slate-500">
+          <span className="text-[10px] font-mono-code text-[#666b7a]">
             Across {userBalances.length} active collector accounts
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl glass-panel border border-white/[0.08] space-y-1">
-          <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
-            Pending UPI Audits
-          </span>
+        <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono-code text-[#9499a6] block">
+              Pending UPI audits
+            </span>
+            <span className={`status-beacon ${pendingDeposits.length > 0 ? 'pending' : 'idle'}`} />
+          </div>
           <span
-            className={`font-space text-xl sm:text-2xl font-extrabold block ${
-              pendingDeposits.length > 0 ? 'text-amber-400' : 'text-slate-400'
+            className={`font-space text-xl font-semibold tabular-nums block ${
+              pendingDeposits.length > 0 ? 'text-amber-400' : 'text-[#666b7a]'
             }`}
           >
             {pendingDeposits.length}
           </span>
-          <span className="text-[10px] font-mono-code text-slate-500">
+          <span className="text-[10px] font-mono-code text-[#666b7a]">
             Awaiting admin statement match
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl glass-panel border border-white/[0.08] space-y-1">
-          <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
-            Total Approved Deposits
-          </span>
-          <span className="font-space text-xl sm:text-2xl font-extrabold text-emerald-400 block">
+        <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono-code text-[#9499a6] block">
+              Total approved deposits
+            </span>
+            <span className="status-beacon active" />
+          </div>
+          <span className="font-space text-xl font-semibold text-emerald-400 tabular-nums block">
             {formatINR(approvedDepositsTotalMinor)}
           </span>
-          <span className="text-[10px] font-mono-code text-slate-500">
+          <span className="text-[10px] font-mono-code text-[#666b7a]">
             Verified server & ledger credit
           </span>
         </div>
 
-        <div className="p-4 rounded-2xl glass-panel border border-white/[0.08] space-y-1">
-          <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
-            Total Ledger Transactions
+        <div className="p-3.5 rounded-xl bg-[#0c0e13] border border-white/[0.07] space-y-1">
+          <span className="text-[11px] font-mono-code text-[#9499a6] block">
+            Total ledger transactions
           </span>
-          <span className="font-space text-xl sm:text-2xl font-extrabold text-white block">
+          <span className="font-space text-xl font-semibold text-[#ededed] tabular-nums block">
             {transactions.length}
           </span>
-          <span className="text-[10px] font-mono-code text-slate-500">
+          <span className="text-[10px] font-mono-code text-[#666b7a]">
             Deposits, acquisitions & credits
           </span>
         </div>
       </div>
 
       {/* 3. Add-Money UPI Audit Requests Queue */}
-      <div className="rounded-3xl glass-panel-elevated border border-white/[0.12] p-5 sm:p-6 shadow-xl space-y-4">
+      <div className="rounded-2xl bg-[#0c0e13] border border-white/[0.07] p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-space font-bold text-base text-white">
-                Add-Money Verification Queue
+              <h3 className="font-space font-medium text-sm text-[#ededed]">
+                Add-money verification queue
               </h3>
               {pendingDeposits.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono-code text-[10px] font-bold border border-amber-400/40">
-                  {pendingDeposits.length} Action Needed
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  {pendingDeposits.length} action needed
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
+            <p className="text-xs text-[#9499a6] font-sans mt-0.5">
               Review user-submitted UPI UTR reference codes against your bank merchant statement.
             </p>
           </div>
@@ -231,26 +237,26 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
           {/* Filter Tabs & Search */}
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             <div className="relative flex-1 sm:w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#9499a6]" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search UTR or user..."
-                className="w-full h-9 glass-input pl-8 pr-3 py-1 rounded-xl text-xs placeholder:text-slate-500 focus:border-cyan-400"
+                className="w-full h-8 bg-[#12151c] border border-white/[0.08] focus:border-white/20 pl-8 pr-3 py-1 rounded-lg text-xs text-[#ededed] placeholder:text-[#666b7a] outline-none"
               />
             </div>
 
-            <div className="flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.06]">
+            <div className="flex items-center gap-1 bg-[#12151c] p-0.5 rounded-lg border border-white/[0.06]">
               {(['pending', 'approved', 'rejected', 'all'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilter(tab)}
-                  className={`px-2.5 py-1 rounded-lg font-mono-code text-[10px] font-bold uppercase transition-all ${
+                  className={`px-2.5 py-1 rounded font-mono-code text-[10px] font-medium transition-colors capitalize ${
                     filter === tab
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#181c25] text-white border border-white/[0.1]'
+                      : 'text-[#9499a6] hover:text-[#ededed]'
                   }`}
                 >
                   {tab}
@@ -262,12 +268,12 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
 
         {/* Requests List */}
         {filteredDeposits.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 space-y-1 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
-            <CheckCircle2 className="w-8 h-8 text-emerald-500/40 mx-auto" />
+          <div className="p-8 text-center text-[#666b7a] space-y-1 rounded-xl bg-[#12151c] border border-white/[0.05]">
+            <CheckCircle2 className="w-6 h-6 text-emerald-500/30 mx-auto" />
             <p className="text-xs font-mono-code">No {filter} deposit requests in queue.</p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {filteredDeposits.map((dep) => {
               const formattedAmt = formatINR(dep.amountMinor)
               const formattedDate = new Date(dep.createdAt).toLocaleString(undefined, {
@@ -280,53 +286,53 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
               return (
                 <div
                   key={dep.id}
-                  className="p-4 rounded-2xl glass-panel border border-white/[0.08] hover:border-white/[0.16] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-3.5 rounded-xl bg-[#12151c] border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                  <div className="space-y-1.5 min-w-0">
+                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-space font-extrabold text-base text-white">
+                      <span className="font-space font-medium text-base text-[#ededed] tabular-nums">
                         {formattedAmt}
                       </span>
 
                       <span
-                        className={`px-2 py-0.5 rounded-full font-mono-code text-[9px] font-bold uppercase border ${
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                           dep.status === 'approved'
-                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                             : dep.status === 'pending'
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-400/40'
-                            : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                         }`}
                       >
                         {dep.status}
                       </span>
 
-                      <span className="text-[10px] font-mono-code text-slate-400">
+                      <span className="text-[11px] font-mono-code text-[#9499a6]">
                         {formattedDate}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-mono-code text-slate-300 flex-wrap">
-                      <span>USER: <strong>{dep.userEmail}</strong></span>
+                    <div className="flex items-center gap-2 text-xs font-mono-code text-[#9499a6] flex-wrap">
+                      <span>User: <strong className="text-[#ededed]">{dep.userEmail}</strong></span>
                       <span>•</span>
-                      <span>REF: {dep.reference}</span>
+                      <span>Ref: {dep.reference}</span>
                     </div>
 
                     {/* UTR Pill with Copy Action */}
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono-code text-slate-400">
-                        SUBMITTED UPI UTR:
+                      <span className="text-[11px] font-mono-code text-[#9499a6]">
+                        UTR:
                       </span>
                       <button
                         type="button"
                         onClick={() => handleCopy(dep.utrNumber, dep.id)}
-                        className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 font-mono-code font-bold text-xs flex items-center gap-1.5 hover:bg-cyan-500/25 transition-all"
+                        className="px-2 py-0.5 rounded bg-[#181c25] border border-white/[0.08] text-[#ededed] font-mono-code text-xs flex items-center gap-1.5 hover:bg-[#202530] transition-colors"
                         title="Copy UTR number"
                       >
                         <span>{dep.utrNumber}</span>
                         {copiedId === dep.id ? (
                           <Check className="w-3 h-3 text-emerald-400" />
                         ) : (
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-[#9499a6]" />
                         )}
                       </button>
                     </div>
@@ -340,22 +346,22 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
 
                   {/* Actions for Pending Requests */}
                   {dep.status === 'pending' && (
-                    <div className="flex items-center gap-2 sm:self-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.06]">
+                    <div className="flex items-center gap-2 sm:self-center flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.05]">
                       <button
                         type="button"
                         disabled={isProcessing}
                         onClick={() => handleApprove(dep)}
-                        className="h-9 px-3.5 rounded-xl btn-primary text-black font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-all shadow-md"
+                        className="btn-primary h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-black" />
-                        <span>Approve & Credit</span>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Approve & credit</span>
                       </button>
 
                       <button
                         type="button"
                         disabled={isProcessing}
                         onClick={() => setRejectingRequest(dep)}
-                        className="h-9 px-3 rounded-xl bg-white/[0.04] hover:bg-rose-500/15 text-slate-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono-code transition-all"
+                        className="h-8 px-2.5 rounded-lg bg-white/[0.03] hover:bg-rose-500/10 text-[#666b7a] hover:text-rose-400 border border-white/[0.06] hover:border-rose-500/20 text-xs font-mono-code transition-colors flex items-center gap-1"
                       >
                         <XCircle className="w-3.5 h-3.5" />
                         <span>Reject</span>
@@ -370,12 +376,12 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
       </div>
 
       {/* 4. Platform User Balances Summary */}
-      <div className="rounded-3xl glass-panel-elevated border border-white/[0.12] p-5 sm:p-6 shadow-xl space-y-4">
+      <div className="rounded-2xl bg-[#0c0e13] border border-white/[0.07] p-5 sm:p-6 space-y-4">
         <div>
-          <h3 className="font-space font-bold text-base text-white">
-            Collector Wallet Balances
+          <h3 className="font-space font-medium text-sm text-[#ededed]">
+            Collector wallet balances
           </h3>
-          <p className="text-xs text-slate-400 font-sans mt-0.5">
+          <p className="text-xs text-[#9499a6] font-sans mt-0.5">
             Active balances maintained in the Russian Market database ledger.
           </p>
         </div>
@@ -383,28 +389,28 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono-code">
             <thead>
-              <tr className="border-b border-white/[0.08] text-slate-400">
-                <th className="pb-2.5 font-medium">COLLECTOR ACCOUNT</th>
-                <th className="pb-2.5 font-medium">AVAILABLE BALANCE</th>
-                <th className="pb-2.5 font-medium text-center">TOTAL OPERATIONS</th>
-                <th className="pb-2.5 font-medium text-right">STATUS</th>
+              <tr className="border-b border-white/[0.06] text-[#9499a6]">
+                <th className="pb-2.5 font-medium">Collector account</th>
+                <th className="pb-2.5 font-medium">Available balance</th>
+                <th className="pb-2.5 font-medium text-center">Operations</th>
+                <th className="pb-2.5 font-medium text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-white/[0.05]">
               {userBalances.map((u) => (
                 <tr key={u.userId} className="hover:bg-white/[0.02]">
-                  <td className="py-3 text-white font-medium">
+                  <td className="py-3 text-[#ededed] font-medium">
                     {u.userId}
                   </td>
-                  <td className="py-3 font-space font-bold text-sm text-cyan-400">
+                  <td className="py-3 font-space font-medium text-sm text-[#ededed] tabular-nums">
                     {formatINR(u.balanceMinor)}
                   </td>
-                  <td className="py-3 text-center text-slate-300">
+                  <td className="py-3 text-center text-[#9499a6] tabular-nums">
                     {u.txCount} txs
                   </td>
                   <td className="py-3 text-right">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-mono-code text-[9px] font-bold border border-emerald-400/30">
-                      ACTIVE
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Active
                     </span>
                   </td>
                 </tr>
@@ -416,33 +422,33 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
 
       {/* Approval Modal */}
       {approvingRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md rounded-3xl glass-panel-elevated p-6 border border-emerald-500/30 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#0c0e13] p-6 border border-white/[0.1] shadow-2xl space-y-4">
             <button
               type="button"
               onClick={() => setApprovingRequest(null)}
-              className="absolute right-4 top-4 p-1.5 rounded-xl glass-input text-slate-400 hover:text-white"
+              className="absolute right-4 top-4 p-1.5 rounded-md bg-[#181c25] text-[#9499a6] hover:text-[#ededed] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div>
-              <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-emerald-400 block mb-1">
-                AUDIT VERIFICATION & SETTLEMENT
+              <span className="font-mono-code text-[11px] uppercase tracking-wider text-emerald-400 block mb-1">
+                Audit verification & settlement
               </span>
-              <h3 className="font-space text-lg font-bold text-white">
-                Approve Deposit #{approvingRequest.reference}
+              <h3 className="font-space text-base font-semibold text-[#ededed]">
+                Approve deposit #{approvingRequest.reference}
               </h3>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">
-                Credit <strong className="text-emerald-400 font-bold">{formatINR(approvingRequest.amountMinor)}</strong> to <span className="text-white">{approvingRequest.userEmail}</span>
+              <p className="text-xs text-[#9499a6] font-sans mt-0.5">
+                Credit <strong className="text-emerald-400 font-medium tabular-nums">{formatINR(approvingRequest.amountMinor)}</strong> to <span className="text-[#ededed]">{approvingRequest.userEmail}</span>
               </p>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1">
-              <p className="text-slate-300 font-sans">
-                Bank UTR: <strong className="font-mono-code text-white">{approvingRequest.utrNumber}</strong>
+            <div className="p-3.5 rounded-xl bg-[#12151c] border border-white/[0.06] text-xs space-y-1">
+              <p className="text-[#9499a6] font-sans">
+                Bank UTR: <strong className="font-mono-code text-[#ededed]">{approvingRequest.utrNumber}</strong>
               </p>
-              <p className="text-[11px] text-slate-400 font-sans">
+              <p className="text-[11px] text-[#666b7a] font-sans">
                 Confirming will immediately credit the collector's available balance and append an audit ledger entry.
               </p>
             </div>
@@ -451,7 +457,7 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
               <button
                 type="button"
                 onClick={() => setApprovingRequest(null)}
-                className="h-10 rounded-xl btn-ghost text-xs font-semibold"
+                className="h-9 rounded-lg bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] text-xs font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -459,10 +465,10 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
                 type="button"
                 disabled={isProcessing}
                 onClick={handleConfirmApprove}
-                className="h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs transition-all shadow-md flex items-center justify-center gap-1.5"
+                className="btn-primary h-9 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Confirm & Credit</span>
+                <span>Confirm & credit</span>
               </button>
             </div>
           </div>
@@ -471,37 +477,37 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
 
       {/* Rejection Modal */}
       {rejectingRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md rounded-3xl glass-panel-elevated p-6 border border-white/[0.14] shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-2xl bg-[#0c0e13] p-6 border border-white/[0.1] shadow-2xl space-y-4">
             <button
               type="button"
               onClick={() => setRejectingRequest(null)}
-              className="absolute right-4 top-4 p-1.5 rounded-xl glass-input text-slate-400 hover:text-white"
+              className="absolute right-4 top-4 p-1.5 rounded-md bg-[#181c25] text-[#9499a6] hover:text-[#ededed] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div>
-              <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-rose-400 block mb-1">
-                AUDIT REJECTION
+              <span className="font-mono-code text-[11px] uppercase tracking-wider text-rose-400 block mb-1">
+                Audit rejection
               </span>
-              <h3 className="font-space text-lg font-bold text-white">
-                Reject Deposit #{rejectingRequest.reference}
+              <h3 className="font-space text-base font-semibold text-[#ededed]">
+                Reject deposit #{rejectingRequest.reference}
               </h3>
-              <p className="text-xs text-slate-400 font-sans mt-0.5">
+              <p className="text-xs text-[#9499a6] font-sans mt-0.5">
                 Amount: {formatINR(rejectingRequest.amountMinor)} • UTR: {rejectingRequest.utrNumber}
               </p>
             </div>
 
             <form onSubmit={handleConfirmReject} className="space-y-4 text-xs font-mono-code">
               <div>
-                <label className="block text-slate-300 mb-1">REASON FOR REJECTION *</label>
+                <label className="block text-[#9499a6] mb-1">Reason for rejection *</label>
                 <textarea
                   rows={3}
                   required
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full glass-input p-3 rounded-xl text-xs font-sans placeholder:text-slate-500 focus:border-rose-400"
+                  className="w-full bg-[#12151c] border border-white/[0.08] focus:border-rose-400/40 p-3 rounded-lg text-xs font-sans text-[#ededed] placeholder:text-[#666b7a] outline-none"
                 />
               </div>
 
@@ -509,16 +515,16 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
                 <button
                   type="button"
                   onClick={() => setRejectingRequest(null)}
-                  className="h-10 rounded-xl btn-ghost text-xs font-semibold"
+                  className="h-9 rounded-lg bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] text-xs font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="h-10 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs transition-all shadow-md"
+                  className="h-9 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs transition-colors shadow-sm"
                 >
-                  Confirm Rejection
+                  Confirm rejection
                 </button>
               </div>
             </form>

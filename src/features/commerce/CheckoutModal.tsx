@@ -65,7 +65,6 @@ export function CheckoutModal({
     setError(null)
 
     try {
-      // 1. Create immutable item snapshots
       const itemSnapshots: OrderItemSnapshot[] = items.map(({ product, quantity }) => ({
         productId: product.id,
         productName: product.name,
@@ -76,10 +75,8 @@ export function CheckoutModal({
         digitalAssetName: product.digitalAsset.filename,
       }))
 
-      // 2. Generate unique idempotency key
       const idempotencyKey = `RM-IDEMP-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
-      // 3. Register Order in Database (status: 'pending')
       const order = await storeEngine.createOrder({
         userId,
         customerEmail: email.trim(),
@@ -89,7 +86,6 @@ export function CheckoutModal({
         idempotencyKey,
       })
 
-      // 4. Initiate through modular payment provider
       const provider = PaymentGatewayService.getProvider(selectedProvider)
       await provider.initiatePayment({
         orderId: order.id,
@@ -113,9 +109,9 @@ export function CheckoutModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
       <div
-        className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto glass-panel-elevated rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/[0.12] shadow-2xl animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto bg-[#0c0e13] rounded-2xl p-5 sm:p-6 border border-white/[0.1] shadow-2xl animate-in zoom-in-95 duration-150"
         role="dialog"
         aria-modal="true"
         aria-labelledby="checkout-title"
@@ -124,7 +120,7 @@ export function CheckoutModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3.5 right-3.5 p-1.5 rounded-full glass-input text-slate-400 hover:text-white"
+          className="absolute top-4 right-4 p-2 rounded-lg bg-[#181c25] border border-white/[0.08] text-slate-400 hover:text-white transition-colors"
           aria-label="Close checkout"
         >
           <X className="w-4 h-4" />
@@ -132,71 +128,71 @@ export function CheckoutModal({
 
         {completedOrder ? (
           /* Order Confirmation Success State */
-          <div className="text-center py-4 space-y-3.5">
-            <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(0,240,255,0.25)]">
-              <CheckCircle2 className="w-7 h-7 text-cyan-400" />
+          <div className="text-center py-4 space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-white/[0.05] border border-white/[0.1] flex items-center justify-center mx-auto text-white">
+              <CheckCircle2 className="w-6 h-6 text-[#34d399]" />
             </div>
 
             <div>
-              <span className="font-mono-code text-[10px] uppercase tracking-widest text-cyan-400 font-bold block mb-1">
-                ORDER CONFIRMED
+              <span className="font-mono-code text-[10px] uppercase font-medium tracking-wider text-[#9499a6] block mb-1">
+                Order confirmed
               </span>
-              <h2 className="font-cinzel text-xl sm:text-2xl font-bold text-white">
+              <h2 className="font-space text-xl font-semibold text-[#ededed]">
                 #{completedOrder.orderNumber}
               </h2>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-left space-y-2 text-xs font-mono-code">
+            <div className="p-3.5 rounded-lg bg-[#12151c] border border-white/[0.06] text-left space-y-2 text-xs font-mono-code">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Status:</span>
-                <span className="text-amber-400 font-bold uppercase text-[11px]">
-                  Pending Settlement
+                <span className="text-[#9499a6]">Status:</span>
+                <span className="text-[#fbbf24] font-medium uppercase text-[11px]">
+                  Pending settlement
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Total:</span>
-                <span className="text-white font-bold">{formattedTotal}</span>
+                <span className="text-[#9499a6]">Total:</span>
+                <span className="text-[#ededed] font-medium tabular-nums">{formattedTotal}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Payment:</span>
-                <span className="text-cyan-300 uppercase">{completedOrder.paymentMethod}</span>
+                <span className="text-[#9499a6]">Payment:</span>
+                <span className="text-[#ededed] uppercase">{completedOrder.paymentMethod}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Email:</span>
-                <span className="text-slate-200 truncate max-w-[180px] sm:max-w-[240px]">
+                <span className="text-[#9499a6]">Email:</span>
+                <span className="text-[#ededed] truncate max-w-[180px] sm:max-w-[240px]">
                   {completedOrder.customerEmail}
                 </span>
               </div>
             </div>
 
-            <p className="text-xs text-slate-300 max-w-sm mx-auto font-sans leading-relaxed">
-              Your order has been recorded. Once payment is verified, your collectible master assets unlock instantly in your Digital Vault.
+            <p className="text-xs text-[#9499a6] max-w-sm mx-auto font-sans leading-relaxed">
+              Your order has been recorded. Once payment is verified, your collectible master assets unlock in your Digital Vault.
             </p>
 
             <div className="pt-2 flex justify-center">
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl btn-primary text-xs font-bold"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg btn-primary text-xs font-semibold"
               >
-                View My Orders
+                View my orders
               </button>
             </div>
           </div>
         ) : (
           /* Checkout Form */
-          <form onSubmit={handlePlaceOrder} className="space-y-4 sm:space-y-5">
+          <form onSubmit={handlePlaceOrder} className="space-y-4">
             <div>
-              <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-cyan-400 block mb-0.5">
-                CHECKOUT
+              <span className="font-mono-code text-[10px] uppercase font-medium tracking-wider text-[#9499a6] block mb-0.5">
+                Checkout
               </span>
-              <h2 id="checkout-title" className="font-cinzel text-lg sm:text-xl font-bold text-white">
+              <h2 id="checkout-title" className="font-space text-lg font-semibold text-[#ededed]">
                 Acquire Collectibles
               </h2>
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2 text-xs text-rose-300">
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center gap-2 text-xs text-[#f87171]">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -204,13 +200,13 @@ export function CheckoutModal({
 
             {/* Customer Details */}
             <div className="space-y-2.5">
-              <span className="font-space text-xs font-bold uppercase tracking-wider text-slate-300 block">
-                Collector Information
+              <span className="font-space text-xs font-medium text-[#ededed] block">
+                Collector information
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-[10px] font-mono-code text-slate-400 mb-1">
-                    EMAIL
+                  <label className="block text-[11px] font-sans text-[#9499a6] mb-1">
+                    Email address
                   </label>
                   <input
                     type="email"
@@ -218,12 +214,12 @@ export function CheckoutModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="collector@example.com"
-                    className="w-full glass-input px-3 py-2 rounded-xl text-xs placeholder:text-slate-500"
+                    className="w-full h-10 bg-[#181c25] border border-white/[0.08] focus:border-white/30 px-3 rounded-lg text-xs text-[#ededed] placeholder:text-slate-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-mono-code text-slate-400 mb-1">
-                    FULL NAME
+                  <label className="block text-[11px] font-sans text-[#9499a6] mb-1">
+                    Full name
                   </label>
                   <input
                     type="text"
@@ -231,52 +227,52 @@ export function CheckoutModal({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Collector Name"
-                    className="w-full glass-input px-3 py-2 rounded-xl text-xs placeholder:text-slate-500"
+                    className="w-full h-10 bg-[#181c25] border border-white/[0.08] focus:border-white/30 px-3 rounded-lg text-xs text-[#ededed] placeholder:text-slate-500"
                   />
                 </div>
               </div>
             </div>
 
             {/* Payment Provider Selection */}
-            <div className="space-y-2.5">
-              <span className="font-space text-xs font-bold uppercase tracking-wider text-slate-300 block">
-                Payment Method
+            <div className="space-y-2">
+              <span className="font-space text-xs font-medium text-[#ededed] block">
+                Payment method
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {/* SunPay Gateway */}
                 <div
                   onClick={() => setSelectedProvider('sunpay')}
-                  className={`p-3 rounded-xl cursor-pointer transition-all border ${
+                  className={`p-3 rounded-lg cursor-pointer transition-colors border ${
                     selectedProvider === 'sunpay'
-                      ? 'bg-cyan-500/10 border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.15)]'
-                      : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                      ? 'bg-[#181c25] border-white/30'
+                      : 'bg-[#12151c] border-white/[0.06] hover:border-white/15'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-space font-bold text-xs text-white">SunPay Gateway</span>
-                    <CreditCard className="w-4 h-4 text-cyan-400" />
+                    <span className="font-space font-medium text-xs text-[#ededed]">SunPay Gateway</span>
+                    <CreditCard className="w-4 h-4 text-slate-400" />
                   </div>
-                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
-                    Card & digital checkout. Order records with pending settlement.
+                  <p className="text-[11px] text-[#9499a6] font-sans leading-relaxed">
+                    Card & digital checkout. Recorded with pending settlement.
                   </p>
                 </div>
 
                 {/* Concierge Settlement */}
                 <div
                   onClick={() => setSelectedProvider('admin_concierge')}
-                  className={`p-3 rounded-xl cursor-pointer transition-all border ${
+                  className={`p-3 rounded-lg cursor-pointer transition-colors border ${
                     selectedProvider === 'admin_concierge'
-                      ? 'bg-violet-500/10 border-violet-400 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-                      : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                      ? 'bg-[#181c25] border-white/30'
+                      : 'bg-[#12151c] border-white/[0.06] hover:border-white/15'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-space font-bold text-xs text-white">
+                    <span className="font-space font-medium text-xs text-[#ededed]">
                       Private Concierge
                     </span>
-                    <Building className="w-4 h-4 text-violet-400" />
+                    <Building className="w-4 h-4 text-slate-400" />
                   </div>
-                  <p className="text-[11px] text-slate-400 font-sans leading-relaxed">
+                  <p className="text-[11px] text-[#9499a6] font-sans leading-relaxed">
                     Direct admin verification via the Admin Control Room.
                   </p>
                 </div>
@@ -284,25 +280,25 @@ export function CheckoutModal({
             </div>
 
             {/* Order Items Snapshot Summary */}
-            <div className="space-y-2">
-              <span className="font-space text-xs font-bold uppercase tracking-wider text-slate-300 block">
+            <div className="space-y-1.5">
+              <span className="font-space text-xs font-medium text-[#ededed] block">
                 Items ({items.length})
               </span>
-              <div className="max-h-32 overflow-y-auto space-y-1.5 pr-1">
+              <div className="max-h-28 overflow-y-auto space-y-1.5 pr-1">
                 {items.map(({ product, quantity }) => (
                   <div
                     key={product.id}
-                    className="p-2 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs font-mono-code"
+                    className="p-2 rounded-lg bg-[#12151c] border border-white/[0.05] flex items-center justify-between text-xs font-mono-code"
                   >
                     <div className="truncate max-w-[200px] sm:max-w-[260px]">
-                      <span className="text-white font-medium block truncate">
+                      <span className="text-[#ededed] font-medium block truncate">
                         {product.name}
                       </span>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[10px] text-[#666b7a]">
                         {product.sku} • Qty: {quantity}
                       </span>
                     </div>
-                    <span className="text-cyan-300 font-bold ml-2">
+                    <span className="text-[#ededed] font-medium ml-2 tabular-nums">
                       {formatINR((product.salePriceMinor ?? product.priceMinor) * quantity)}
                     </span>
                   </div>
@@ -311,12 +307,12 @@ export function CheckoutModal({
             </div>
 
             {/* Total & Submit */}
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+            <div className="pt-3 border-t border-white/[0.07] flex items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-mono-code uppercase tracking-widest text-slate-400 block">
-                  ORDER TOTAL
+                <span className="text-[11px] font-sans text-[#9499a6] block">
+                  Order total
                 </span>
-                <span className="font-space text-xl sm:text-2xl font-bold text-white">
+                <span className="font-space text-xl font-bold text-[#ededed] tabular-nums">
                   {formattedTotal}
                 </span>
               </div>
@@ -324,15 +320,15 @@ export function CheckoutModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl btn-primary text-xs font-bold active:scale-95 disabled:opacity-50 transition-all"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg btn-primary text-xs font-semibold active:scale-98 disabled:opacity-40 transition-all"
               >
-                <span>{isSubmitting ? 'Placing Order...' : 'Place Order'}</span>
+                <span>{isSubmitting ? 'Placing order...' : 'Place order'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono-code text-slate-400 pt-1">
-              <Lock className="w-3 h-3 text-cyan-400" />
+            <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono-code text-[#666b7a] pt-1">
+              <Lock className="w-3 h-3 text-[#9499a6]" />
               <span>Encrypted checkout & verified database settlement</span>
             </div>
           </form>
@@ -341,3 +337,5 @@ export function CheckoutModal({
     </div>
   )
 }
+
+export default CheckoutModal

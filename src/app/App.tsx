@@ -107,7 +107,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans overflow-x-hidden selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-[#060709] text-[#ededed] flex flex-col font-sans overflow-x-hidden selection:bg-white selection:text-black">
       {/* 1. Header (Mobile-first, sticky with search, orders, notifications, cart, and desktop nav) */}
       <Header
         activeSection={activeSection}
@@ -157,7 +157,7 @@ export function App() {
 
       {/* Subtle Mobile Bottom Ambient Fade (low height to never obscure scrolling cards) */}
       <div
-        className="md:hidden fixed bottom-0 inset-x-0 h-16 pointer-events-none bg-gradient-to-t from-[#030712] to-transparent z-40"
+        className="md:hidden fixed bottom-0 inset-x-0 h-16 pointer-events-none bg-gradient-to-t from-[#060709] to-transparent z-40"
         aria-hidden="true"
       />
 

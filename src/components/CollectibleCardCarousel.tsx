@@ -50,7 +50,7 @@ export function CollectibleCardCarousel({
 
   return (
     <section aria-label="Featured Collectibles" className="w-full">
-      <div className="relative w-full rounded-3xl glass-panel p-4 sm:p-6 border border-white/[0.08] shadow-lg">
+      <div className="relative w-full rounded-2xl bg-[#0c0e13] p-5 sm:p-6 border border-white/[0.07]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
           {/* Card Visual Showcase */}
           <div className="lg:col-span-7 flex flex-col items-center justify-center">
@@ -64,7 +64,7 @@ export function CollectibleCardCarousel({
                 type="button"
                 onClick={prevSlide}
                 aria-label="Previous card"
-                className="p-1.5 rounded-lg btn-ghost text-slate-300 hover:text-white"
+                className="p-1.5 rounded-md bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -77,7 +77,7 @@ export function CollectibleCardCarousel({
                     onClick={() => setCurrentIndex(idx)}
                     className={`h-1.5 rounded-full transition-all duration-200 ${
                       idx === currentIndex
-                        ? 'w-6 bg-cyan-400'
+                        ? 'w-6 bg-[#ededed]'
                         : 'w-2 bg-white/20 hover:bg-white/40'
                     }`}
                     aria-label={`Slide ${idx + 1}`}
@@ -89,7 +89,7 @@ export function CollectibleCardCarousel({
                 type="button"
                 onClick={nextSlide}
                 aria-label="Next card"
-                className="p-1.5 rounded-lg btn-ghost text-slate-300 hover:text-white"
+                className="p-1.5 rounded-md bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -99,42 +99,34 @@ export function CollectibleCardCarousel({
           {/* Details & Actions */}
           <div className="lg:col-span-5 flex flex-col justify-center space-y-3.5 text-left">
             <div className="flex items-center gap-2">
-              <span
-                className={`px-2.5 py-0.5 rounded-full font-mono-code text-[10px] font-bold tracking-widest uppercase border ${
-                  active.category === 'VISA'
-                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-400/40'
-                    : active.category === 'MASTERCARD'
-                    ? 'bg-rose-500/15 text-rose-300 border-rose-400/40'
-                    : 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40'
-                }`}
-              >
+              <span className="px-2.5 py-0.5 rounded-full font-mono-code text-[11px] font-medium bg-[#181c25] text-[#ededed] border border-white/[0.08]">
                 {active.category}
               </span>
 
-              <span className="flex items-center gap-1 font-mono-code text-[11px] text-emerald-400 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {isAvailable ? 'In Stock' : 'Sold Out'}
+              <span className="flex items-center gap-1.5 font-mono-code text-[11px] text-[#9499a6]">
+                <span className={`status-beacon ${isAvailable ? 'active' : 'idle'}`} />
+                <span>{isAvailable ? 'In stock' : 'Sold out'}</span>
               </span>
             </div>
 
             <div>
-              <h2 className="font-space text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="font-space text-xl sm:text-2xl font-semibold text-[#ededed] tracking-tight">
                 {active.name}
               </h2>
             </div>
 
             {/* Price Box */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between">
+            <div className="p-3.5 rounded-xl bg-[#12151c] border border-white/[0.06] flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
                   Price
                 </span>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="font-space text-2xl font-extrabold text-white">
+                  <span className="font-space text-2xl font-semibold text-[#ededed] tabular-nums">
                     {formatINR(priceMinor)}
                   </span>
                   {originalPriceMinor && (
-                    <span className="text-xs font-mono-code line-through text-slate-500">
+                    <span className="text-xs font-mono-code line-through text-[#666b7a] tabular-nums">
                       {formatINR(originalPriceMinor)}
                     </span>
                   )}
@@ -142,23 +134,23 @@ export function CollectibleCardCarousel({
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-mono-code text-[#9499a6] block">
                   Category
                 </span>
-                <span className="text-xs font-mono-code font-bold text-white block mt-0.5">
+                <span className="text-xs font-mono-code font-medium text-[#ededed] block mt-0.5">
                   {active.category}
                 </span>
               </div>
             </div>
 
-            {/* Actions (Consistent h-10 button heights) */}
+            {/* Actions */}
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => onSelectProduct(active)}
-                className="h-10 flex items-center justify-center gap-1.5 px-3 rounded-xl btn-ghost text-xs font-semibold text-slate-300 hover:text-white border border-white/[0.08] transition-colors"
+                className="h-10 flex items-center justify-center gap-1.5 px-3 rounded-lg bg-[#181c25] hover:bg-[#202530] text-xs font-medium text-[#ededed] border border-white/[0.08] transition-colors"
               >
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-3.5 h-3.5 text-[#9499a6]" />
                 <span>Details</span>
               </button>
 
@@ -166,7 +158,7 @@ export function CollectibleCardCarousel({
                 type="button"
                 disabled={!isAvailable}
                 onClick={() => onQuickBuy(active)}
-                className="h-10 flex items-center justify-center gap-1.5 px-3 rounded-xl btn-primary text-xs font-bold active:scale-95 disabled:opacity-50 transition-all shadow-md"
+                className="btn-primary h-10 flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-medium disabled:opacity-50"
               >
                 <span>BUY NOW</span>
                 <ArrowRight className="w-3.5 h-3.5" />

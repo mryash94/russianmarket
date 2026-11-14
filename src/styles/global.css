@@ -1,156 +1,176 @@
 @import "tailwindcss";
 
+/**
+ * RUSSIAN MARKET — Master Design System
+ * Styled following the unslop methodology by Damir Sokolovsky (@heydamir, https://heydamir.design/unslop)
+ * Under CC BY 4.0 license.
+ *
+ * Theme: Premium Black / Sovereign Vault
+ * Deepest: #060709 | Panel: #0c0e12 | Card: #12151b | Raised: #181c24
+ * Hairlines: rgba(255, 255, 255, 0.07)
+ */
+
 :root {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #f1f5f9;
+  color: #ededed;
   background: #060709;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  /* Premium Black Neutral Ramp */
   --color-bg: #060709;
-  --color-bg-subtle: #0b0d12;
-  --color-panel: rgba(14, 16, 22, 0.75);
-  --color-panel-elevated: rgba(20, 24, 33, 0.85);
-  --color-border: rgba(255, 255, 255, 0.08);
+  --color-bg-subtle: #090b0f;
+  --color-panel: #0c0e13;
+  --color-panel-elevated: #12151c;
+  --color-raised: #181c25;
+  --color-border: rgba(255, 255, 255, 0.07);
   --color-border-subtle: rgba(255, 255, 255, 0.04);
-  --color-border-active: rgba(0, 240, 255, 0.35);
-  --color-text: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-cyan: #00f0ff;
-  --color-violet: #6366f1;
-  --color-gold: #fbbf24;
-  --surface-glass: rgba(11, 14, 20, 0.7);
-  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --shadow-card: 0 16px 36px -8px rgba(0, 0, 0, 0.7);
-  --shadow-modal: 0 24px 60px -12px rgba(0, 0, 0, 0.9);
+  --color-border-focus: rgba(255, 255, 255, 0.25);
+
+  /* Three Distinct Text Roles */
+  --color-text-primary: #ededed;
+  --color-text-secondary: #9499a6;
+  --color-text-muted: #666b7a;
+
+  /* Restrained Accents */
+  --color-accent-cyan: #00f0ff;
+  --color-accent-emerald: #34d399;
+  --color-accent-amber: #fbbf24;
+  --color-accent-rose: #f87171;
+
+  /* Surfaces & Hairlines */
+  --surface-panel: #0c0e13;
+  --surface-card: #12151c;
+  --surface-raised: #181c25;
+  --hairline-top: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* Easing */
+  --ease-out-cubic: cubic-bezier(0.22, 1, 0.36, 1);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
   color-scheme: dark;
   background-color: var(--color-bg);
 }
 
-/* Refined liquid-glass surfaces */
+/* Master Surfaces */
 .glass-panel {
-  background: var(--surface-glass);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: var(--surface-panel);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-subtle), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), var(--hairline-top);
 }
 
 .glass-panel-elevated {
-  background: var(--color-panel-elevated);
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  background: var(--surface-card);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), var(--hairline-top);
 }
 
 .glass-input {
-  background: rgba(15, 18, 26, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
-  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  transition: border-color 150ms var(--ease-out-cubic), background-color 150ms var(--ease-out-cubic);
 }
 
 .glass-input:focus {
-  border-color: rgba(0, 240, 255, 0.6);
-  background: rgba(15, 18, 26, 0.9);
-  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.25);
+  border-color: var(--color-border-focus);
+  background: #1d222d;
   outline: none;
 }
 
-/* Professional buttons */
+/* Restrained Luxury Buttons */
 .btn-primary {
-  background: #ffffff;
+  background: #ededed;
   color: #060709;
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: background-color 150ms var(--ease-out-cubic), transform 120ms var(--ease-out-cubic);
 }
 
-.btn-primary:hover {
-  background: #f1f5f9;
+.btn-primary:hover:not(:disabled) {
+  background: #ffffff;
   transform: translateY(-0.5px);
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
 }
 
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-cyan {
-  background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
-  color: #060709;
-  font-weight: 700;
-  border: 1px solid rgba(0, 240, 255, 0.5);
-  box-shadow: 0 2px 12px rgba(0, 240, 255, 0.2);
-  transition: all 0.15s ease;
-}
-
-.btn-cyan:hover {
-  background: linear-gradient(135deg, #22d3ee 0%, #0369a1 100%);
-  transform: translateY(-0.5px);
-  box-shadow: 0 4px 18px rgba(0, 240, 255, 0.35);
-}
-
-.btn-cyan:active {
-  transform: translateY(0);
-}
-
-.btn-violet {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: #ffffff;
-  font-weight: 600;
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.25);
-  transition: all 0.15s ease;
-}
-
-.btn-violet:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  transform: translateY(-0.5px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
-}
-
-.btn-violet:active {
+.btn-primary:active:not(:disabled) {
   transform: translateY(0);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.04);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.15s ease;
+  background: var(--surface-raised);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  transition: color 150ms var(--ease-out-cubic), background-color 150ms var(--ease-out-cubic), border-color 150ms var(--ease-out-cubic);
 }
 
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
+.btn-ghost:hover:not(:disabled) {
+  background: #202532;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--color-text-primary);
 }
 
-.btn-ghost:active {
-  background: rgba(255, 255, 255, 0.1);
+.btn-ghost:active:not(:disabled) {
+  background: #181c25;
 }
 
-.font-cinzel {
-  font-family: 'Cinzel', serif;
-}
-
+/* Typography Helpers */
 .font-space {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
 }
 
 .font-mono-code {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-feature-settings: 'tnum' on, 'zero' on;
 }
 
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Precision Keycap */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Signature Cryptographic Status Beacon */
+.status-beacon {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-beacon.active {
+  background: #34d399;
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.status-beacon.pending {
+  background: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.status-beacon.idle {
+  background: #666b7a;
+  border-color: rgba(102, 107, 122, 0.5);
+}
+
+/* Global Reset & Scrollbars */
 * {
   box-sizing: border-box;
 }
@@ -170,7 +190,7 @@ body {
   margin: 0;
   overflow-x: hidden;
   background: var(--color-bg);
-  color: #f1f5f9;
+  color: var(--color-text-primary);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -189,13 +209,13 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--color-cyan);
+  outline: 2px solid rgba(255, 255, 255, 0.4);
   outline-offset: 2px;
 }
 
 ::selection {
   color: #060709;
-  background: var(--color-cyan);
+  background: #ededed;
 }
 
 #root {
@@ -203,7 +223,7 @@ select:focus-visible {
   overflow-x: hidden;
 }
 
-/* Custom scrollbar */
+/* Subtle charcoal scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -214,12 +234,12 @@ select:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {

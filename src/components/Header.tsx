@@ -50,8 +50,8 @@ export function Header({
   const [showNotifDropdown, setShowNotifDropdown] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/[0.08] px-3 sm:px-6 py-2.5 transition-all">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+    <header className="sticky top-0 z-40 w-full bg-[#060709]/95 backdrop-blur-md border-b border-white/[0.07] px-3.5 sm:px-6 py-2.5 transition-colors">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
         {/* Left: Brand Logo */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <RussianMarketLogo size="md" showWordmark={true} />
@@ -76,7 +76,7 @@ export function Header({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search editions..."
-              className="w-full glass-input pl-8 pr-7 py-1.5 rounded-xl text-xs placeholder:text-slate-500 focus:border-cyan-400"
+              className="w-full h-9 bg-[#12151c] border border-white/[0.08] focus:border-white/30 rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder:text-slate-500 transition-colors"
             />
             {searchQuery && (
               <button
@@ -94,7 +94,7 @@ export function Header({
             type="button"
             onClick={() => setShowSearchInput(!showSearchInput)}
             aria-label="Search"
-            className="xl:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+            className="xl:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -104,13 +104,13 @@ export function Header({
             <button
               type="button"
               onClick={onOpenVault}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-300 hover:text-cyan-300 hover:bg-white/[0.05] border border-white/[0.08] transition-colors"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.05] border border-white/[0.08] transition-colors"
               title="Digital Vault"
             >
-              <Archive className="w-4 h-4 text-slate-300 hover:text-cyan-400" />
-              <span className="hidden sm:inline text-xs font-medium">Vault</span>
+              <Archive className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline text-xs font-medium text-slate-300">Vault</span>
               {vaultCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-violet-500/20 text-violet-300 font-mono-code text-[10px] font-bold">
+                <span className="px-1.5 py-0.2 rounded bg-white/[0.08] text-white font-mono-code text-[10px] font-medium tabular-nums">
                   {vaultCount}
                 </span>
               )}
@@ -121,13 +121,13 @@ export function Header({
           <button
             type="button"
             onClick={onOpenOrders}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/[0.05] border border-white/[0.08] transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.05] border border-white/[0.08] transition-colors"
             title="My Orders"
           >
-            <FileCheck className="w-4 h-4 text-slate-300" />
-            <span className="hidden sm:inline text-xs font-medium">Orders</span>
+            <FileCheck className="w-3.5 h-3.5 text-slate-400" />
+            <span className="hidden sm:inline text-xs font-medium text-slate-300">Orders</span>
             {ordersCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-mono-code text-[10px] font-bold">
+              <span className="px-1.5 py-0.2 rounded bg-white/[0.08] text-white font-mono-code text-[10px] font-medium tabular-nums">
                 {ordersCount}
               </span>
             )}
@@ -139,35 +139,35 @@ export function Header({
               type="button"
               onClick={() => setShowNotifDropdown(!showNotifDropdown)}
               aria-label="Notifications"
-              className="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors"
+              className="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-4 h-4 text-slate-400" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-cyan-400" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400" />
               )}
             </button>
 
             {showNotifDropdown && (
-              <div className="absolute right-0 mt-2 w-72 sm:w-80 glass-panel-elevated rounded-2xl p-3 shadow-2xl z-50 border border-white/[0.12] animate-in fade-in zoom-in-95">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.08]">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#12151c] rounded-xl p-3 shadow-2xl z-50 border border-white/[0.1] animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.07]">
                   <span className="text-xs font-semibold text-white">Notifications</span>
-                  <span className="text-[10px] font-mono-code text-slate-400">
+                  <span className="text-[10px] font-mono-code text-slate-400 tabular-nums">
                     {unreadCount} unread
                   </span>
                 </div>
                 <div className="max-h-60 overflow-y-auto space-y-1.5 pr-0.5">
                   {notifications.length === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-4 font-sans">
-                      No notifications.
+                      No notifications
                     </p>
                   ) : (
                     notifications.map((n) => (
                       <div
                         key={n.id}
                         onClick={() => onMarkNotificationRead(n.id)}
-                        className={`p-2 rounded-xl cursor-pointer transition-colors ${
+                        className={`p-2 rounded-lg cursor-pointer transition-colors ${
                           !n.readAt
-                            ? 'bg-white/[0.06] border border-white/[0.08]'
+                            ? 'bg-white/[0.05] border border-white/[0.08]'
                             : 'bg-transparent opacity-60 hover:opacity-100'
                         }`}
                       >
@@ -197,9 +197,9 @@ export function Header({
               type="button"
               onClick={onToggleAdminView}
               title="Admin Control Room"
-              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-medium transition-colors border ${
+              className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                 isAdminView
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  ? 'bg-white/15 text-white border-white/20'
                   : 'text-slate-400 hover:text-white border-white/[0.08] hover:bg-white/[0.05]'
               }`}
             >
@@ -214,7 +214,7 @@ export function Header({
 
       {/* Mobile Search Row (if expanded) */}
       {showSearchInput && (
-        <div className="mt-2.5 xl:hidden animate-in fade-in slide-in-from-top-1">
+        <div className="mt-2 xl:hidden animate-in fade-in slide-in-from-top-1">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -223,7 +223,7 @@ export function Header({
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search collectibles..."
               autoFocus
-              className="w-full glass-input pl-9 pr-8 py-2 rounded-xl text-xs placeholder:text-slate-500"
+              className="w-full h-9 bg-[#12151c] border border-white/[0.08] focus:border-white/30 rounded-lg pl-9 pr-8 text-xs text-white placeholder:text-slate-500"
             />
             {searchQuery && (
               <button
@@ -240,3 +240,5 @@ export function Header({
     </header>
   )
 }
+
+export default Header

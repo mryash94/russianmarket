@@ -2,14 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   MessageCircle,
   Send,
-  ShieldCheck,
   User,
   Bot,
-  Lock,
   Paperclip,
   Trash2,
   CheckCheck,
-  Sparkles,
   X,
   FileText,
   AlertCircle,
@@ -27,7 +24,7 @@ type ChatSectionProps = {
   userEmail?: string
 }
 
-export function ChatSection({ userId, userEmail = 'collector@russianmarket.store' }: ChatSectionProps) {
+export function ChatSection({ userId, userEmail: _userEmail = 'collector@russianmarket.store' }: ChatSectionProps) {
   const [conversations, setConversations] = useState<SupportConversation[]>([])
   const [activeConvId, setActiveConvId] = useState<string>('')
   const [inputText, setInputText] = useState('')
@@ -96,7 +93,6 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
     const el = scrollContainerRef.current
     if (!el) return
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-    // Consider user "near bottom" if within 100px of bottom
     isNearBottomRef.current = distanceFromBottom < 100
   }
 
@@ -107,7 +103,7 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
 
     const isImg = file.type.startsWith('image/')
     if (file.size > 10 * 1024 * 1024) {
-      setSendError('File size exceeds 10MB limit.')
+      setSendError('File size exceeds 10MB limit')
       return
     }
 
@@ -126,78 +122,79 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
       URL.revokeObjectURL(attachment.url)
     }
     setAttachment(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
+  // Send message
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     const trimmed = inputText.trim()
-    if ((!trimmed && !attachment) || !activeConv || isSending) return
+    if (!trimmed && !attachment) return
 
     setIsSending(true)
     setSendError(null)
     shouldAutoScrollRef.current = true
 
-    const currentText = trimmed
-    const currentAttachment = attachment
-
-    // Clear input immediately for snappy responsive feel
-    setInputText('')
-    setAttachment(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
-
     try {
+      const convId = activeConv?.id || `conv_${userId}`
+
       await storeEngine.sendMessage({
-        conversationId: activeConv.id,
+        conversationId: convId,
         senderUserId: userId,
         senderType: 'customer',
-        body: currentText || (currentAttachment ? `[Attached file: ${currentAttachment.name}]` : ''),
-        attachmentName: currentAttachment?.name,
-        attachmentUrl: currentAttachment?.url,
+        body: trimmed || (attachment ? `Sent attachment: ${attachment.name}` : ''),
+        attachmentName: attachment?.name,
+        attachmentUrl: attachment?.url,
       })
 
-      // Simulate Concierge auto-acknowledgement if no admin is currently in the active thread
-      setIsTyping(true)
-      setTimeout(async () => {
-        try {
-          const replies = [
-            'Thank you for contacting Russian Market Concierge. Your inquiry has been routed to our Senior Curatorial Officer. All digital assets in your vault are cryptographically authenticated.',
-            'Your transaction and entitlement credentials have been verified with our sovereign ledger. If you require settlement verification, orders are processed within 15 minutes.',
-            'Our curatorial desk confirms that all Russian Market editions are backed by encrypted master files in your Digital Vault. How else may we assist your collection today?',
-            'Your message has been logged in our secure curatorial register. A senior officer will verify your vault status shortly.',
-          ]
-          const randomReply = replies[Math.floor(Math.random() * replies.length)]
+      setInputText('')
+      handleClearAttachment()
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
 
-          await storeEngine.sendMessage({
-            conversationId: activeConv.id,
-            senderType: 'admin',
-            body: randomReply,
-          })
+      // Simulated curator reply if first message
+      if (!activeConv || activeConv.messages.length === 0) {
+        setIsTyping(true)
+        setTimeout(async () => {
           setIsTyping(false)
           shouldAutoScrollRef.current = true
-        } catch {
-          setIsTyping(false)
-        }
-      }, 1500)
+          await storeEngine.sendMessage({
+            conversationId: convId,
+            senderType: 'admin',
+            body: 'Your message has been logged in our secure curatorial register. A senior officer will verify your vault status shortly.',
+          })
+          await reloadConversations()
+        }, 1200)
+      }
+
+      await reloadConversations()
     } catch (err) {
-      console.error('Send message error:', err)
-      setSendError(err instanceof Error ? err.message : 'Message failed to send. Tap to retry.')
-      // Restore input text on error
-      setInputText(currentText)
-      setAttachment(currentAttachment)
+      setSendError(err instanceof Error ? err.message : 'Message transmission failed')
     } finally {
       setIsSending(false)
     }
   }
 
-  const handleClearHistory = async () => {
-    if (!activeConv) return
-    if (confirm('Clear your conversation history with Russian Market Concierge?')) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      void handleSendMessage()
+    }
+  }
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value)
+    // Auto-expand textarea up to 120px
+    const target = e.target
+    target.style.height = 'auto'
+    target.style.height = `${Math.min(target.scrollHeight, 120)}px`
+  }
+
+  const handleClearChat = async () => {
+    if (activeConv) {
       await storeEngine.clearConversationMessages(activeConv.id)
       await reloadConversations()
     }
@@ -205,54 +202,56 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
 
   const handleQuickTopic = (topic: string) => {
     setInputText(topic)
-    textareaRef.current?.focus()
+    if (textareaRef.current) {
+      textareaRef.current.focus()
+    }
   }
 
   return (
-    <div className="space-y-3 max-w-4xl mx-auto flex flex-col h-[calc(100dvh-10rem)] min-h-[500px]">
+    <div className="flex flex-col h-[calc(100vh-130px)] sm:h-[calc(100vh-140px)] max-w-4xl mx-auto space-y-3">
       {/* 1. Compact Header */}
-      <div className="flex items-center justify-between gap-2 px-1 flex-shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.25)]">
+      <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-[#0c0e13] border border-white/[0.07] flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#181c25] border border-white/[0.08] flex items-center justify-center text-white">
             <MessageCircle className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-space font-bold text-sm sm:text-base text-white tracking-tight">
-                Collector Concierge
+              <h2 className="font-space text-sm sm:text-base font-semibold text-[#ededed]">
+                Collector concierge
               </h2>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono-code text-[9px] font-bold">
-                24/7 LIVE
+              <span className="flex items-center gap-1 font-mono-code text-[10px] text-[#9499a6]">
+                <span className="status-beacon active" />
+                Live
               </span>
             </div>
-            <span className="text-[10px] font-mono-code text-slate-400 block truncate max-w-[220px] sm:max-w-md">
-              Authenticated line ({userEmail}) • Response &lt; 2m
-            </span>
+            <p className="text-[11px] text-[#666b7a] font-sans">
+              Senior Curatorial Officer • Typical response &lt; 2m
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {activeConv && activeConv.messages.length > 1 && (
+          {activeConv && activeConv.messages.length > 0 && (
             <button
               type="button"
-              onClick={handleClearHistory}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.04] hover:bg-rose-500/15 text-slate-400 hover:text-rose-300 border border-white/[0.08] hover:border-rose-500/30 text-xs font-mono-code transition-all"
-              title="Clear Chat History"
+              onClick={handleClearChat}
+              className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg btn-ghost text-xs font-medium flex items-center gap-1 text-[#9499a6] hover:text-white transition-colors"
+              title="Clear chat history"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Clear</span>
             </button>
           )}
 
-          <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono-code text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-400/30">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>AUTHENTICATED</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono-code text-[#9499a6] bg-[#12151c] px-2.5 py-1 rounded border border-white/[0.08]">
+            <span>Authenticated</span>
           </div>
         </div>
       </div>
 
       {/* 2. Main Full-Height Chat Container */}
-      <div className="flex-1 min-h-0 glass-panel-elevated rounded-3xl border border-white/[0.12] flex flex-col overflow-hidden shadow-2xl relative">
+      <div className="flex-1 min-h-0 bg-[#0c0e13] rounded-2xl border border-white/[0.07] flex flex-col overflow-hidden shadow-xl relative">
         {/* Scrollable Messages Area */}
         <div
           ref={scrollContainerRef}
@@ -261,10 +260,9 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {/* Quick Service Inquiry Prompts */}
-          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2 flex-shrink-0">
-            <span className="text-[10px] font-mono-code text-slate-400 uppercase tracking-wider block flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-cyan-400" />
-              Quick Inquiries:
+          <div className="p-3 rounded-lg bg-[#12151c] border border-white/[0.06] space-y-2 flex-shrink-0">
+            <span className="text-[10px] font-mono-code text-[#666b7a] uppercase tracking-wider block">
+              Quick inquiries:
             </span>
             <div className="flex flex-wrap gap-1.5">
               {[
@@ -277,7 +275,7 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
                   key={i}
                   type="button"
                   onClick={() => handleQuickTopic(topic)}
-                  className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-cyan-500/15 text-slate-300 hover:text-cyan-300 border border-white/[0.08] hover:border-cyan-400/40 text-[11px] font-sans transition-all text-left"
+                  className="px-2.5 py-1 rounded-md bg-[#181c25] hover:bg-white/[0.08] text-[#ededed] border border-white/[0.08] text-[11px] font-sans transition-colors text-left"
                 >
                   {topic}
                 </button>
@@ -288,13 +286,13 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
           {/* Empty Conversation State */}
           {(!activeConv || activeConv.messages.length === 0) && (
             <div className="text-center py-12 px-4 space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center mx-auto text-cyan-400 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
-                <MessageCircle className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-lg bg-[#181c25] border border-white/[0.08] flex items-center justify-center mx-auto text-white">
+                <MessageCircle className="w-5 h-5" />
               </div>
-              <h4 className="font-space font-bold text-sm text-white">
+              <h4 className="font-space font-medium text-sm text-[#ededed]">
                 Connected to Private Concierge
               </h4>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto font-sans">
+              <p className="text-xs text-[#9499a6] max-w-sm mx-auto font-sans">
                 Our Senior Curatorial Officer is on standby. Inquire regarding editions, custody verification, or order status.
               </p>
             </div>
@@ -317,10 +315,10 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
               >
                 {/* Avatar */}
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs ${
                     isCustomer
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/30'
-                      : 'bg-violet-500/20 text-violet-300 border border-violet-400/30'
+                      ? 'bg-[#181c25] text-white border border-white/[0.1]'
+                      : 'bg-[#12151c] text-[#9499a6] border border-white/[0.08]'
                   }`}
                 >
                   {isCustomer ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
@@ -328,15 +326,15 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
 
                 {/* Message Body Container */}
                 <div
-                  className={`p-3.5 rounded-2xl text-xs leading-relaxed transition-all break-words [overflow-wrap:anywhere] ${
+                  className={`p-3.5 rounded-xl text-xs leading-relaxed transition-all break-words [overflow-wrap:anywhere] ${
                     isCustomer
-                      ? 'bg-gradient-to-r from-cyan-500 to-sky-600 text-black font-medium shadow-[0_4px_16px_rgba(0,240,255,0.25)] rounded-tr-none'
-                      : 'glass-panel text-slate-100 border border-white/[0.12] rounded-tl-none font-sans shadow-md'
+                      ? 'bg-[#181c25] text-[#ededed] border border-white/[0.1] rounded-tr-none'
+                      : 'bg-[#12151c] text-[#ededed] border border-white/[0.07] rounded-tl-none font-sans'
                   }`}
                 >
                   {/* Sender Header */}
-                  <div className="flex items-center justify-between gap-3 mb-1 text-[9px] font-mono-code opacity-80">
-                    <span className="font-bold">{isCustomer ? 'YOU' : 'CONCIERGE DESK'}</span>
+                  <div className="flex items-center justify-between gap-3 mb-1 text-[9px] font-mono-code text-[#666b7a]">
+                    <span>{isCustomer ? 'You' : 'Concierge desk'}</span>
                     <span className="flex items-center gap-1">
                       {formattedTime}
                       {isCustomer && (
@@ -344,9 +342,9 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
                           {msg.status === 'sending' ? (
                             <RefreshCw className="w-2.5 h-2.5 animate-spin" />
                           ) : msg.status === 'failed' ? (
-                            <AlertCircle className="w-2.5 h-2.5 text-rose-700" />
+                            <AlertCircle className="w-2.5 h-2.5 text-[#f87171]" />
                           ) : (
-                            <CheckCheck className="w-3 h-3 text-black/80" />
+                            <CheckCheck className="w-3 h-3 text-[#34d399]" />
                           )}
                         </span>
                       )}
@@ -355,17 +353,17 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
 
                   {/* Attachment Preview (if attached) */}
                   {msg.attachmentName && (
-                    <div className="mb-2 p-2 rounded-xl bg-black/20 border border-black/20 flex items-center gap-2">
+                    <div className="mb-2 p-2 rounded-lg bg-black/40 border border-white/[0.08] flex items-center gap-2">
                       {msg.attachmentUrl ? (
                         <img
                           src={msg.attachmentUrl}
                           alt={msg.attachmentName}
-                          className="w-12 h-12 object-cover rounded-lg border border-white/20"
+                          className="w-12 h-12 object-cover rounded border border-white/10"
                         />
                       ) : (
                         <FileText className="w-4 h-4 text-white" />
                       )}
-                      <span className="text-[11px] font-mono-code truncate font-bold">
+                      <span className="text-[11px] font-mono-code truncate font-medium">
                         {msg.attachmentName}
                       </span>
                     </div>
@@ -381,15 +379,15 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex gap-2.5 mr-auto max-w-[80%] items-center">
-              <div className="w-7 h-7 rounded-lg bg-violet-500/20 text-violet-300 border border-violet-400/30 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-[#12151c] text-[#9499a6] border border-white/[0.08] flex items-center justify-center">
                 <Bot className="w-3.5 h-3.5" />
               </div>
-              <div className="px-3.5 py-2.5 rounded-2xl glass-panel text-xs text-slate-400 border border-white/[0.1] rounded-tl-none flex items-center gap-2">
+              <div className="px-3.5 py-2.5 rounded-xl bg-[#12151c] text-xs text-[#9499a6] border border-white/[0.07] rounded-tl-none flex items-center gap-2">
                 <span className="font-mono-code text-[11px]">Curator is typing</span>
                 <span className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.2s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.4s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse [animation-delay:0.2s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse [animation-delay:0.4s]" />
                 </span>
               </div>
             </div>
@@ -400,12 +398,12 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
 
         {/* Attachment Pill (if staging file) */}
         {attachment && (
-          <div className="px-4 py-2 bg-cyan-500/10 border-t border-cyan-400/20 flex items-center justify-between text-xs font-mono-code text-cyan-300 flex-shrink-0">
+          <div className="px-4 py-2 bg-[#181c25] border-t border-white/[0.08] flex items-center justify-between text-xs font-mono-code text-[#ededed] flex-shrink-0">
             <div className="flex items-center gap-2 truncate">
               {attachment.isImage ? (
-                <ImageIcon className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                <ImageIcon className="w-3.5 h-3.5 text-[#9499a6] flex-shrink-0" />
               ) : (
-                <Paperclip className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                <Paperclip className="w-3.5 h-3.5 text-[#9499a6] flex-shrink-0" />
               )}
               <span className="truncate">Attached: {attachment.name}</span>
             </div>
@@ -420,92 +418,74 @@ export function ChatSection({ userId, userEmail = 'collector@russianmarket.store
           </div>
         )}
 
-        {/* Error notification banner if send failed */}
+        {/* Send Error Toast */}
         {sendError && (
-          <div className="px-4 py-2 bg-rose-500/15 border-t border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>{sendError}</span>
-            </div>
+          <div className="px-4 py-2 bg-rose-500/10 border-t border-rose-500/20 text-[#f87171] text-xs flex items-center justify-between flex-shrink-0">
+            <span className="truncate">{sendError}</span>
             <button
               type="button"
-              onClick={() => void handleSendMessage()}
-              className="underline font-bold text-rose-200"
+              onClick={() => setSendError(null)}
+              className="p-1 text-slate-400 hover:text-white"
             >
-              Retry
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* 3. Fixed Message Composer Form */}
-        <form
-          onSubmit={(e) => void handleSendMessage(e)}
-          className="p-3 sm:p-3.5 border-t border-white/[0.08] bg-[#090d16]/95 backdrop-blur-md flex items-end gap-2 flex-shrink-0 z-10"
-        >
-          {/* Hidden File Input */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            className="hidden"
-            accept="image/*,.pdf,.doc,.docx,.asc,.sig,.txt"
-          />
+        {/* Fixed Message Composer Area */}
+        <div className="p-3 sm:p-4 bg-[#0c0e13] border-t border-white/[0.07] flex-shrink-0">
+          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileSelect}
+              className="hidden"
+              accept="image/*,.pdf,.txt,.doc"
+            />
 
-          {/* Attachment Paperclip Button */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white border border-white/[0.08] transition-colors flex-shrink-0"
-            title="Attach file or screenshot"
-            aria-label="Attach file"
-          >
-            <Paperclip className="w-4 h-4" />
-          </button>
+            {/* Attachment Button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2.5 rounded-lg btn-ghost text-slate-400 hover:text-white flex-shrink-0 transition-colors"
+              title="Attach document or screenshot"
+              aria-label="Attach file"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
 
-          {/* Multiline Message Textarea with Auto-Expansion */}
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value)
-              e.target.style.height = 'auto'
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                void handleSendMessage()
-              }
-            }}
-            placeholder="Type your inquiry for concierge..."
-            disabled={isSending}
-            className="flex-1 min-h-[40px] max-h-[120px] glass-input px-3.5 py-2.5 rounded-xl text-xs sm:text-sm placeholder:text-slate-500 focus:border-cyan-400 resize-none font-sans"
-          />
+            {/* Multiline Input Textarea */}
+            <div className="flex-1 relative">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={inputText}
+                onChange={handleTextareaChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Inquire with private concierge..."
+                className="w-full bg-[#181c25] border border-white/[0.08] focus:border-white/30 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm text-[#ededed] placeholder:text-slate-500 resize-none overflow-y-auto max-h-[120px] transition-colors"
+                style={{ minHeight: '40px' }}
+              />
+            </div>
 
-          {/* Send Button */}
-          <button
-            type="submit"
-            disabled={(!inputText.trim() && !attachment) || isSending}
-            className="h-10 px-4 rounded-xl btn-primary text-black font-bold active:scale-95 disabled:opacity-40 transition-all text-xs flex items-center gap-1.5 flex-shrink-0"
-            aria-label="Send message"
-          >
-            {isSending ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <>
-                <span className="hidden xs:inline">Send</span>
-                <Send className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
-        </form>
-      </div>
-
-      {/* Security Footer Notice */}
-      <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono-code text-slate-500 flex-shrink-0">
-        <Lock className="w-3 h-3 text-cyan-400" />
-        <span>End-to-end encrypted curatorial communications • Sovereign Vault Protocol</span>
+            {/* Send Button */}
+            <button
+              type="submit"
+              disabled={isSending || (!inputText.trim() && !attachment)}
+              className="h-10 px-4 rounded-lg btn-primary text-xs font-semibold flex items-center justify-center gap-1.5 flex-shrink-0 active:scale-98 disabled:opacity-40 transition-all"
+              aria-label="Send message"
+            >
+              <span>Send</span>
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+          <div className="mt-1 text-right">
+            <span className="text-[10px] font-mono-code text-[#666b7a] hidden sm:inline">
+              Shift + Enter for new line • Enter to send
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   )

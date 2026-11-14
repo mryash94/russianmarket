@@ -30,43 +30,38 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
   }
 
   return (
-    <div className="space-y-5 pb-16 max-w-4xl mx-auto">
+    <div className="space-y-6 pb-20 max-w-4xl mx-auto">
       <div>
-        <span className="font-mono-code text-[10px] uppercase font-bold tracking-widest text-cyan-400 block mb-1">
-          ACCOUNT
-        </span>
-        <h2 className="font-cinzel text-xl md:text-2xl font-bold text-white">
-          Account & Settings
+        <h2 className="font-space text-xl md:text-2xl font-semibold text-[#ededed] tracking-tight">
+          Account & settings
         </h2>
-        <p className="text-xs text-slate-400 font-sans mt-0.5">
-          Manage your collector profile, notifications, and policies.
+        <p className="text-xs text-[#9499a6] font-sans mt-0.5">
+          Manage your collector profile, notifications, and store policies
         </p>
       </div>
 
       {/* Supabase Authentication Panel (if not signed in) */}
       {!user && (
-        <div className="glass-panel-elevated rounded-3xl p-5 border border-cyan-500/30">
+        <div className="rounded-2xl p-5 bg-[#0c0e13] border border-white/[0.08]">
           <AuthPanel />
         </div>
       )}
 
       {/* Profile Overview Card */}
-      <div className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-2xl p-4 sm:p-6 bg-[#0c0e13] border border-white/[0.07] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-violet-600 p-0.5 shadow-lg flex items-center justify-center">
-            <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center font-cinzel text-base font-bold text-cyan-300">
-              {(user?.email?.[0] ?? displayName[0] ?? 'R').toUpperCase()}
-            </div>
+          <div className="w-11 h-11 rounded-lg bg-[#181c25] border border-white/[0.1] flex items-center justify-center font-space text-base font-semibold text-[#ededed]">
+            {(user?.email?.[0] ?? displayName[0] ?? 'R').toUpperCase()}
           </div>
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-space font-bold text-sm sm:text-base text-white">{displayName}</h3>
-              <span className="px-2 py-0.5 rounded-full font-mono-code text-[9px] uppercase font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                {isAdmin ? 'ADMINISTRATOR' : user ? 'VERIFIED' : 'GUEST'}
+              <h3 className="font-space font-medium text-sm sm:text-base text-[#ededed]">{displayName}</h3>
+              <span className="px-2 py-0.5 rounded font-mono-code text-[10px] uppercase bg-white/[0.05] text-[#9499a6] border border-white/[0.08]">
+                {isAdmin ? 'Administrator' : user ? 'Verified' : 'Guest'}
               </span>
             </div>
-            <p className="text-xs font-mono-code text-slate-400 mt-0.5 truncate max-w-[220px] sm:max-w-none">
+            <p className="text-xs font-mono-code text-[#666b7a] mt-0.5 truncate max-w-[220px] sm:max-w-none">
               {user?.email || 'Local Collector Session'}
             </p>
           </div>
@@ -76,23 +71,23 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
           <button
             type="button"
             onClick={() => signOut()}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 text-xs font-semibold border border-white/10 transition-all self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg btn-ghost text-xs font-medium text-[#f87171] hover:text-[#f87171] transition-colors self-start sm:self-auto"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign out</span>
           </button>
         )}
       </div>
 
       {/* Profile Edit Form */}
-      <form onSubmit={handleSaveProfile} className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 space-y-3.5">
+      <form onSubmit={handleSaveProfile} className="rounded-2xl p-4 sm:p-6 bg-[#0c0e13] border border-white/[0.07] space-y-3.5">
         <div className="flex items-center justify-between">
-          <h3 className="font-space font-bold text-sm text-white flex items-center gap-2">
-            <User className="w-4 h-4 text-cyan-400" />
-            <span>Profile Details</span>
+          <h3 className="font-space font-medium text-sm text-[#ededed] flex items-center gap-2">
+            <User className="w-4 h-4 text-white/50" />
+            <span>Profile details</span>
           </h3>
           {savedSuccess && (
-            <span className="text-xs font-mono-code text-emerald-400 flex items-center gap-1 animate-in fade-in">
+            <span className="text-xs font-mono-code text-[#34d399] flex items-center gap-1 animate-in fade-in">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Saved
             </span>
@@ -101,50 +96,50 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[10px] font-mono-code text-slate-400 mb-1">
-              DISPLAY NAME
+            <label className="block text-[11px] font-sans text-[#9499a6] mb-1">
+              Display name
             </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full glass-input px-3.5 py-2 rounded-xl text-xs"
+              className="w-full h-10 bg-[#181c25] border border-white/[0.08] focus:border-white/30 px-3.5 rounded-lg text-xs text-[#ededed]"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-mono-code text-slate-400 mb-1">
-              EMAIL ADDRESS
+            <label className="block text-[11px] font-sans text-[#9499a6] mb-1">
+              Email address
             </label>
             <input
               type="email"
               disabled
               value={user?.email || 'collector@russianmarket.store'}
-              className="w-full glass-input px-3.5 py-2 rounded-xl text-xs opacity-60 cursor-not-allowed"
+              className="w-full h-10 bg-[#181c25] border border-white/[0.08] px-3.5 rounded-lg text-xs text-[#666b7a] cursor-not-allowed"
             />
           </div>
         </div>
 
         <div className="pt-2 flex justify-end">
-          <button type="submit" className="px-5 py-2 rounded-xl btn-primary text-xs font-bold active:scale-95 transition-all">
-            Save Changes
+          <button type="submit" className="px-5 py-2 rounded-lg btn-primary text-xs font-semibold active:scale-98 transition-all">
+            Save changes
           </button>
         </div>
       </form>
 
       {/* Preferences & Notifications */}
-      <div className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 space-y-3">
-        <h3 className="font-space font-bold text-sm text-white flex items-center gap-2">
-          <Bell className="w-4 h-4 text-cyan-400" />
+      <div className="rounded-2xl p-4 sm:p-6 bg-[#0c0e13] border border-white/[0.07] space-y-3">
+        <h3 className="font-space font-medium text-sm text-[#ededed] flex items-center gap-2">
+          <Bell className="w-4 h-4 text-white/50" />
           <span>Notifications</span>
         </h3>
 
-        <div className="flex items-center justify-between py-2 border-b border-white/5">
+        <div className="flex items-center justify-between py-2 border-b border-white/[0.06]">
           <div className="pr-4">
-            <span className="font-space font-medium text-xs text-white block">
+            <span className="font-space font-medium text-xs text-[#ededed] block">
               Digital Vault Delivery Alerts
             </span>
-            <span className="text-[11px] text-slate-400 font-sans">
+            <span className="text-[11px] text-[#9499a6] font-sans">
               Instant notification when purchased collectible assets are ready.
             </span>
           </div>
@@ -152,29 +147,29 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
             type="checkbox"
             checked={emailNotifications}
             onChange={(e) => setEmailNotifications(e.target.checked)}
-            className="w-4 h-4 accent-cyan-400 cursor-pointer flex-shrink-0"
+            className="w-4 h-4 accent-white cursor-pointer flex-shrink-0"
           />
         </div>
       </div>
 
       {/* Store Policies */}
-      <div className="glass-panel rounded-3xl p-4 sm:p-6 border border-white/10 space-y-3">
-        <h3 className="font-space font-bold text-sm text-white flex items-center gap-2">
-          <FileText className="w-4 h-4 text-cyan-400" />
-          <span>Store Policies</span>
+      <div className="rounded-2xl p-4 sm:p-6 bg-[#0c0e13] border border-white/[0.07] space-y-3">
+        <h3 className="font-space font-medium text-sm text-[#ededed] flex items-center gap-2">
+          <FileText className="w-4 h-4 text-white/50" />
+          <span>Store policies</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setActiveModalPolicy('privacy')}
-            className="p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 flex items-center justify-between text-left transition-all"
+            className="p-3.5 rounded-xl bg-[#12151c] hover:bg-[#181c25] border border-white/[0.06] flex items-center justify-between text-left transition-colors"
           >
             <div>
-              <span className="font-space font-bold text-xs text-white block">
-                Privacy Policy
+              <span className="font-space font-medium text-xs text-[#ededed] block">
+                Privacy policy
               </span>
-              <span className="text-[10px] text-slate-400 font-mono-code">
+              <span className="text-[10px] text-[#9499a6] font-sans">
                 Customer privacy and data security
               </span>
             </div>
@@ -184,13 +179,13 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
           <button
             type="button"
             onClick={() => setActiveModalPolicy('refund')}
-            className="p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 flex items-center justify-between text-left transition-all"
+            className="p-3.5 rounded-xl bg-[#12151c] hover:bg-[#181c25] border border-white/[0.06] flex items-center justify-between text-left transition-colors"
           >
             <div>
-              <span className="font-space font-bold text-xs text-white block">
-                Refund & Delivery Policy
+              <span className="font-space font-medium text-xs text-[#ededed] block">
+                Refund & delivery policy
               </span>
-              <span className="text-[10px] text-slate-400 font-mono-code">
+              <span className="text-[10px] text-[#9499a6] font-sans">
                 Digital delivery and support terms
               </span>
             </div>
@@ -200,30 +195,30 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
       </div>
 
       {/* Admin Panel Access Shortcut */}
-      <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-mono-code text-slate-400">
-          <SlidersHorizontal className="w-4 h-4 text-amber-400" />
-          <span>ADMIN CONTROL ROOM</span>
+      <div className="p-4 rounded-xl bg-[#0c0e13] border border-white/[0.07] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-mono-code text-[#9499a6]">
+          <SlidersHorizontal className="w-4 h-4 text-white/70" />
+          <span>Admin control room</span>
         </div>
         <button
           type="button"
           onClick={onToggleAdmin}
-          className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 active:scale-95 transition-all"
+          className="px-3.5 py-1.5 rounded-lg btn-ghost text-xs font-medium hover:text-white transition-colors"
         >
-          Open Admin Dashboard
+          Open admin dashboard
         </button>
       </div>
 
       {/* Policy Viewer Dialog */}
       {activeModalPolicy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in">
-          <div className="relative w-full max-w-xl glass-panel-elevated rounded-3xl p-6 border border-white/15 shadow-2xl">
-            <h3 className="font-cinzel text-lg font-bold text-white mb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="relative w-full max-w-xl bg-[#0c0e13] rounded-2xl p-6 border border-white/[0.1] shadow-2xl">
+            <h3 className="font-space text-lg font-semibold text-[#ededed] mb-3">
               {activeModalPolicy === 'privacy'
                 ? 'Privacy Policy'
                 : 'Refund & Delivery Policy'}
             </h3>
-            <p className="text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-wrap mb-4">
+            <p className="text-xs text-[#9499a6] font-sans leading-relaxed whitespace-pre-wrap mb-4">
               {activeModalPolicy === 'privacy'
                 ? `1. Russian Market respects customer privacy. We never store functional bank card credentials or CVVs.
 2. Orders and accounts are securely registered and protected under verified database encryption.
@@ -236,7 +231,7 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
               <button
                 type="button"
                 onClick={() => setActiveModalPolicy(null)}
-                className="px-4 py-2 rounded-xl btn-primary text-xs font-bold"
+                className="px-4 py-2 rounded-lg btn-primary text-xs font-semibold"
               >
                 Close
               </button>
@@ -247,3 +242,5 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
     </div>
   )
 }
+
+export default SettingsSection
