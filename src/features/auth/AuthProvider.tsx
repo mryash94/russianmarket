@@ -20,30 +20,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  // Verify server-side role from user_roles table
+  // Verify server-side role from user_roles table and is_admin() RPC
   const fetchUserRole = useCallback(async (activeUser: User | null): Promise<UserRole> => {
     if (!activeUser) return 'customer'
 
-    const email = activeUser.email?.trim().toLowerCase() ?? ''
-    const isOwner = email === AUTHORIZED_ADMIN_EMAIL
-
     if (!supabase) {
-      return isOwner ? 'admin' : 'customer'
+      const email = activeUser.email?.trim().toLowerCase() ?? ''
+      return email === AUTHORIZED_ADMIN_EMAIL ? 'admin' : 'customer'
     }
 
     try {
+      // 1. Check server-side is_admin RPC
+      const { data: serverIsAdmin, error: rpcError } = await supabase.rpc('is_admin')
+      if (!rpcError && typeof serverIsAdmin === 'boolean') {
+        return serverIsAdmin ? 'admin' : 'customer'
+      }
+
+      // 2. Query user_roles table
       const { data, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', activeUser.id)
         .maybeSingle()
 
-      if (!roleError && data?.role) {
-        return data.role as UserRole
+      if (!roleError && data?.role === 'admin') {
+        return 'admin'
       }
-      return isOwner ? 'admin' : 'customer'
+
+      // 3. Fallback check for root administrator
+      const email = activeUser.email?.trim().toLowerCase() ?? ''
+      return email === AUTHORIZED_ADMIN_EMAIL ? 'admin' : 'customer'
     } catch {
-      return isOwner ? 'admin' : 'customer'
+      return 'customer'
     }
   }, [])
 

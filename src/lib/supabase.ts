@@ -1,10 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() ?? ''
+// Canonical Supabase Project for Russian Market (deeprhlnoflqzpraxkaq)
+const DEFAULT_SUPABASE_URL = 'https://deeprhlnoflqzpraxkaq.supabase.co'
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_sZDP51eyY5koRcQ8t4l5hg_TXT8sSy-'
+
+const supabaseUrl = (
+  import.meta.env.VITE_SUPABASE_URL ||
+  DEFAULT_SUPABASE_URL
+)?.trim() ?? ''
+
 const supabaseAnonKey = (
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  DEFAULT_SUPABASE_ANON_KEY
 )?.trim() ?? ''
 
 function isValidSupabaseUrl(value: string): boolean {
