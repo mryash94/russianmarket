@@ -100,7 +100,7 @@ export function AddMoneyModal({
   // 3. Generate QR Code whenever activeRequest changes
   useEffect(() => {
     if (step === 'pay' && activeRequest && settings) {
-      const merchantId = activeRequest.merchantUpiId || settings.upiMerchantId || 'russianmarket@icici'
+      const merchantId = activeRequest.merchantUpiId || settings.upiMerchantId || 'blackxayush@fam'
       const merchantName = activeRequest.merchantDisplayName || settings.upiMerchantName || 'Russian Market Collectibles'
       const amountRupees = (activeRequest.amountMinor / 100).toFixed(2)
       const note = activeRequest.reference
@@ -436,7 +436,7 @@ export function AddMoneyModal({
             {/* Mobile Direct UPI Intent Link */}
             <a
               href={`upi://pay?pa=${encodeURIComponent(
-                activeRequest.merchantUpiId || settings?.upiMerchantId || 'russianmarket@icici'
+                activeRequest.merchantUpiId || settings?.upiMerchantId || 'blackxayush@fam'
               )}&pn=${encodeURIComponent(
                 activeRequest.merchantDisplayName || settings?.upiMerchantName || 'Russian Market Collectibles'
               )}&am=${(activeRequest.amountMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(activeRequest.reference)}`}

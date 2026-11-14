@@ -1697,7 +1697,7 @@ class StoreEngine {
       sunpayMerchantId: '',
       sunpayApiEndpoint: 'https://api.sunpay.gateway/v1',
       sunpaySandboxMode: true,
-      upiMerchantId: 'russianmarket@icici',
+      upiMerchantId: 'blackxayush@fam',
       upiMerchantName: 'Russian Market Collectibles',
       upiMinAmountMinor: 10000, // ₹100.00
       upiMaxAmountMinor: 5000000, // ₹50,000.00
@@ -2031,7 +2031,7 @@ class StoreEngine {
           id: `audit_init_2`,
           action: 'GATEWAY_UPI_CONFIGURED',
           targetResource: 'store_settings',
-          payload: { vpa: 'russianmarket@icici', merchant: 'Russian Market Collectibles' },
+          payload: { vpa: 'blackxayush@fam', merchant: 'Russian Market Collectibles' },
           ipAddress: '127.0.0.1 (System)',
           createdAt: new Date(Date.now() - 3600000).toISOString(),
         },

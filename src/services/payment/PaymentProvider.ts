@@ -6,6 +6,7 @@ export type PaymentInitiationResult = {
   provider: string
   status: OrderStatus
   paymentUrl?: string
+  qrCodeUrl?: string
   instructions?: string
   errorMessage?: string
 }
@@ -39,6 +40,7 @@ export interface PaymentProvider {
     currency: string
     customerEmail: string
     customerName?: string
+    productId?: string
     idempotencyKey: string
   }): Promise<PaymentInitiationResult>
 

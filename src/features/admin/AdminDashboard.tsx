@@ -1187,7 +1187,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                       name="upiMerchantId"
                       type="text"
                       required
-                      defaultValue={settings?.upiMerchantId || 'russianmarket@icici'}
+                      defaultValue={settings?.upiMerchantId || 'blackxayush@fam'}
                       className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-cyan-400"
                     />
                   </div>
@@ -1650,7 +1650,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-white/60">Default Merchant VPA:</span>
-                      <span className="text-emerald-400 font-semibold">{settings?.upiMerchantId || 'russianmarket@icici'}</span>
+                      <span className="text-emerald-400 font-semibold">{settings?.upiMerchantId || 'blackxayush@fam'}</span>
                     </div>
                   </div>
 

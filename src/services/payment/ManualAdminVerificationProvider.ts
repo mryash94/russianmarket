@@ -4,11 +4,13 @@ import type {
   PaymentVerificationResult,
   WebhookResult,
 } from './PaymentProvider'
+import { supabaseUrl } from '../../lib/supabase'
 
 export class ManualAdminVerificationProvider implements PaymentProvider {
   readonly id = 'admin_concierge'
   readonly displayName = 'Private Concierge Settlement'
   readonly isConfigured = true
+  private endpoint = `${supabaseUrl}/functions/v1/quick-responder`
 
   async initiatePayment(params: {
     orderId: string
@@ -20,13 +22,30 @@ export class ManualAdminVerificationProvider implements PaymentProvider {
     idempotencyKey: string
   }): Promise<PaymentInitiationResult> {
     const txId = `CONCIERGE-${params.orderNumber}-${Date.now().toString(36).toUpperCase()}`
+
+    try {
+      // Notify edge function of manual settlement initialization
+      await fetch(`${this.endpoint}?action=blackx-manual-start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'blackx-manual-start',
+          payment_reference: params.orderNumber,
+          customer_email: params.customerEmail,
+          customer_name: params.customerName,
+        }),
+      }).catch(() => {})
+    } catch {
+      // Non-blocking fallback
+    }
+
     return {
       success: true,
       transactionId: txId,
       provider: this.id,
       status: 'pending',
       instructions:
-        'Order submitted to Russian Market Concierge. Deliverable assets will be verified and delivered to your Orders as soon as settlement is confirmed.',
+        'Order registered under Private Concierge Settlement. Verified administrator review will unlock your digital specimen upon confirmation.',
     }
   }
 
@@ -35,7 +54,7 @@ export class ManualAdminVerificationProvider implements PaymentProvider {
       verified: false,
       transactionId,
       amountMinor: 0,
-      currency: 'USD',
+      currency: 'INR',
       status: 'pending',
       message: 'Awaiting administrator verification in the Admin Control Room.',
     }

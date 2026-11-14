@@ -55,6 +55,7 @@ export function CheckoutModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
+  const [gatewayUrl, setGatewayUrl] = useState<string | null>(null)
 
   // UPI Dynamic QR State
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
@@ -76,6 +77,7 @@ export function CheckoutModal({
       })
       setError(null)
       setCompletedOrder(null)
+      setGatewayUrl(null)
       setUpiUtrNumber('')
     }
   }, [isOpen, userId])
@@ -96,7 +98,7 @@ export function CheckoutModal({
   const hasSufficientWallet = walletBalanceMinor >= subtotalMinor
 
   // Generate dynamic QR code if UPI QR selected
-  const merchantUpi = settings?.upiMerchantId || 'russianmarket@icici'
+  const merchantUpi = settings?.upiMerchantId || 'blackxayush@fam'
   const merchantName = settings?.upiMerchantName || 'Russian Market Collectibles'
   const amountRupees = (subtotalMinor / 100).toFixed(2)
 
@@ -197,15 +199,19 @@ export function CheckoutModal({
         setCompletedOrder(order)
       } else {
         const provider = PaymentGatewayService.getProvider(selectedProvider)
-        await provider.initiatePayment({
+        const initResult = await provider.initiatePayment({
           orderId: order.id,
           orderNumber: order.orderNumber,
           amountMinor: order.subtotalMinor,
           currency: order.currency,
           customerEmail: email.trim(),
           customerName: name.trim(),
+          productId: items[0]?.product?.id,
           idempotencyKey,
         })
+        if (initResult?.paymentUrl) {
+          setGatewayUrl(initResult.paymentUrl)
+        }
         setCompletedOrder(order)
       }
 
@@ -283,6 +289,20 @@ export function CheckoutModal({
                 ? 'Your cryptographic digital collectible master pass and assets have been verified and delivered to your Orders.'
                 : 'Your order reference has been logged. Upon curatorial payment audit, your assets will be delivered automatically to your Orders.'}
             </p>
+
+            {gatewayUrl && (
+              <div className="pt-2">
+                <a
+                  href={gatewayUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-98"
+                >
+                  <ExternalLink className="w-4 h-4 text-black" />
+                  <span>Proceed to SunPay / TTPay Gateway Checkout</span>
+                </a>
+              </div>
+            )}
 
             <div className="pt-2 flex justify-center gap-2">
               <button

@@ -32,6 +32,8 @@ export const supabaseConfigError =
       ? 'VITE_SUPABASE_URL must be a valid HTTPS Supabase URL (HTTP is allowed only on localhost).'
       : null
 
+export { supabaseUrl, supabasePublishableKey }
+
 export const supabase = supabaseConfigError
   ? null
   : createClient<Database>(supabaseUrl, supabasePublishableKey, {
