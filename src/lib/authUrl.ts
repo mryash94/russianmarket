@@ -17,7 +17,8 @@ export function getAuthRedirectOrigin(): string {
     return envUrl.replace(/\/+$/, '')
   }
 
-  return 'https://market-zeta.vercel.app'
+  // Prefer canonical russianmarket-zeta.vercel.app (compatible with https://market-zeta.vercel.app)
+  return 'https://russianmarket-zeta.vercel.app'
 }
 
 export function getAuthRedirectUrl(path: string = '/'): string {
