@@ -2,6 +2,9 @@ import { useState, useMemo } from 'react'
 import {
   Search,
   ArrowRight,
+  ChevronDown,
+  X,
+  Eye,
 } from 'lucide-react'
 import { CollectibleCardVisual } from '../../components/CollectibleCardVisual'
 import { CollectibleCardCarousel } from '../../components/CollectibleCardCarousel'
@@ -15,7 +18,7 @@ type CatalogPageProps = {
   initialSearchQuery?: string
 }
 
-// Exactly 3 Categories as mandated
+// Exactly 3 Categories as mandated (plus All Cards)
 const CATEGORIES: { id: CardCategory | 'all'; label: string }[] = [
   { id: 'all', label: 'All Cards' },
   { id: 'VISA', label: 'VISA' },
@@ -46,7 +49,8 @@ export function CatalogPage({
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q),
+          p.category.toLowerCase().includes(q) ||
+          p.sku.toLowerCase().includes(q),
       )
     }
 
@@ -75,8 +79,8 @@ export function CatalogPage({
   }, [products, selectedCategory, searchQuery, sortBy, priceRange])
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Featured Carousel */}
+    <div className="space-y-6">
+      {/* Featured 3D Showcase Carousel */}
       <CollectibleCardCarousel
         products={products}
         onSelectProduct={onSelectProduct}
@@ -84,20 +88,20 @@ export function CatalogPage({
       />
 
       {/* Product Discovery & Category Filters */}
-      <div id="catalogue-section" className="space-y-4 pt-1">
+      <div id="catalogue-section" className="space-y-3.5 pt-2">
         {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 className="font-space text-xl sm:text-2xl font-bold text-white tracking-tight">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-space text-lg sm:text-2xl font-bold text-white tracking-tight">
             Collectible Catalogue
           </h2>
 
-          <span className="font-mono-code text-xs text-slate-400">
+          <span className="font-mono-code text-[11px] sm:text-xs text-slate-400">
             Showing <strong className="text-cyan-400">{filteredProducts.length}</strong> Editions
           </span>
         </div>
 
-        {/* 3 Categories Filter Tabs (VISA | MASTERCARD | RUPAY) */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {/* 3 Categories Filter Tabs (Smooth horizontal scroll on mobile, no clipping) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none -mx-1 px-1">
           {CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat.id
             return (
@@ -105,7 +109,7 @@ export function CatalogPage({
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl font-mono-code text-xs font-bold uppercase tracking-wider transition-all border ${
+                className={`flex-shrink-0 px-3.5 sm:px-4 py-2 rounded-xl font-mono-code text-xs font-bold uppercase tracking-wider transition-all border whitespace-nowrap ${
                   isSelected
                     ? cat.id === 'VISA'
                       ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
@@ -123,54 +127,73 @@ export function CatalogPage({
           })}
         </div>
 
-        {/* Filter Toolbar (Search, Price & Sorting) */}
-        <div className="p-3 rounded-2xl glass-panel border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        {/* Filter Toolbar (Search, Price & Sorting with guaranteed screen fit) */}
+        <div className="p-3 sm:p-4 rounded-2xl glass-panel border border-white/[0.08] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           {/* Quick Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter by name..."
-              className="w-full glass-input pl-8 pr-3 py-1.5 rounded-xl text-xs placeholder:text-slate-500"
+              className="w-full glass-input pl-8 pr-7 py-2 rounded-xl text-xs sm:text-sm placeholder:text-slate-500 focus:border-cyan-400"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                aria-label="Clear filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            {/* Price Filter (INR) */}
-            <select
-              value={priceRange}
-              onChange={(e) => setPriceRange(e.target.value as any)}
-              className="glass-input px-2.5 py-1.5 rounded-xl text-xs bg-slate-950 text-slate-300 border-white/[0.08] flex-1 sm:flex-none"
-            >
-              <option value="all">All Prices</option>
-              <option value="under_1000">Under ₹1,000</option>
-              <option value="1000_1500">₹1,000 – ₹1,500</option>
-              <option value="above_1500">Above ₹1,500</option>
-            </select>
+          {/* Responsive 2-Column Grid on Mobile, Flex on Desktop */}
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5">
+            {/* Price Filter (INR) — perfectly constrained to screen */}
+            <div className="relative min-w-0 w-full sm:w-36">
+              <select
+                value={priceRange}
+                onChange={(e) => setPriceRange(e.target.value as any)}
+                aria-label="Filter by price range"
+                className="w-full appearance-none glass-input pl-3 pr-7 py-2 rounded-xl text-xs bg-[#090d16] text-slate-200 border-white/[0.1] focus:border-cyan-400 font-medium truncate cursor-pointer"
+              >
+                <option value="all">All Prices</option>
+                <option value="under_1000">Under ₹1,000</option>
+                <option value="1000_1500">₹1,000 – ₹1,500</option>
+                <option value="above_1500">Above ₹1,500</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            </div>
 
-            {/* Sort Order */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="glass-input px-2.5 py-1.5 rounded-xl text-xs bg-slate-950 text-slate-300 border-white/[0.08] flex-1 sm:flex-none"
-            >
-              <option value="newest">Newest</option>
-              <option value="popular">Popular</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
+            {/* Sort Order — perfectly aligned */}
+            <div className="relative min-w-0 w-full sm:w-40">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                aria-label="Sort editions"
+                className="w-full appearance-none glass-input pl-3 pr-7 py-2 rounded-xl text-xs bg-[#090d16] text-slate-200 border-white/[0.1] focus:border-cyan-400 font-medium truncate cursor-pointer"
+              >
+                <option value="newest">Newest</option>
+                <option value="popular">Popular</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Product Cards Grid: Universal Card Design */}
       {filteredProducts.length === 0 ? (
-        <div className="p-12 text-center glass-panel rounded-2xl border border-white/[0.08] my-6">
-          <p className="text-sm text-slate-300 font-medium mb-1">No cards found</p>
+        <div className="p-10 text-center glass-panel rounded-2xl border border-white/[0.08] my-6">
+          <p className="text-sm text-slate-300 font-medium mb-1">No collectible editions found</p>
           <p className="text-xs text-slate-500 mb-4 font-sans">
-            Try adjusting your search query or category filter.
+            Try adjusting your search query, price filter, or category selection.
           </p>
           <button
             type="button"
@@ -206,14 +229,14 @@ export function CatalogPage({
               >
                 {/* 1. Universal Interactive 3D Collectible Card Visual */}
                 <div
-                  className="mb-3.5 cursor-pointer"
+                  className="mb-3.5 flex justify-center cursor-pointer"
                   onClick={() => onSelectProduct(product)}
                 >
                   <CollectibleCardVisual product={product} size="md" interactive={true} />
                 </div>
 
-                {/* 2. Compact Product Information (Strictly: Name, Category, Price, Original Price, Availability, BUY NOW) */}
-                <div className="space-y-3">
+                {/* 2. Compact Product Information */}
+                <div className="space-y-3 pt-1">
                   {/* Category & Availability Row */}
                   <div className="flex items-center justify-between gap-2">
                     <span
@@ -243,8 +266,8 @@ export function CatalogPage({
                     {product.name}
                   </h3>
 
-                  {/* Price & Action Row */}
-                  <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2">
+                  {/* Price & Action Row (Consistent button heights, never overlaps) */}
+                  <div className="pt-2.5 border-t border-white/[0.08] flex items-center justify-between gap-2">
                     <div>
                       <div className="flex items-baseline gap-1.5">
                         <span className="font-space font-extrabold text-lg text-white">
@@ -258,12 +281,22 @@ export function CatalogPage({
                       </div>
                     </div>
 
-                    <div className="flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onSelectProduct(product)}
+                        className="h-9 px-3 rounded-xl btn-ghost text-xs font-semibold flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span className="hidden xs:inline sm:inline">Details</span>
+                      </button>
+
                       <button
                         type="button"
                         disabled={!isAvailable}
                         onClick={() => onQuickBuy(product)}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-primary text-xs font-bold active:scale-95 disabled:opacity-50 transition-all shadow-md"
+                        className="h-9 px-3.5 sm:px-4 rounded-xl btn-primary text-xs font-bold flex items-center gap-1.5 active:scale-95 disabled:opacity-50 transition-all shadow-md"
                       >
                         <span>BUY NOW</span>
                         <ArrowRight className="w-3 h-3" />
@@ -279,3 +312,5 @@ export function CatalogPage({
     </div>
   )
 }
+
+export default CatalogPage

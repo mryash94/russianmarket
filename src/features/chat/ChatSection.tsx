@@ -140,8 +140,8 @@ export function ChatSection({ userId }: ChatSectionProps) {
         )}
       </div>
 
-      {/* Main Chat Container */}
-      <div className="glass-panel-elevated rounded-3xl border border-white/[0.12] flex flex-col h-[580px] overflow-hidden shadow-2xl">
+      {/* Main Chat Container (Responsive height on mobile) */}
+      <div className="glass-panel-elevated rounded-3xl border border-white/[0.12] flex flex-col h-[60vh] min-h-[440px] max-h-[640px] overflow-hidden shadow-2xl">
         {/* Top Chat Bar */}
         <div className="p-3.5 sm:p-4 border-b border-white/[0.08] flex items-center justify-between bg-white/[0.02] flex-shrink-0">
           <div className="flex items-center gap-3">

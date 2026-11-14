@@ -28,18 +28,18 @@ export function Navigation({
     }
   }
 
-  // Strictly the 5 requested navigation items with luxury icons and micro-fx
+  // Strictly the 5 requested navigation items with luxury, legible icons and micro-fx
   const items: LiquidNavItem[] = [
     {
       label: 'CARDS',
       icon: (
         <svg
           viewBox="0 0 24 24"
-          width="18"
-          height="18"
+          width="21"
+          height="21"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
@@ -56,11 +56,11 @@ export function Navigation({
       icon: (
         <svg
           viewBox="0 0 24 24"
-          width="18"
-          height="18"
+          width="21"
+          height="21"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
@@ -76,11 +76,11 @@ export function Navigation({
         <span className="relative inline-flex items-center justify-center">
           <svg
             viewBox="0 0 24 24"
-            width="18"
-            height="18"
+            width="21"
+            height="21"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.8"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
@@ -89,7 +89,7 @@ export function Navigation({
           </svg>
           {unreadChatCount > 0 && (
             <span
-              className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse"
+              className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.9)] animate-pulse"
               aria-label={`${unreadChatCount} unread message${unreadChatCount > 1 ? 's' : ''}`}
             />
           )}
@@ -102,11 +102,11 @@ export function Navigation({
       icon: (
         <svg
           viewBox="0 0 24 24"
-          width="18"
-          height="18"
+          width="21"
+          height="21"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
@@ -123,11 +123,11 @@ export function Navigation({
       icon: (
         <svg
           viewBox="0 0 24 24"
-          width="18"
-          height="18"
+          width="21"
+          height="21"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
@@ -150,20 +150,20 @@ export function Navigation({
           onChange={handleIndexChange}
           tone="dark"
           sound={false}
-          className="shadow-lg shadow-black/40"
+          className="shadow-xl shadow-black/60"
         />
       </div>
     )
   }
 
-  // Mobile Bottom Floating variant (safe-area compliant, centered, touch-friendly)
+  // Mobile Bottom Floating variant (safe-area compliant, enlarged pill, centered touch targets)
   if (variant === 'mobile') {
     return (
       <nav
         aria-label="Mobile Bottom Navigation"
-        className={`md:hidden fixed bottom-3 inset-x-0 z-50 flex justify-center pointer-events-none px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] ${className}`}
+        className={`md:hidden fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-3 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
       >
-        <div className="pointer-events-auto filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
+        <div className="pointer-events-auto filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)]">
           <LiquidNavbar
             items={items}
             active={activeIndex}
@@ -176,7 +176,7 @@ export function Navigation({
     )
   }
 
-  // Default adaptive variant (renders inline on desktop and floating at bottom on mobile)
+  // Default adaptive variant
   return (
     <>
       <div className={`hidden md:inline-flex items-center justify-center ${className}`}>
@@ -186,14 +186,14 @@ export function Navigation({
           onChange={handleIndexChange}
           tone="dark"
           sound={false}
-          className="shadow-lg shadow-black/40"
+          className="shadow-xl shadow-black/60"
         />
       </div>
       <nav
         aria-label="Mobile Bottom Navigation"
-        className={`md:hidden fixed bottom-3 inset-x-0 z-50 flex justify-center pointer-events-none px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.25rem)] ${className}`}
+        className={`md:hidden fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-3 pb-[env(safe-area-inset-bottom,0px)] ${className}`}
       >
-        <div className="pointer-events-auto filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]">
+        <div className="pointer-events-auto filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.95)]">
           <LiquidNavbar
             items={items}
             active={activeIndex}

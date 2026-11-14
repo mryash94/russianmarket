@@ -126,8 +126,8 @@ export function App() {
         onMarkNotificationRead={handleMarkNotificationRead}
       />
 
-      {/* 2. Main Content View Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 pt-4 pb-24 md:pb-12">
+      {/* 2. Main Content View Area with ample safe bottom clearance */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 pt-4 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] md:pb-16">
         {activeSection === 'cards' && (
           <CatalogPage
             products={products}
@@ -153,8 +153,14 @@ export function App() {
         )}
       </main>
 
+      {/* Subtle Mobile Bottom Ambient Gradient to prevent hard text collisions under floating navbar */}
+      <div
+        className="md:hidden fixed bottom-0 inset-x-0 h-28 pointer-events-none bg-gradient-to-t from-[#030712] via-[#030712]/80 to-transparent z-40"
+        aria-hidden="true"
+      />
+
       {/* 3. Navigation Controls */}
-      {/* Mobile Fixed Bottom Bar (safe-area optimized) */}
+      {/* Mobile Fixed Bottom Bar (safe-area optimized, enlarged touch targets) */}
       <Navigation
         activeSection={activeSection}
         onChange={setActiveSection}

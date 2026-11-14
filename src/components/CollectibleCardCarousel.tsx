@@ -151,12 +151,12 @@ export function CollectibleCardCarousel({
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions (Consistent h-10 button heights) */}
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => onSelectProduct(active)}
-                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl btn-ghost text-xs font-semibold text-slate-300 hover:text-white border border-white/[0.08]"
+                className="h-10 flex items-center justify-center gap-1.5 px-3 rounded-xl btn-ghost text-xs font-semibold text-slate-300 hover:text-white border border-white/[0.08] transition-colors"
               >
                 <Eye className="w-3.5 h-3.5" />
                 <span>Details</span>
@@ -166,7 +166,7 @@ export function CollectibleCardCarousel({
                 type="button"
                 disabled={!isAvailable}
                 onClick={() => onQuickBuy(active)}
-                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl btn-primary text-xs font-bold active:scale-95 disabled:opacity-50 transition-all shadow-md"
+                className="h-10 flex items-center justify-center gap-1.5 px-3 rounded-xl btn-primary text-xs font-bold active:scale-95 disabled:opacity-50 transition-all shadow-md"
               >
                 <span>BUY NOW</span>
                 <ArrowRight className="w-3.5 h-3.5" />
