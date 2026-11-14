@@ -47,7 +47,7 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
   const [displayName, setDisplayName] = useState(() => {
     return user?.user_metadata?.full_name || user?.user_metadata?.name || 'Valued Collector'
   })
-  const [vaultAlerts, setVaultAlerts] = useState(true)
+  const [orderAlerts, setOrderAlerts] = useState(true)
   const [transactionAlerts, setTransactionAlerts] = useState(true)
   const [activeModalPolicy, setActiveModalPolicy] = useState<'privacy' | 'refund' | 'custody' | null>(null)
   const [savedSuccess, setSavedSuccess] = useState(false)
@@ -81,7 +81,7 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
             </div>
             <h3 className="font-space font-semibold text-base text-white">Sign In to RUSSIAN MARKET</h3>
             <p className="text-xs text-white/60 max-w-md mx-auto">
-              Authenticate via Google or email to link your private Digital Vault, access order history, and manage notifications.
+              Authenticate via Google or email to access your order deliverables, wallet balance, and notifications.
             </p>
           </div>
           <AuthPanel />
@@ -230,7 +230,7 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
           <div className="flex items-center justify-between py-3">
             <div className="pr-4">
               <span className="font-space font-medium text-xs text-[#ededed] block">
-                Digital Vault Delivery Alerts
+                Order Deliverable Alerts
               </span>
               <span className="text-[11px] text-[#9499a6] font-sans">
                 Immediate notification upon verification and release of cryptographic collectibles.
@@ -238,8 +238,8 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
             </div>
             <input
               type="checkbox"
-              checked={vaultAlerts}
-              onChange={(e) => setVaultAlerts(e.target.checked)}
+              checked={orderAlerts}
+              onChange={(e) => setOrderAlerts(e.target.checked)}
               className="w-4 h-4 accent-cyan-400 cursor-pointer flex-shrink-0"
             />
           </div>
@@ -313,7 +313,7 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
                 Security Architecture
               </span>
               <span className="text-[10px] text-[#9499a6] font-sans">
-                Encryption & vault audit
+                Encryption & ledger audit
               </span>
             </div>
             <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -352,12 +352,12 @@ export function SettingsSection({ isAdmin, onToggleAdmin }: SettingsSectionProps
                 <>
                   <p>1. Russian Market practices strict data minimization. We never collect, process, or store payment card numbers, expiry dates, or CVV security codes.</p>
                   <p>2. Collector accounts are authenticated via Google OAuth or encrypted Supabase Auth sessions.</p>
-                  <p>3. Collector identifiers are used exclusively for digital asset vault settlement and encrypted download entitlement verification.</p>
+                  <p>3. Collector identifiers are used exclusively for digital asset order settlement and encrypted download entitlement verification.</p>
                 </>
               )}
               {activeModalPolicy === 'refund' && (
                 <>
-                  <p>1. All digital collectible passes and artwork files are cryptographically dispatched to the customer's private Digital Vault immediately upon verified payment settlement.</p>
+                  <p>1. All digital collectible passes and artwork files are cryptographically dispatched to the customer's verified Orders immediately upon payment settlement.</p>
                   <p>2. Due to the cryptographic nature of instantaneous digital delivery, completed orders cannot be reversed once the digital pass is minted.</p>
                   <p>3. In the unlikely event of network interruption or delivery error, our Concierge service provides instant re-issuance.</p>
                 </>

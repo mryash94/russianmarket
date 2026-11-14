@@ -1440,7 +1440,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           {/* ======================================================== */}
           {activeTab === 'notifications' && (
             <div className="p-6 rounded-2xl bg-[#0c0e12] border border-white/5 space-y-4">
-              <h2 className="text-base font-bold text-white">Broadcast Vault Notification</h2>
+              <h2 className="text-base font-bold text-white">Broadcast Collector Notification</h2>
               <p className="text-xs text-white/60">Dispatch real-time notification to all active collectors.</p>
               <div className="space-y-3 font-mono text-xs max-w-lg">
                 <input

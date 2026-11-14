@@ -5,7 +5,6 @@ import { CatalogPage } from '../features/catalog/CatalogPage'
 import { ProductDetailsDialog } from '../features/catalog/ProductDetailsDialog'
 import { CheckoutModal } from '../features/commerce/CheckoutModal'
 import { MyOrdersModal } from '../features/orders/MyOrdersModal'
-import { DigitalVaultModal } from '../features/vault/DigitalVaultModal'
 import { VideoSection } from '../features/video/VideoSection'
 import { ChatSection } from '../features/chat/ChatSection'
 import { WalletSection } from '../features/wallet/WalletSection'
@@ -74,35 +73,31 @@ export function App() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isOrdersOpen, setIsOrdersOpen] = useState(false)
-  const [isVaultOpen, setIsVaultOpen] = useState(false)
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   // Realtime Badges & Data
   const [searchQuery, setSearchQuery] = useState('')
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [ordersCount, setOrdersCount] = useState(0)
-  const [vaultCount, setVaultCount] = useState(0)
   const [unreadChatCount, setUnreadChatCount] = useState(0)
 
   // Load Initial Store Data
   const refreshStoreData = useCallback(async () => {
     try {
-      const [pList, nList, oList, vList, chatCount] = await Promise.all([
+      const [pList, nList, oList, chatCount] = await Promise.all([
         storeEngine.getProducts(),
         storeEngine.getNotifications(userId),
-        storeEngine.getOrders(userId),
-        storeEngine.getCustomerEntitlements(userId),
+        storeEngine.getOrders(userId, userEmail),
         storeEngine.getUnreadChatCount(userId),
       ])
       setProducts(pList)
       setNotifications(nList)
       setOrdersCount(oList.length)
-      setVaultCount(vList.length)
       setUnreadChatCount(chatCount)
     } catch (err) {
       console.error('Failed to load store data:', err)
     }
-  }, [userId])
+  }, [userId, userEmail])
 
   useEffect(() => {
     void refreshStoreData()
@@ -260,7 +255,6 @@ export function App() {
         unreadCount={unreadNotificationsCount}
         unreadChatCount={unreadChatCount}
         ordersCount={ordersCount}
-        vaultCount={vaultCount}
         notifications={notifications}
         isAdmin={isAdmin}
         isAdminView={false}
@@ -268,10 +262,6 @@ export function App() {
         onOpenOrders={() => {
           if (!user) setIsAuthModalOpen(true)
           else setIsOrdersOpen(true)
-        }}
-        onOpenVault={() => {
-          if (!user) setIsAuthModalOpen(true)
-          else setIsVaultOpen(true)
         }}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
@@ -355,22 +345,16 @@ export function App() {
         isOpen={isOrdersOpen}
         onClose={() => setIsOrdersOpen(false)}
         userId={userId}
-        onOpenVault={() => setIsVaultOpen(true)}
-      />
-
-      {/* Digital Vault Modal */}
-      <DigitalVaultModal
-        isOpen={isVaultOpen}
-        onClose={() => setIsVaultOpen(false)}
-        userId={userId}
+        userEmail={userEmail}
       />
 
       {/* Sovereign Auth Modal (Prompted on BUY NOW for Guests) */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => setIsAuthModalOpen(false)}
         title="Sign In to Complete Acquisition"
-        subtitle="Authenticate via Google or email to complete your collectible purchase and access your private vault."
+        subtitle="Create an account or sign in to complete your collectible acquisition and access your order deliverables."
       />
     </div>
   )

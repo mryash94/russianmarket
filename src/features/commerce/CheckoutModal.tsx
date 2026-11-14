@@ -259,7 +259,7 @@ export function CheckoutModal({
                 <span className={`font-medium uppercase text-[11px] ${
                   completedOrder.status === 'payment_verified' ? 'text-[#34d399]' : 'text-[#fbbf24]'
                 }`}>
-                  {completedOrder.status === 'payment_verified' ? 'Settled & In Vault' : 'Pending Verification'}
+                  {completedOrder.status === 'payment_verified' ? 'Settled & Delivered' : 'Pending Verification'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -280,8 +280,8 @@ export function CheckoutModal({
 
             <p className="text-xs text-[#9499a6] max-w-sm mx-auto font-sans leading-relaxed">
               {completedOrder.status === 'payment_verified'
-                ? 'Your cryptographic digital collectible master assets have been delivered to your Digital Vault.'
-                : 'Your order reference has been logged. Upon curatorial payment audit, your assets will unlock automatically in your Vault.'}
+                ? 'Your cryptographic digital collectible master pass and assets have been verified and delivered to your Orders.'
+                : 'Your order reference has been logged. Upon curatorial payment audit, your assets will be delivered automatically to your Orders.'}
             </p>
 
             <div className="pt-2 flex justify-center gap-2">

@@ -297,7 +297,7 @@ export function CustomerDrilldownModal({
                       <span className="text-emerald-400 font-bold block">{formatINR(o.subtotalMinor)}</span>
                       <span className="text-[10px] text-white/40">
                         {o.status === 'payment_verified' || o.status === 'completed'
-                          ? 'Vault Unlocked'
+                          ? 'Verified & Delivered'
                           : 'Awaiting Audit'}
                       </span>
                     </div>

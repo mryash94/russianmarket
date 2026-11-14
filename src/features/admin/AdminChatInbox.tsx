@@ -449,10 +449,10 @@ export function AdminChatInbox({ onNotify }: AdminChatInboxProps) {
                   Quick reply:
                 </span>
                 {[
-                  'Payment received. Vault asset unlocked.',
+                  'Payment received. Deliverable assets unlocked.',
                   'Please provide your 12-digit bank UTR reference.',
                   'Transaction verified by administrator.',
-                  'High-res master assets are available in your Vault.',
+                  'High-res master passes are available in your Orders.',
                 ].map((canned, idx) => (
                   <button
                     key={idx}

@@ -8,7 +8,7 @@
     "dev": "vite --host --port 5173 --strictPort",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node scripts/test-v3-enterprise.mjs",
+    "test": "node scripts/test-v4-complete.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

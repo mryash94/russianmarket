@@ -248,7 +248,7 @@ export function AddMoneyModal({
             </div>
             <div>
               <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase">
-                INSTANT VAULT SETTLEMENT
+                INSTANT WALLET SETTLEMENT
               </span>
               <h2 id={`${modalId}-title`} className="text-base font-bold text-white tracking-tight">
                 Add Funds via UPI

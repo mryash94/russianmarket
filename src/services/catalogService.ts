@@ -422,7 +422,7 @@ function mapProductRows(
         ? available > 0
           ? `${available} available`
           : 'Out of stock'
-        : 'Available in Vault',
+        : 'Instant Delivery',
       availability: available > 0 ? 'in_stock' : 'sold_out',
       editionNumber: row.artwork_number,
       editionTotal: 100,

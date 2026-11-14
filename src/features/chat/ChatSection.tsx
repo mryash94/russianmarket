@@ -29,7 +29,7 @@ export function ChatSection({ userId, userEmail: _userEmail = 'collector@russian
   const [activeConvId, setActiveConvId] = useState<string>('')
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
+  const [isTyping] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
 
   // Attachment state
@@ -155,21 +155,6 @@ export function ChatSection({ userId, userEmail: _userEmail = 'collector@russian
         textareaRef.current.style.height = 'auto'
       }
 
-      // Simulated curator reply if first message
-      if (!activeConv || activeConv.messages.length === 0) {
-        setIsTyping(true)
-        setTimeout(async () => {
-          setIsTyping(false)
-          shouldAutoScrollRef.current = true
-          await storeEngine.sendMessage({
-            conversationId: convId,
-            senderType: 'admin',
-            body: 'Your message has been logged in our secure curatorial register. A senior officer will verify your vault status shortly.',
-          })
-          await reloadConversations()
-        }, 1200)
-      }
-
       await reloadConversations()
     } catch (err) {
       setSendError(err instanceof Error ? err.message : 'Message transmission failed')
@@ -267,7 +252,7 @@ export function ChatSection({ userId, userEmail: _userEmail = 'collector@russian
             <div className="flex flex-wrap gap-1.5">
               {[
                 'Verify my recent order settlement',
-                'How do I download my Vault archive?',
+                'How do I download my order deliverable pass?',
                 'Are edition numbers guaranteed unique?',
                 'I need curator assistance with payment',
               ].map((topic, i) => (

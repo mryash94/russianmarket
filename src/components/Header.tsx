@@ -5,7 +5,6 @@ import {
   FileCheck,
   X,
   SlidersHorizontal,
-  Archive,
 } from 'lucide-react'
 import { RussianMarketLogo } from './RussianMarketLogo'
 import { Navigation, type AppSection } from './Navigation'
@@ -18,14 +17,12 @@ type HeaderProps = {
   unreadCount: number
   unreadChatCount?: number
   ordersCount: number
-  vaultCount?: number
   notifications: NotificationItem[]
   isAdmin: boolean
   isAdminView: boolean
   onToggleAdminView: () => void
   onOpenCart?: () => void
   onOpenOrders: () => void
-  onOpenVault?: () => void
   onSearchChange: (query: string) => void
   searchQuery: string
   onMarkNotificationRead: (id: string) => void
@@ -39,13 +36,11 @@ export function Header({
   unreadCount,
   unreadChatCount = 0,
   ordersCount,
-  vaultCount = 0,
   notifications,
   isAdmin,
   isAdminView,
   onToggleAdminView,
   onOpenOrders,
-  onOpenVault,
   onSearchChange,
   searchQuery,
   onMarkNotificationRead,
@@ -131,24 +126,6 @@ export function Header({
             <Search className="w-4 h-4" />
           </button>
 
-          {/* Digital Vault Shortcut */}
-          {onOpenVault && (
-            <button
-              type="button"
-              onClick={onOpenVault}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/[0.05] border border-white/[0.08] transition-colors"
-              title="Digital Vault"
-            >
-              <Archive className="w-3.5 h-3.5 text-slate-400" />
-              <span className="hidden sm:inline text-xs font-medium text-slate-300">Vault</span>
-              {vaultCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded bg-white/[0.08] text-white font-mono-code text-[10px] font-medium tabular-nums">
-                  {vaultCount}
-                </span>
-              )}
-            </button>
-          )}
-
           {/* My Orders Shortcut */}
           <button
             type="button"
@@ -182,10 +159,25 @@ export function Header({
             {showNotifDropdown && (
               <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#12151c] rounded-xl p-3 shadow-2xl z-50 border border-white/[0.1] animate-in fade-in zoom-in-95">
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.07]">
-                  <span className="text-xs font-semibold text-white">Notifications</span>
-                  <span className="text-[10px] font-mono-code text-slate-400 tabular-nums">
-                    {unreadCount} unread
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-mono-code text-[9px] tabular-nums">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void storeEngine.markAllNotificationsRead(user ? (user as any).id : null)
+                      }}
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 font-sans transition-colors"
+                    >
+                      Mark all read
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-60 overflow-y-auto space-y-1.5 pr-0.5">
                   {notifications.length === 0 ? (
@@ -196,11 +188,23 @@ export function Header({
                     notifications.map((n) => (
                       <div
                         key={n.id}
-                        onClick={() => onMarkNotificationRead(n.id)}
+                        onClick={() => {
+                          onMarkNotificationRead(n.id)
+                          setShowNotifDropdown(false)
+                          if (n.notificationType === 'order' || n.title.toLowerCase().includes('order')) {
+                            onOpenOrders()
+                          } else if (n.notificationType === 'support' || n.title.toLowerCase().includes('concierge') || n.title.toLowerCase().includes('chat')) {
+                            onSectionChange('chat')
+                          } else if (n.title.toLowerCase().includes('wallet') || n.title.toLowerCase().includes('deposit') || n.title.toLowerCase().includes('fund')) {
+                            onSectionChange('wallet')
+                          } else {
+                            onOpenOrders()
+                          }
+                        }}
                         className={`p-2 rounded-lg cursor-pointer transition-colors ${
                           !n.readAt
-                            ? 'bg-white/[0.05] border border-white/[0.08]'
-                            : 'bg-transparent opacity-60 hover:opacity-100'
+                            ? 'bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08]'
+                            : 'bg-transparent opacity-60 hover:opacity-100 hover:bg-white/[0.03]'
                         }`}
                       >
                         <div className="flex items-center justify-between">

@@ -448,15 +448,75 @@ class StoreEngine {
 
   // --- ORDERS ---
 
-  async getOrders(userId?: string | null): Promise<Order[]> {
+  async getOrders(userId?: string | null, userEmail?: string | null): Promise<Order[]> {
     const raw = localStorage.getItem(STORAGE_KEYS.ORDERS)
-    let orders: Order[] = raw ? JSON.parse(raw) : []
+    let localOrders: Order[] = raw ? JSON.parse(raw) : []
 
     if (userId) {
-      orders = orders.filter((o) => o.userId === userId)
+      localOrders = localOrders.filter((o) => o.userId === userId || (userEmail && o.customerEmail === userEmail))
     }
 
-    return orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    if (supabase) {
+      try {
+        let query = supabase
+          .from('orders')
+          .select('*, items:order_items(*)')
+          .order('created_at', { ascending: false })
+
+        if (userId && isUuid(userId)) {
+          query = query.eq('user_id', userId)
+        } else if (userEmail) {
+          query = query.eq('customer_email', userEmail)
+        }
+
+        const { data, error } = await query
+        if (!error && data && data.length > 0) {
+          const remoteOrders: Order[] = data.map((r: any) => ({
+            id: r.id,
+            orderNumber: r.order_number,
+            userId: r.user_id,
+            status: r.status,
+            subtotalMinor: Number(r.subtotal_minor),
+            currency: r.currency || 'INR',
+            customerEmail: r.customer_email || '',
+            customerName: r.customer_name || 'Valued Collector',
+            paymentMethod: r.payment_method,
+            paymentReference: r.payment_reference,
+            idempotencyKey: r.idempotency_key,
+            adminNotes: r.admin_notes,
+            redemptionToken: r.redemption_token,
+            isRedeemed: r.is_redeemed,
+            redeemedAt: r.redeemed_at,
+            redeemedBy: r.redeemed_by,
+            verifiedAt: r.verified_at,
+            completedAt: r.completed_at,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+            items: (r.items || []).map((it: any) => ({
+              productId: it.product_id,
+              productName: it.product_name,
+              sku: it.sku,
+              collection: it.collection,
+              unitPriceMinor: Number(it.unit_price_minor),
+              quantity: it.quantity,
+              digitalAssetName: it.digital_asset_name,
+            })),
+          }))
+
+          const merged = [...remoteOrders]
+          for (const l of localOrders) {
+            if (!merged.some((m) => m.orderNumber === l.orderNumber || m.id === l.id)) {
+              merged.push(l)
+            }
+          }
+          return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        }
+      } catch (err) {
+        console.warn('Supabase getOrders warning:', err)
+      }
+    }
+
+    return localOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 
   async getOrderById(orderId: string): Promise<Order | null> {
@@ -507,6 +567,49 @@ class StoreEngine {
       updatedAt: now,
     }
 
+    // Persist to Supabase if authenticated
+    if (supabase && isUuid(params.userId)) {
+      try {
+        const { data: insertedOrder, error: orderErr } = await supabase
+          .from('orders')
+          .insert({
+            order_number: orderNumber,
+            user_id: params.userId,
+            status: 'pending',
+            subtotal_minor: subtotalMinor,
+            currency: 'INR',
+            customer_email: params.customerEmail,
+            customer_name: params.customerName || 'Valued Collector',
+            payment_method: params.paymentMethod,
+            redemption_token: redemptionToken,
+          })
+          .select()
+          .maybeSingle()
+
+        if (!orderErr && insertedOrder) {
+          newOrder.id = insertedOrder.id
+          const itemsPayload = params.items
+            .filter((it) => isUuid(it.productId))
+            .map((it) => ({
+              order_id: insertedOrder.id,
+              product_id: it.productId,
+              product_name: it.productName,
+              sku: it.sku,
+              collection: it.collection,
+              unit_price_minor: it.unitPriceMinor,
+              quantity: it.quantity,
+              digital_asset_name: it.digitalAssetName,
+            }))
+
+          if (itemsPayload.length > 0) {
+            await supabase.from('order_items').insert(itemsPayload)
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase createOrder sync warning:', err)
+      }
+    }
+
     const updated = [newOrder, ...existingOrders]
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updated))
 
@@ -551,6 +654,22 @@ class StoreEngine {
       adminNotes: adminNotes || target.adminNotes,
     }
 
+    if (supabase && isUuid(target.id)) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            status: 'payment_verified',
+            verified_at: now,
+            updated_at: now,
+            admin_notes: adminNotes || target.adminNotes,
+          })
+          .eq('id', target.id)
+      } catch (err) {
+        console.warn('Supabase verifyOrderPayment sync warning:', err)
+      }
+    }
+
     const updatedList = orders.map((o) => (o.id === orderId ? updatedOrder : o))
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updatedList))
 
@@ -575,9 +694,9 @@ class StoreEngine {
     // Notification
     await this.createNotification({
       userId: target.userId,
-      title: 'Payment Verified & Vault Unlocked',
-      body: `Order #${target.orderNumber} is verified. Your digital master assets are now ready for secure download in your Vault.`,
-      notificationType: 'vault',
+      title: 'Payment Verified & Deliverables Ready',
+      body: `Order #${target.orderNumber} is verified. Your digital master collectible pass and assets are now ready in your Orders.`,
+      notificationType: 'order',
     })
 
     this.emit('order_updated', updatedOrder)
@@ -1036,28 +1155,51 @@ class StoreEngine {
 
   async getWalletTransactions(userId?: string | null): Promise<WalletTx[]> {
     const raw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
-    if (!raw) {
-      const initial: WalletTx[] = [
-        {
-          id: 'wtx_init_01',
-          userId: userId || 'demo_collector_user',
-          amountMinor: 500000, // ₹5,000.00
-          transactionType: 'credit',
-          status: 'completed',
-          reference: 'WELCOME-BONUS-INR',
-          description: 'Russian Market Collector Allocation',
-          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        },
-      ]
-      localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(initial))
-      return initial
-    }
+    let list: WalletTx[] = []
     try {
-      const list: WalletTx[] = JSON.parse(raw)
-      return userId ? list.filter((tx) => tx.userId === userId) : list
+      list = raw ? JSON.parse(raw) : []
     } catch {
-      return []
+      list = []
     }
+
+    // Persist & fetch from Supabase if authenticated
+    if (supabase && userId && isUuid(userId)) {
+      try {
+        const { data, error } = await supabase
+          .from('wallet_transactions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+
+        if (!error && data && data.length > 0) {
+          const remoteTxs: WalletTx[] = data.map((r: any) => ({
+            id: r.id,
+            userId: r.user_id,
+            amountMinor: Number(r.amount_minor),
+            transactionType: r.transaction_type,
+            status: r.status,
+            reference: r.reference || '',
+            description: r.description || '',
+            createdAt: r.created_at,
+          }))
+
+          const merged = [...remoteTxs]
+          for (const l of list) {
+            if (l.userId === userId && !merged.some((m) => m.id === l.id || (m.reference && m.reference === l.reference))) {
+              merged.push(l)
+            }
+          }
+          return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        }
+      } catch (err) {
+        console.warn('Supabase getWalletTransactions warning:', err)
+      }
+    }
+
+    if (userId) {
+      return list.filter((tx) => tx.userId === userId)
+    }
+    return list
   }
 
   async getWalletBalance(userId?: string | null): Promise<number> {
@@ -1076,6 +1218,21 @@ class StoreEngine {
       ...tx,
       id: `wtx_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       createdAt: new Date().toISOString(),
+    }
+
+    if (supabase && tx.userId && isUuid(tx.userId)) {
+      try {
+        await supabase.from('wallet_transactions').insert({
+          user_id: tx.userId,
+          amount_minor: tx.amountMinor,
+          transaction_type: tx.transactionType,
+          status: tx.status,
+          reference: tx.reference,
+          description: tx.description,
+        })
+      } catch (err) {
+        console.warn('Supabase recordWalletTransaction sync warning:', err)
+      }
     }
 
     localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify([newTx, ...list]))
@@ -1315,7 +1472,7 @@ class StoreEngine {
         id: 'notif_welcome',
         userId: userId || 'all',
         title: 'Welcome to Russian Market',
-        body: 'Explore the 6 imperial digital collectible editions with encrypted vault delivery.',
+        body: 'Explore the 6 imperial digital collectible editions with encrypted direct delivery.',
         notificationType: 'system',
         readAt: null,
         createdAt: new Date().toISOString(),
@@ -1335,10 +1492,45 @@ class StoreEngine {
     const list: NotificationItem[] = raw ? JSON.parse(raw) : []
     const item = list.find((n) => n.id === id)
     if (item) {
-      item.readAt = new Date().toISOString()
+      const now = new Date().toISOString()
+      item.readAt = now
       localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list))
+      if (supabase && isUuid(id)) {
+        try {
+          await supabase
+            .from('notifications')
+            .update({ read_at: now })
+            .eq('id', id)
+        } catch (err) {
+          console.warn('Supabase markNotificationRead warning:', err)
+        }
+      }
       this.emit('notifications_updated', list)
     }
+  }
+
+  async markAllNotificationsRead(userId?: string | null): Promise<void> {
+    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)
+    const list: NotificationItem[] = raw ? JSON.parse(raw) : []
+    const now = new Date().toISOString()
+    list.forEach((n) => {
+      if (!n.readAt && (!userId || n.userId === userId || n.userId === 'all')) {
+        n.readAt = now
+      }
+    })
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list))
+    if (supabase && userId && isUuid(userId)) {
+      try {
+        await supabase
+          .from('notifications')
+          .update({ read_at: now })
+          .eq('user_id', userId)
+          .is('read_at', null)
+      } catch (err) {
+        console.warn('Supabase markAllNotificationsRead warning:', err)
+      }
+    }
+    this.emit('notifications_updated', list)
   }
 
   async createNotification(notif: Omit<NotificationItem, 'id' | 'createdAt'>): Promise<NotificationItem> {

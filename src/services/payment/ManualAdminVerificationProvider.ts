@@ -26,7 +26,7 @@ export class ManualAdminVerificationProvider implements PaymentProvider {
       provider: this.id,
       status: 'pending',
       instructions:
-        'Order submitted to Russian Market Concierge. Assets will unlock in your Private Vault as soon as settlement is verified by the administrator.',
+        'Order submitted to Russian Market Concierge. Deliverable assets will be verified and delivered to your Orders as soon as settlement is confirmed.',
     }
   }
 

@@ -13,7 +13,7 @@ export function HowToBanners({ onOpenSupport }: HowToBannersProps) {
       icon: ShieldCheck,
     },
     {
-      title: 'Vault Delivery',
+      title: 'Direct Delivery',
       subtitle: 'Encrypted master archive files',
       icon: Download,
     },

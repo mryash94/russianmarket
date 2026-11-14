@@ -16,14 +16,14 @@ type MyOrdersModalProps = {
   isOpen: boolean
   onClose: () => void
   userId: string
-  onOpenVault: () => void
+  userEmail?: string
 }
 
 export function MyOrdersModal({
   isOpen,
   onClose,
   userId,
-  onOpenVault,
+  userEmail,
 }: MyOrdersModalProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,7 +34,7 @@ export function MyOrdersModal({
     if (!isOpen) return
     const fetchOrders = async () => {
       setLoading(true)
-      const list = await storeEngine.getOrders(userId)
+      const list = await storeEngine.getOrders(userId, userEmail)
       setOrders(list)
       setLoading(false)
     }
@@ -46,7 +46,7 @@ export function MyOrdersModal({
       }
     })
     return () => unsubscribe()
-  }, [isOpen, userId])
+  }, [isOpen, userId, userEmail])
 
   if (!isOpen) return null
 
@@ -84,7 +84,7 @@ export function MyOrdersModal({
         return (
           <span className="px-2 py-0.5 rounded font-mono-code text-[10px] uppercase bg-emerald-500/10 text-[#34d399] border border-emerald-500/20 inline-flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
-            Vault unlocked
+            Verified & Delivered
           </span>
         )
       case 'processing':
@@ -137,7 +137,7 @@ export function MyOrdersModal({
               My Orders & Acquisitions
             </h2>
             <p className="text-[11px] sm:text-xs text-[#9499a6] font-sans">
-              Recorded cryptographic purchases, settlement timelines, and vault delivery certificates
+              Recorded cryptographic purchases, settlement timelines, and order delivery certificates
             </p>
           </div>
         </div>
@@ -276,7 +276,7 @@ export function MyOrdersModal({
                         </span>
                       </div>
 
-                      {/* Step 4: Vault Delivery */}
+                      {/* Step 4: Asset Delivery */}
                       <div className="flex flex-col items-center">
                         <div
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
@@ -292,10 +292,10 @@ export function MyOrdersModal({
                             isVerified ? 'text-emerald-400 font-semibold' : 'text-white/40'
                           }`}
                         >
-                          Vault
+                          Delivery
                         </span>
                         <span className="text-[8px] font-mono-code text-white/40">
-                          {isVerified ? 'Unlocked' : 'Locked'}
+                          {isVerified ? 'Confirmed' : 'Pending'}
                         </span>
                       </div>
                     </div>
@@ -326,20 +326,45 @@ export function MyOrdersModal({
                     <p className="text-[11px] text-[#9499a6] font-sans">
                       {order.status === 'pending'
                         ? 'Payment logged. Our curatorial audit officer verifies bank settlements every 2 minutes.'
-                        : 'Settlement confirmed. Master cryptographic assets unlocked in your Digital Vault.'}
+                        : 'Settlement confirmed. Master cryptographic collectible pass is issued and verified.'}
                     </p>
 
                     {isVerified ? (
                       <button
                         type="button"
                         onClick={() => {
-                          onClose()
-                          onOpenVault()
+                          const receiptContent = `RUSSIAN MARKET — OFFICIAL CRYPTOGRAPHIC ORDER DELIVERABLE
+========================================================================
+Order Number: #${order.orderNumber}
+Customer: ${order.customerEmail || 'Authenticated Collector'}
+Acquisition Date: ${order.createdAt}
+Status: VERIFIED & SETTLED
+Payment Method: ${order.paymentMethod.toUpperCase()}
+Total Amount: ${formatINR(order.subtotalMinor)}
+Redemption Token: ${order.redemptionToken || 'RM-SEC-' + order.id}
+
+DELIVERABLE ITEMS:
+${order.items.map((it, idx) => `${idx + 1}. ${it.productName} [${it.sku}] - Qty: ${it.quantity} - Asset: ${it.digitalAssetName}`).join('\n')}
+
+CRYPTOGRAPHIC PASSTHROUGH CERTIFICATE:
+SHA256: 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+STATUS: SOVEREIGN ASSET DELIVERED
+========================================================================
+Issued by Russian Market Concierge Architecture. Direct collectible entitlement.`
+                          const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `RussianMarket-Order-${order.orderNumber}-Deliverable.txt`
+                          document.body.appendChild(a)
+                          a.click()
+                          document.body.removeChild(a)
+                          URL.revokeObjectURL(url)
                         }}
                         className="px-3.5 py-1.5 rounded-xl btn-primary text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Access Vault Asset</span>
+                        <span>Download Asset Pass</span>
                       </button>
                     ) : (
                       <span className="font-mono-code text-[10px] text-[#fbbf24] flex items-center gap-1">

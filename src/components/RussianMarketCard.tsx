@@ -345,7 +345,7 @@ export function RussianMarketCard({
             {/* Middle: Sovereign Specifications */}
             <div className="my-auto py-1">
               <div className="flex items-center justify-between text-[10px] font-mono-code text-white/50">
-                <span>SECURITY LEVEL: APEX VAULT</span>
+                <span>SECURITY LEVEL: APEX SOVEREIGN</span>
                 <span>SETTLEMENT: INSTANT</span>
               </div>
               <p className="text-[9px] text-white/35 font-mono-code mt-0.5">

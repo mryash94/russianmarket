@@ -98,7 +98,7 @@ export function CatalogPage({
               Collectible Catalogue
             </h2>
             <p className="text-[11px] sm:text-xs text-[#9499a6] font-sans mt-0.5">
-              Curated cryptographic digital editions • Sovereign vault settlement
+              Curated cryptographic digital editions • Sovereign order settlement
             </p>
           </div>
 

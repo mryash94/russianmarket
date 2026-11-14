@@ -111,6 +111,8 @@ export type Database = {
         payment_reference: string | null
         idempotency_key: string
         admin_notes: string | null
+        redemption_token?: string | null
+        is_redeemed?: boolean
         verified_at: string | null
         completed_at: string | null
         created_at: string
@@ -236,6 +238,8 @@ export type Database = {
         transaction_type: 'credit' | 'debit' | 'adjustment'
         status: 'pending' | 'completed' | 'failed' | 'reversed'
         reference: string | null
+        description?: string
+        utr_number?: string | null
         created_at: string
       }>
       support_conversations: Table<{

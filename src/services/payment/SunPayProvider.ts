@@ -48,7 +48,7 @@ export class SunPayProvider implements PaymentProvider {
     customerName?: string
     idempotencyKey: string
   }): Promise<PaymentInitiationResult> {
-    const txRef = `SUN-${Date.now().toString(36).toUpperCase()}-${params.idempotencyKey.slice(0, 8)}`
+    const txRef = `SUN-${params.orderNumber}-${Date.now().toString(36).toUpperCase()}`
 
     // When SunPay is awaiting credentials:
     if (!this.isConfigured) {
@@ -68,7 +68,7 @@ export class SunPayProvider implements PaymentProvider {
       transactionId: txRef,
       provider: this.id,
       status: 'pending',
-      paymentUrl: `${this.config.apiEndpoint}/checkout/${txRef}`,
+      paymentUrl: `${this.config.apiEndpoint}/checkout/${txRef}?currency=INR&amount=${params.amountMinor}`,
       instructions: 'Redirecting to SunPay secure gateway terminal...',
     }
   }
@@ -80,7 +80,7 @@ export class SunPayProvider implements PaymentProvider {
         verified: false,
         transactionId,
         amountMinor: 0,
-        currency: 'USD',
+        currency: 'INR',
         status: 'pending',
         message: 'SunPay API is awaiting live merchant credentials. Awaiting settlement.',
       }
@@ -90,7 +90,7 @@ export class SunPayProvider implements PaymentProvider {
       verified: false,
       transactionId,
       amountMinor: 0,
-      currency: 'USD',
+      currency: 'INR',
       status: 'pending',
       message: 'Pending webhook verification from SunPay gateway.',
     }

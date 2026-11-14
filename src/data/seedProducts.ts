@@ -36,7 +36,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'VISA Sovereign Edition' },
       { label: 'Asset Resolution', value: '8192 × 8192 UHD Master' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: true,
@@ -76,7 +76,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'VISA Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K Cinema Canvas' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -116,7 +116,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'VISA Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K UHD Digital Asset' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -156,7 +156,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'VISA Sovereign Edition' },
       { label: 'Asset Resolution', value: '8K Ultra Master' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: true,
@@ -196,7 +196,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'VISA Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K Cinema Canvas' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -240,7 +240,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'Mastercard Sovereign Edition' },
       { label: 'Asset Resolution', value: '8192 × 8192 UHD Master' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: true,
@@ -280,7 +280,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'Mastercard Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K HDR Cinema Canvas' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -320,7 +320,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'Mastercard Sovereign Edition' },
       { label: 'Asset Resolution', value: '8K Master Archive' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -360,7 +360,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'Mastercard Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K Cinema Canvas' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: true,
@@ -400,7 +400,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'Mastercard Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K Master Archive' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -444,7 +444,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'RuPay Sovereign Edition' },
       { label: 'Asset Resolution', value: '8K Master Archive' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: true,
@@ -484,7 +484,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'RuPay Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K Cinema Canvas' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,
@@ -524,7 +524,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'RuPay Sovereign Edition' },
       { label: 'Asset Resolution', value: '8K Ultra Master' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: true,
@@ -564,7 +564,7 @@ export const SEED_PRODUCTS: Product[] = [
     specifications: [
       { label: 'Category', value: 'RuPay Sovereign Edition' },
       { label: 'Asset Resolution', value: '4K Master Archive' },
-      { label: 'Delivery Vault', value: 'Instant Signed Token' },
+      { label: 'Delivery Method', value: 'Instant Signed Token' },
     ],
     status: 'active',
     isFeatured: false,

@@ -161,7 +161,7 @@ export function CartDrawer({
                   <span className="text-white">{formattedSubtotal}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-400">
-                  <span>Vault Delivery</span>
+                  <span>Direct Delivery</span>
                   <span className="text-emerald-400">Free</span>
                 </div>
                 <div className="flex items-center justify-between text-sm font-semibold pt-1.5 border-t border-white/[0.04] text-white">

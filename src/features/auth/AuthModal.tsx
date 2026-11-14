@@ -7,6 +7,7 @@ type AuthModalProps = {
   onSuccess?: () => void
   title?: string
   subtitle?: string
+  initialMode?: 'sign-in' | 'sign-up' | 'forgot-password'
 }
 
 export function AuthModal({
@@ -15,6 +16,7 @@ export function AuthModal({
   onSuccess,
   title,
   subtitle,
+  initialMode = 'sign-up',
 }: AuthModalProps) {
   if (!isOpen) return null
 
@@ -41,7 +43,7 @@ export function AuthModal({
               {subtitle && <p className="text-xs text-white/60 mt-1">{subtitle}</p>}
             </div>
           )}
-          <AuthPanel onAuthSuccess={onSuccess} />
+          <AuthPanel onAuthSuccess={onSuccess} initialMode={initialMode} />
         </div>
       </div>
     </div>
