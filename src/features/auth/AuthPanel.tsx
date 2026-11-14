@@ -33,29 +33,56 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
     loading,
     error,
     notice,
+    isPasswordRecovery,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
+    sendPasswordResetEmail,
+    updateUserPassword,
+    resendConfirmationEmail,
     signOut,
     clearMessages,
   } = useAuth()
-  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+
+  const [mode, setMode] = useState<'sign-in' | 'sign-up' | 'forgot-password'>(() => {
+    return isPasswordRecovery ? 'sign-in' : 'sign-in'
+  })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [resending, setResending] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     clearMessages()
     setSubmitting(true)
     try {
+      if (isPasswordRecovery) {
+        if (newPassword.length < 8) {
+          alert('Password must be at least 8 characters long.')
+          return
+        }
+        if (newPassword !== confirmPassword) {
+          alert('Passwords do not match.')
+          return
+        }
+        await updateUserPassword(newPassword)
+        onAuthSuccess?.()
+        return
+      }
+
       if (mode === 'sign-in') {
         await signInWithEmail(email, password)
-      } else {
+        onAuthSuccess?.()
+      } else if (mode === 'sign-up') {
         await signUpWithEmail(email, password)
+        onAuthSuccess?.()
+      } else if (mode === 'forgot-password') {
+        await sendPasswordResetEmail(email)
       }
-      onAuthSuccess?.()
     } finally {
       setSubmitting(false)
     }
@@ -71,6 +98,20 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
     }
   }
 
+  async function handleResendConfirmation() {
+    if (!email) {
+      alert('Please enter your email address to resend confirmation.')
+      return
+    }
+    clearMessages()
+    setResending(true)
+    try {
+      await resendConfirmationEmail(email)
+    } finally {
+      setResending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-3 bg-[#0c0e12] border border-white/10 rounded-2xl">
@@ -82,7 +123,8 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
     )
   }
 
-  if (user) {
+  // Active Session View (When already signed in and not resetting password)
+  if (user && !isPasswordRecovery) {
     return (
       <div className="p-6 bg-[#0c0e12] border border-white/10 rounded-2xl flex flex-col gap-4">
         <div className="flex items-center gap-4">
@@ -101,7 +143,7 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
               )}
             </div>
             <h3 className="text-sm font-semibold text-white truncate">{user.email}</h3>
-            <p className="text-xs text-white/50">Protected by Supabase Auth</p>
+            <p className="text-xs text-white/50">Protected by Supabase Auth (Active)</p>
           </div>
         </div>
 
@@ -119,6 +161,82 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
     )
   }
 
+  // Password Recovery Mode (Triggered by recovery token in URL)
+  if (isPasswordRecovery) {
+    return (
+      <div className="p-6 bg-[#0c0e12] border border-white/10 rounded-2xl flex flex-col gap-5 shadow-2xl">
+        <div className="text-left space-y-1">
+          <span className="text-[10px] font-mono tracking-widest text-amber-400 uppercase">
+            SECURITY RECOVERY
+          </span>
+          <h2 className="text-lg font-bold text-white">
+            Set New Secure Password
+          </h2>
+          <p className="text-xs text-white/60">
+            Create a new master password for your collector account.
+          </p>
+        </div>
+
+        <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3.5">
+          <div className="space-y-1">
+            <label className="text-xs text-white/70 font-medium">New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              placeholder="•••••••••••• (min 8 chars)"
+              disabled={submitting}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full h-11 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-amber-400 transition-colors"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-white/70 font-medium">Confirm New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              placeholder="••••••••••••"
+              disabled={submitting}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full h-11 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-amber-400 transition-colors"
+            />
+          </div>
+
+          {error && (
+            <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-lg">
+              {error}
+            </p>
+          )}
+          {notice && (
+            <p className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-lg">
+              {notice}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full h-11 mt-1 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-black font-semibold text-sm flex items-center justify-center gap-2 transition-transform active:scale-98 shadow-md disabled:opacity-50"
+          >
+            {submitting ? (
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <span>Save New Password & Sign In</span>
+                <Icon name="arrow-right" size={15} />
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  // Standard Login / Registration / Forgot Password UI
   return (
     <div className="p-6 bg-[#0c0e12] border border-white/10 rounded-2xl flex flex-col gap-5 shadow-2xl">
       <div className="text-left space-y-1">
@@ -126,10 +244,14 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
           SECURE VAULT ACCESS
         </span>
         <h2 className="text-lg font-bold text-white">
-          {mode === 'sign-in' ? 'Sign In to RUSSIAN MARKET' : 'Create Collector Account'}
+          {mode === 'sign-in' && 'Sign In to RUSSIAN MARKET'}
+          {mode === 'sign-up' && 'Create Collector Account'}
+          {mode === 'forgot-password' && 'Reset Account Password'}
         </h2>
         <p className="text-xs text-white/60">
-          Instant access to haute digital collectibles and private vault delivery.
+          {mode === 'forgot-password'
+            ? 'Enter your registered email address to receive password recovery instructions.'
+            : 'Instant access to haute digital collectibles and private vault delivery.'}
         </p>
       </div>
 
@@ -139,59 +261,62 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
         </p>
       )}
 
-      {/* Google OAuth Button */}
-      <button
-        type="button"
-        disabled={!supabase || googleLoading || submitting}
-        onClick={() => void handleGoogleLogin()}
-        className="w-full h-11 px-4 rounded-xl bg-white text-black hover:bg-neutral-100 font-semibold text-sm flex items-center justify-center gap-3 transition-transform active:scale-98 shadow-md disabled:opacity-50"
-      >
-        {googleLoading ? (
-          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <GoogleIcon />
-        )}
-        <span>Continue with Google</span>
-      </button>
+      {/* Google OAuth (Available on Sign In and Register) */}
+      {mode !== 'forgot-password' && (
+        <>
+          <button
+            type="button"
+            disabled={!supabase || googleLoading || submitting}
+            onClick={() => void handleGoogleLogin()}
+            className="w-full h-11 px-4 rounded-xl bg-white text-black hover:bg-neutral-100 font-semibold text-sm flex items-center justify-center gap-3 transition-transform active:scale-98 shadow-md disabled:opacity-50"
+          >
+            {googleLoading ? (
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            <span>Continue with Google</span>
+          </button>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3 my-1">
-        <div className="h-px flex-1 bg-white/10" />
-        <span className="text-[11px] font-mono text-white/40 uppercase">Or continue with email</span>
-        <div className="h-px flex-1 bg-white/10" />
-      </div>
+          <div className="flex items-center gap-3 my-1">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-[11px] font-mono text-white/40 uppercase">Or continue with email</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
 
-      {/* Mode Toggle */}
-      <div className="grid grid-cols-2 p-1 bg-white/5 rounded-xl border border-white/5">
-        <button
-          type="button"
-          className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
-            mode === 'sign-in'
-              ? 'bg-white/15 text-white shadow-sm'
-              : 'text-white/50 hover:text-white'
-          }`}
-          onClick={() => {
-            clearMessages()
-            setMode('sign-in')
-          }}
-        >
-          Sign In
-        </button>
-        <button
-          type="button"
-          className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
-            mode === 'sign-up'
-              ? 'bg-white/15 text-white shadow-sm'
-              : 'text-white/50 hover:text-white'
-          }`}
-          onClick={() => {
-            clearMessages()
-            setMode('sign-up')
-          }}
-        >
-          Register
-        </button>
-      </div>
+          {/* Mode Switcher */}
+          <div className="grid grid-cols-2 p-1 bg-white/5 rounded-xl border border-white/5">
+            <button
+              type="button"
+              className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                mode === 'sign-in'
+                  ? 'bg-white/15 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white'
+              }`}
+              onClick={() => {
+                clearMessages()
+                setMode('sign-in')
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                mode === 'sign-up'
+                  ? 'bg-white/15 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white'
+              }`}
+              onClick={() => {
+                clearMessages()
+                setMode('sign-up')
+              }}
+            >
+              Register
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Form */}
       <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-3">
@@ -209,20 +334,36 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-xs text-white/70 font-medium">Password</label>
-          <input
-            type="password"
-            required
-            autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
-            placeholder="••••••••••••"
-            minLength={6}
-            disabled={!supabase || submitting || googleLoading}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-cyan-400 transition-colors"
-          />
-        </div>
+        {mode !== 'forgot-password' && (
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs text-white/70 font-medium">Password</label>
+              {mode === 'sign-in' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearMessages()
+                    setMode('forgot-password')
+                  }}
+                  className="text-[11px] text-cyan-400/80 hover:text-cyan-300 transition-colors"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </div>
+            <input
+              type="password"
+              required
+              autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'}
+              placeholder="••••••••••••"
+              minLength={6}
+              disabled={!supabase || submitting || googleLoading}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-cyan-400 transition-colors"
+            />
+          </div>
+        )}
 
         {error && (
           <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-lg">
@@ -244,11 +385,39 @@ export function AuthPanel({ onAuthSuccess }: { onAuthSuccess?: () => void }) {
             <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
-              <span>{mode === 'sign-in' ? 'Sign In Securely' : 'Create Collector Account'}</span>
+              <span>
+                {mode === 'sign-in' && 'Sign In Securely'}
+                {mode === 'sign-up' && 'Create Collector Account'}
+                {mode === 'forgot-password' && 'Send Password Recovery Email'}
+              </span>
               <Icon name="arrow-right" size={15} />
             </>
           )}
         </button>
+
+        {mode === 'forgot-password' && (
+          <div className="flex items-center justify-between pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                clearMessages()
+                setMode('sign-in')
+              }}
+              className="text-xs text-white/50 hover:text-white transition-colors"
+            >
+              ← Back to Sign In
+            </button>
+
+            <button
+              type="button"
+              disabled={resending || !email}
+              onClick={() => void handleResendConfirmation()}
+              className="text-xs text-cyan-400/80 hover:text-cyan-300 transition-colors disabled:opacity-40"
+            >
+              {resending ? 'Sending…' : 'Resend confirmation'}
+            </button>
+          </div>
+        )}
       </form>
 
       <p className="text-[11px] text-white/40 flex items-center justify-center gap-1.5 font-mono">

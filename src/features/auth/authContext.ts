@@ -12,9 +12,14 @@ export type AuthContextValue = {
   loading: boolean
   error: string | null
   notice: string | null
+  isPasswordRecovery: boolean
+  setIsPasswordRecovery: (value: boolean) => void
   signInWithGoogle: (returnUrl?: string) => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string) => Promise<void>
+  sendPasswordResetEmail: (email: string) => Promise<void>
+  updateUserPassword: (password: string) => Promise<void>
+  resendConfirmationEmail: (email: string) => Promise<void>
   sendEmailOtp: (email: string) => Promise<void>
   verifyOtp: (email: string, token: string) => Promise<boolean>
   signOut: () => Promise<void>

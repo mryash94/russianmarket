@@ -7,6 +7,7 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, supabaseConfigError } from '../../lib/supabase'
+import { getAuthRedirectUrl } from '../../lib/authUrl'
 import { AuthContext, type AuthContextValue, type UserRole } from './authContext'
 
 const AUTHORIZED_ADMIN_EMAIL = 'own77777777@gmail.com'
@@ -19,6 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(Boolean(supabase))
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const hash = window.location.hash || ''
+    const search = window.location.search || ''
+    return hash.includes('type=recovery') || search.includes('recovery=true')
+  })
 
   // Verify server-side role from user_roles table and is_admin() RPC
   const fetchUserRole = useCallback(async (activeUser: User | null): Promise<UserRole> => {
@@ -91,10 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
 
-    // Listen to real-time auth changes (Sign-in, OAuth redirects, token refresh)
+    // Listen to real-time auth changes (Sign-in, OAuth redirects, recovery, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, nextSession) => {
+      async (event, nextSession) => {
         if (!isMounted) return
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true)
+        }
         await syncSession(nextSession)
       },
     )
@@ -118,11 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const redirectOrigin = window.location.origin
+      const redirectUrl = getAuthRedirectUrl('/')
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${redirectOrigin}/`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -170,9 +181,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      const redirectUrl = getAuthRedirectUrl('/')
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
       })
       if (signUpError) {
         setError(signUpError.message)
@@ -180,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (data.session) {
         await syncSession(data.session)
-        setNotice('Account created and signed in.')
+        setNotice('Account created and signed in successfully.')
       } else {
         setNotice('Please check your email to confirm your account, then sign in.')
       }
@@ -188,6 +203,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(err instanceof Error ? err.message : 'Sign up failed.')
     }
   }, [syncSession])
+
+  const sendPasswordResetEmail = useCallback(async (email: string) => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return
+    }
+
+    try {
+      const redirectUrl = getAuthRedirectUrl('/?recovery=true')
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: redirectUrl,
+      })
+      if (resetError) {
+        setError(resetError.message)
+        return
+      }
+      setNotice(`Password recovery link dispatched to ${email}.`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Password reset request failed.')
+    }
+  }, [])
+
+  const updateUserPassword = useCallback(async (newPassword: string) => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return
+    }
+
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+      if (updateError) {
+        setError(updateError.message)
+        return
+      }
+      setIsPasswordRecovery(false)
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      setNotice('Password updated successfully. Session secured.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update password.')
+    }
+  }, [])
+
+  const resendConfirmationEmail = useCallback(async (email: string) => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return
+    }
+
+    try {
+      const redirectUrl = getAuthRedirectUrl('/')
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      })
+      if (resendError) {
+        setError(resendError.message)
+        return
+      }
+      setNotice(`Confirmation link re-sent to ${email}.`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend confirmation email.')
+    }
+  }, [])
 
   const sendEmailOtp = useCallback(async (email: string) => {
     setError(null)
@@ -198,10 +289,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      const redirectUrl = getAuthRedirectUrl('/')
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: redirectUrl,
         },
       })
       if (otpError) {
@@ -290,9 +382,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     error,
     notice,
+    isPasswordRecovery,
+    setIsPasswordRecovery,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
+    sendPasswordResetEmail,
+    updateUserPassword,
+    resendConfirmationEmail,
     sendEmailOtp,
     verifyOtp,
     signOut,
@@ -309,9 +406,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     error,
     notice,
+    isPasswordRecovery,
+    setIsPasswordRecovery,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
+    sendPasswordResetEmail,
+    updateUserPassword,
+    resendConfirmationEmail,
     sendEmailOtp,
     verifyOtp,
     signOut,
