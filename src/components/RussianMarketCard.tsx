@@ -142,7 +142,8 @@ export function RussianMarketCard({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!interactive || !cardRef.current) return
+      // Ignore touch moves to prevent scroll stutter and gesture conflicts on mobile
+      if (!interactive || !cardRef.current || e.pointerType === 'touch') return
       const rect = cardRef.current.getBoundingClientRect()
       const px = (e.clientX - rect.left) / rect.width
       const py = (e.clientY - rect.top) / rect.height

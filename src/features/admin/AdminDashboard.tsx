@@ -21,6 +21,8 @@ import {
   RefreshCw,
   Check,
   Ban,
+  MessageCircle,
+  Wallet,
 } from 'lucide-react'
 import {
   storeEngine,
@@ -31,12 +33,22 @@ import type { Product, CardCategory } from '../../types/product'
 import { formatINR } from '../../lib/currency'
 import { RussianMarketCard } from '../../components/RussianMarketCard'
 import type { OrderStatus } from '../../types/database'
+import { AdminChatInbox } from './AdminChatInbox'
+import { AdminWalletManager } from './AdminWalletManager'
 
 type AdminDashboardProps = {
   onExitAdmin: () => void
 }
 
-type AdminTab = 'overview' | 'orders' | 'products' | 'qr_scanner' | 'customers' | 'settings'
+type AdminTab =
+  | 'overview'
+  | 'inbox'
+  | 'wallet'
+  | 'orders'
+  | 'products'
+  | 'qr_scanner'
+  | 'customers'
+  | 'settings'
 
 export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
@@ -330,6 +342,8 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
         {(
           [
             { id: 'overview', label: 'Overview Metrics', icon: TrendingUp },
+            { id: 'inbox', label: 'Support Inbox', icon: MessageCircle },
+            { id: 'wallet', label: 'Wallet & UPI Audit', icon: Wallet },
             { id: 'orders', label: `Orders (${orders.length})`, icon: FileCheck },
             { id: 'products', label: `Products (${products.length})`, icon: Package },
             { id: 'qr_scanner', label: 'QR Scanner & Redeem', icon: QrCode },
@@ -471,6 +485,16 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           </div>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* TAB: SUPPORT INBOX                                       */}
+      {/* ======================================================== */}
+      {activeTab === 'inbox' && <AdminChatInbox onNotify={notifySuccess} />}
+
+      {/* ======================================================== */}
+      {/* TAB: WALLET & UPI AUDIT                                  */}
+      {/* ======================================================== */}
+      {activeTab === 'wallet' && <AdminWalletManager onNotify={notifySuccess} />}
 
       {/* ======================================================== */}
       {/* TAB 2: ORDER MANAGEMENT                                  */}
@@ -983,42 +1007,117 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
             </p>
           </div>
 
-          <div className="glass-panel-elevated rounded-3xl p-6 border border-white/[0.1] space-y-4 shadow-xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono-code">
-              <div>
-                <label className="block text-slate-400 mb-1">STORE BRAND</label>
-                <input
-                  type="text"
-                  disabled
-                  defaultValue={settings?.storeName || 'RUSSIAN MARKET'}
-                  className="w-full glass-input px-3 py-2 rounded-xl opacity-80"
-                />
-              </div>
+          <div className="glass-panel-elevated rounded-3xl p-6 border border-white/[0.1] space-y-6 shadow-xl">
+            {/* General Settings */}
+            <div className="space-y-3">
+              <h3 className="font-space font-bold text-sm text-white">General Parameters</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono-code">
+                <div>
+                  <label className="block text-slate-400 mb-1">STORE BRAND</label>
+                  <input
+                    type="text"
+                    disabled
+                    defaultValue={settings?.storeName || 'RUSSIAN MARKET'}
+                    className="w-full glass-input px-3 py-2 rounded-xl opacity-80"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">PRIMARY CURRENCY</label>
-                <input
-                  type="text"
-                  disabled
-                  defaultValue="INR (₹)"
-                  className="w-full glass-input px-3 py-2 rounded-xl opacity-80 font-bold text-cyan-400"
-                />
-              </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">PRIMARY CURRENCY</label>
+                  <input
+                    type="text"
+                    disabled
+                    defaultValue="INR (₹)"
+                    className="w-full glass-input px-3 py-2 rounded-xl opacity-80 font-bold text-cyan-400"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">CONCIERGE DESK EMAIL</label>
-                <input
-                  type="email"
-                  defaultValue={settings?.supportEmail || 'concierge@russianmarket.store'}
-                  className="w-full glass-input px-3 py-2 rounded-xl"
-                />
-              </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">CONCIERGE DESK EMAIL</label>
+                  <input
+                    id="supportEmailInput"
+                    type="email"
+                    defaultValue={settings?.supportEmail || 'concierge@russianmarket.store'}
+                    className="w-full glass-input px-3 py-2 rounded-xl"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">GATEWAY STATUS</label>
-                <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-400 font-bold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>MODULAR PRODUCTION READY</span>
+                <div>
+                  <label className="block text-slate-400 mb-1">GATEWAY STATUS</label>
+                  <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-400 font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>MODULAR PRODUCTION READY</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* UPI QR & Payment Gateway Settings */}
+            <div className="space-y-3 pt-4 border-t border-white/[0.08]">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-cyan-400" />
+                <h3 className="font-space font-bold text-sm text-white">UPI QR Add-Money Settings</h3>
+              </div>
+              <p className="text-xs text-slate-400 font-sans">
+                Configure your verified merchant UPI VPA and parameters used for scannable QR generation.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono-code">
+                <div>
+                  <label className="block text-slate-400 mb-1">MERCHANT UPI ID (VPA) *</label>
+                  <input
+                    id="upiMerchantIdInput"
+                    type="text"
+                    defaultValue={settings?.upiMerchantId || 'russianmarket@icici'}
+                    placeholder="e.g. merchant@upi"
+                    className="w-full glass-input px-3 py-2 rounded-xl font-bold text-cyan-300"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">MERCHANT DISPLAY NAME *</label>
+                  <input
+                    id="upiMerchantNameInput"
+                    type="text"
+                    defaultValue={settings?.upiMerchantName || 'Russian Market Collectibles'}
+                    placeholder="e.g. Russian Market"
+                    className="w-full glass-input px-3 py-2 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">MINIMUM PERMITTED DEPOSIT (₹)</label>
+                  <input
+                    id="upiMinAmountInput"
+                    type="number"
+                    min="1"
+                    defaultValue={settings?.upiMinAmountMinor ? settings.upiMinAmountMinor / 100 : 100}
+                    className="w-full glass-input px-3 py-2 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">MAXIMUM PERMITTED DEPOSIT (₹)</label>
+                  <input
+                    id="upiMaxAmountInput"
+                    type="number"
+                    min="100"
+                    defaultValue={settings?.upiMaxAmountMinor ? settings.upiMaxAmountMinor / 100 : 50000}
+                    className="w-full glass-input px-3 py-2 rounded-xl"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-400 mb-1">PAYMENT INSTRUCTIONS</label>
+                  <textarea
+                    id="upiInstructionsInput"
+                    rows={2}
+                    defaultValue={
+                      settings?.upiInstructions ||
+                      'Scan with any UPI App (Google Pay, PhonePe, Paytm, BHIM, Cred). Enter your 12-digit UPI UTR number after completing payment for manual curatorial verification.'
+                    }
+                    className="w-full glass-input p-3 rounded-xl font-sans"
+                  />
                 </div>
               </div>
             </div>
@@ -1026,8 +1125,25 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
-                onClick={() => notifySuccess('Store governance settings verified and persisted.')}
-                className="px-4 py-2 rounded-xl btn-primary text-black font-bold text-xs"
+                onClick={async () => {
+                  const supportEmail = (document.getElementById('supportEmailInput') as HTMLInputElement)?.value
+                  const upiMerchantId = (document.getElementById('upiMerchantIdInput') as HTMLInputElement)?.value
+                  const upiMerchantName = (document.getElementById('upiMerchantNameInput') as HTMLInputElement)?.value
+                  const upiMinAmount = parseFloat((document.getElementById('upiMinAmountInput') as HTMLInputElement)?.value) || 100
+                  const upiMaxAmount = parseFloat((document.getElementById('upiMaxAmountInput') as HTMLInputElement)?.value) || 50000
+                  const upiInstructions = (document.getElementById('upiInstructionsInput') as HTMLTextAreaElement)?.value
+
+                  await storeEngine.updateSettings({
+                    supportEmail,
+                    upiMerchantId,
+                    upiMerchantName,
+                    upiMinAmountMinor: Math.round(upiMinAmount * 100),
+                    upiMaxAmountMinor: Math.round(upiMaxAmount * 100),
+                    upiInstructions,
+                  })
+                  notifySuccess('Store governance and UPI parameters persisted successfully.')
+                }}
+                className="px-4 py-2 rounded-xl btn-primary text-black font-bold text-xs shadow-md"
               >
                 Save Settings
               </button>

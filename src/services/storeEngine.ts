@@ -72,6 +72,9 @@ export type SupportMessage = {
   senderUserId?: string
   senderType: 'customer' | 'admin' | 'system'
   body: string
+  attachmentName?: string
+  attachmentUrl?: string
+  status?: 'sending' | 'delivered' | 'failed'
   createdAt: string
 }
 
@@ -81,6 +84,8 @@ export type SupportConversation = {
   userEmail: string
   subject: string
   status: 'open' | 'pending' | 'closed'
+  unreadAdminCount?: number
+  unreadCustomerCount?: number
   createdAt: string
   updatedAt: string
   messages: SupportMessage[]
@@ -104,7 +109,26 @@ export type WalletTx = {
   status: 'pending' | 'completed' | 'failed' | 'reversed'
   reference: string
   description: string
+  utrNumber?: string
+  rejectionReason?: string
+  approvedAt?: string
+  approvedBy?: string
   createdAt: string
+}
+
+export type DepositRequest = {
+  id: string
+  userId: string
+  userEmail: string
+  amountMinor: number
+  utrNumber: string
+  reference: string
+  status: 'pending' | 'approved' | 'rejected'
+  notes?: string
+  rejectionReason?: string
+  createdAt: string
+  reviewedAt?: string
+  reviewedBy?: string
 }
 
 export type StoreSettings = {
@@ -118,6 +142,11 @@ export type StoreSettings = {
   sunpayMerchantId: string
   sunpayApiEndpoint: string
   sunpaySandboxMode: boolean
+  upiMerchantId: string
+  upiMerchantName: string
+  upiMinAmountMinor: number
+  upiMaxAmountMinor: number
+  upiInstructions: string
 }
 
 const STORAGE_KEYS = {
@@ -128,6 +157,7 @@ const STORAGE_KEYS = {
   CONVERSATIONS: 'rm_db_conversations_v2',
   NOTIFICATIONS: 'rm_db_notifications_v2',
   WALLET_TX: 'rm_db_wallet_tx_v2',
+  DEPOSITS: 'rm_db_deposits_v2',
   SETTINGS: 'rm_db_settings_v2',
   VIDEOS: 'rm_db_videos_v2',
 }
@@ -603,10 +633,12 @@ class StoreEngine {
       // Default initial welcome conversation
       const welcome: SupportConversation = {
         id: 'conv_welcome',
-        userId: userId || 'guest_user',
-        userEmail: 'concierge@russianmarket.store',
-        subject: 'Welcome to Russian Market Haute Concierge',
+        userId: userId || 'demo_collector_user',
+        userEmail: 'collector@russianmarket.store',
+        subject: 'Collector Concierge & Sovereign Inquiries',
         status: 'open',
+        unreadAdminCount: 0,
+        unreadCustomerCount: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         messages: [
@@ -624,9 +656,41 @@ class StoreEngine {
     }
 
     if (userId) {
-      return list.filter((c) => c.userId === userId || c.id === 'conv_welcome')
+      const userConvs = list.filter((c) => c.userId === userId)
+      if (userConvs.length === 0) {
+        // Create user's dedicated conversation if none exists
+        const newConv: SupportConversation = {
+          id: `conv_${userId}`,
+          userId,
+          userEmail: `${userId}@russianmarket.store`,
+          subject: `Collector Concierge #${userId.slice(0, 8)}`,
+          status: 'open',
+          unreadAdminCount: 0,
+          unreadCustomerCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messages: [
+            {
+              id: `msg_welcome_${Date.now()}`,
+              conversationId: `conv_${userId}`,
+              senderType: 'admin',
+              body: 'Greetings and welcome to Russian Market. Our private concierge is at your service 24/7 for collection inquiries, digital asset authentication, and private order settlement.',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        }
+        list = [newConv, ...list]
+        localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
+        return [newConv]
+      }
+      return userConvs
     }
     return list
+  }
+
+  async getAllConversationsForAdmin(): Promise<SupportConversation[]> {
+    const list = await this.getConversations()
+    return list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   }
 
   async sendMessage(params: {
@@ -634,10 +698,27 @@ class StoreEngine {
     senderUserId?: string
     senderType: 'customer' | 'admin'
     body: string
+    attachmentName?: string
+    attachmentUrl?: string
   }): Promise<SupportMessage> {
     const list = await this.getConversations()
-    const conv = list.find((c) => c.id === params.conversationId)
-    if (!conv) throw new Error('Conversation not found')
+    let conv = list.find((c) => c.id === params.conversationId)
+    if (!conv) {
+      // Auto-create if not found
+      conv = {
+        id: params.conversationId,
+        userId: params.senderUserId || 'demo_collector_user',
+        userEmail: params.senderUserId ? `${params.senderUserId}@russianmarket.store` : 'collector@russianmarket.store',
+        subject: `Collector Concierge #${params.conversationId.slice(0, 8)}`,
+        status: 'open',
+        unreadAdminCount: 0,
+        unreadCustomerCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        messages: [],
+      }
+      list.unshift(conv)
+    }
 
     const newMsg: SupportMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -645,15 +726,63 @@ class StoreEngine {
       senderUserId: params.senderUserId,
       senderType: params.senderType,
       body: params.body,
+      attachmentName: params.attachmentName,
+      attachmentUrl: params.attachmentUrl,
+      status: 'delivered',
       createdAt: new Date().toISOString(),
     }
 
     conv.messages.push(newMsg)
     conv.updatedAt = new Date().toISOString()
+    if (params.senderType === 'customer') {
+      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1
+    } else {
+      conv.unreadCustomerCount = (conv.unreadCustomerCount || 0) + 1
+    }
+
     localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
 
+    // Supabase sync if active
+    if (supabase) {
+      try {
+        await supabase.from('support_messages').insert({
+          id: newMsg.id,
+          conversation_id: params.conversationId,
+          sender_user_id: params.senderUserId || null,
+          sender_type: params.senderType,
+          body: params.body,
+          idempotency_key: newMsg.id,
+        })
+      } catch (err) {
+        console.warn('Supabase chat message insert warning:', err)
+      }
+    }
+
     this.emit('new_message', newMsg)
+    this.emit('conversations_updated', list)
     return newMsg
+  }
+
+  async updateConversationStatus(conversationId: string, status: 'open' | 'pending' | 'closed'): Promise<void> {
+    const list = await this.getConversations()
+    const conv = list.find((c) => c.id === conversationId)
+    if (conv) {
+      conv.status = status
+      conv.updatedAt = new Date().toISOString()
+      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
+      this.emit('conversations_updated', list)
+    }
+  }
+
+  async markConversationRead(conversationId: string, viewer: 'admin' | 'customer'): Promise<void> {
+    const list = await this.getConversations()
+    const conv = list.find((c) => c.id === conversationId)
+    if (conv) {
+      if (viewer === 'admin') conv.unreadAdminCount = 0
+      if (viewer === 'customer') conv.unreadCustomerCount = 0
+      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
+      this.emit('conversations_updated', list)
+    }
   }
 
   async clearConversationMessages(conversationId: string): Promise<void> {
@@ -671,8 +800,11 @@ class StoreEngine {
         },
       ]
       conv.updatedAt = new Date().toISOString()
+      conv.unreadAdminCount = 0
+      conv.unreadCustomerCount = 0
       localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
       this.emit('new_message', conv.messages[0])
+      this.emit('conversations_updated', list)
     }
   }
 
@@ -690,7 +822,7 @@ class StoreEngine {
           status: 'completed',
           reference: 'WELCOME-BONUS-INR',
           description: 'Russian Market Collector Allocation',
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
         },
       ]
       localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(initial))
@@ -712,13 +844,13 @@ class StoreEngine {
       .reduce((sum, tx) => sum + tx.amountMinor, 0)
   }
 
-  private async recordWalletTransaction(tx: Omit<WalletTx, 'id' | 'createdAt'>): Promise<WalletTx> {
+  async recordWalletTransaction(tx: Omit<WalletTx, 'id' | 'createdAt'>): Promise<WalletTx> {
     const raw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
     const list: WalletTx[] = raw ? JSON.parse(raw) : []
 
     const newTx: WalletTx = {
       ...tx,
-      id: `wtx_${Date.now()}`,
+      id: `wtx_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       createdAt: new Date().toISOString(),
     }
 
@@ -727,7 +859,7 @@ class StoreEngine {
     return newTx
   }
 
-  private async completeWalletTransaction(reference: string): Promise<void> {
+  async completeWalletTransaction(reference: string): Promise<void> {
     const raw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
     const list: WalletTx[] = raw ? JSON.parse(raw) : []
     const tx = list.find((t) => t.reference === reference)
@@ -736,6 +868,181 @@ class StoreEngine {
       localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(list))
       this.emit('wallet_updated', tx)
     }
+  }
+
+  async getAllWalletBalances(): Promise<{ userId: string; balanceMinor: number; txCount: number }[]> {
+    const txs = await this.getWalletTransactions()
+    const map = new Map<string, { balanceMinor: number; txCount: number }>()
+
+    txs.forEach((tx) => {
+      const u = tx.userId || 'demo_collector_user'
+      const cur = map.get(u) || { balanceMinor: 0, txCount: 0 }
+      if (tx.status === 'completed') {
+        cur.balanceMinor += tx.amountMinor
+      }
+      cur.txCount += 1
+      map.set(u, cur)
+    })
+
+    return Array.from(map.entries()).map(([userId, data]) => ({
+      userId,
+      balanceMinor: data.balanceMinor,
+      txCount: data.txCount,
+    }))
+  }
+
+  // --- ADD MONEY WITH UPI QR & DEPOSIT REQUESTS ---
+
+  async getDepositRequests(status?: 'pending' | 'approved' | 'rejected'): Promise<DepositRequest[]> {
+    const raw = localStorage.getItem(STORAGE_KEYS.DEPOSITS)
+    const list: DepositRequest[] = raw ? JSON.parse(raw) : []
+    return status ? list.filter((r) => r.status === status) : list
+  }
+
+  async createDepositRequest(params: {
+    userId: string
+    userEmail: string
+    amountMinor: number
+    utrNumber: string
+    reference: string
+    notes?: string
+  }): Promise<DepositRequest> {
+    const cleanUtr = params.utrNumber.trim()
+    if (!cleanUtr) throw new Error('Valid UPI UTR / Reference number is required')
+
+    const raw = localStorage.getItem(STORAGE_KEYS.DEPOSITS)
+    const list: DepositRequest[] = raw ? JSON.parse(raw) : []
+
+    // Prevent duplicate UTR submission
+    const existing = list.find((d) => d.utrNumber === cleanUtr && d.status !== 'rejected')
+    if (existing) {
+      throw new Error(`UPI UTR #${cleanUtr} has already been submitted for verification. Duplicate request prevented.`)
+    }
+
+    const newRequest: DepositRequest = {
+      id: `dep_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      amountMinor: params.amountMinor,
+      utrNumber: cleanUtr,
+      reference: params.reference,
+      status: 'pending',
+      notes: params.notes,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Add pending wallet transaction
+    await this.recordWalletTransaction({
+      userId: params.userId,
+      amountMinor: params.amountMinor,
+      transactionType: 'credit',
+      status: 'pending',
+      reference: params.reference,
+      description: `Add Money via UPI QR (UTR: ${cleanUtr})`,
+      utrNumber: cleanUtr,
+    })
+
+    localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify([newRequest, ...list]))
+
+    // Create user notification
+    await this.createNotification({
+      userId: params.userId,
+      title: 'Deposit Request Submitted',
+      body: `Your deposit of ₹${(params.amountMinor / 100).toLocaleString('en-IN')} (UTR: ${cleanUtr}) is pending admin verification.`,
+      notificationType: 'vault',
+    })
+
+    this.emit('deposits_updated', newRequest)
+    return newRequest
+  }
+
+  async approveDepositRequest(requestId: string, adminUser: string): Promise<DepositRequest> {
+    const raw = localStorage.getItem(STORAGE_KEYS.DEPOSITS)
+    const list: DepositRequest[] = raw ? JSON.parse(raw) : []
+    const req = list.find((r) => r.id === requestId)
+    if (!req) throw new Error('Deposit request not found')
+    if (req.status !== 'pending') throw new Error(`Deposit request is already ${req.status}`)
+
+    const now = new Date().toISOString()
+    req.status = 'approved'
+    req.reviewedAt = now
+    req.reviewedBy = adminUser
+
+    // Complete wallet transaction
+    const txRaw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
+    const txList: WalletTx[] = txRaw ? JSON.parse(txRaw) : []
+    const tx = txList.find((t) => t.reference === req.reference || t.utrNumber === req.utrNumber)
+    if (tx) {
+      tx.status = 'completed'
+      tx.approvedAt = now
+      tx.approvedBy = adminUser
+    } else {
+      // If transaction wasn't found, create completed transaction
+      txList.unshift({
+        id: `wtx_${Date.now()}`,
+        userId: req.userId,
+        amountMinor: req.amountMinor,
+        transactionType: 'credit',
+        status: 'completed',
+        reference: req.reference,
+        description: `Verified Deposit via UPI QR (UTR: ${req.utrNumber})`,
+        utrNumber: req.utrNumber,
+        approvedAt: now,
+        approvedBy: adminUser,
+        createdAt: now,
+      })
+    }
+
+    localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(txList))
+    localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify(list))
+
+    await this.createNotification({
+      userId: req.userId,
+      title: 'Deposit Approved & Credited',
+      body: `Your deposit of ₹${(req.amountMinor / 100).toLocaleString('en-IN')} has been verified by curatorial audit and added to your balance.`,
+      notificationType: 'vault',
+    })
+
+    this.emit('wallet_updated', tx)
+    this.emit('deposits_updated', req)
+    return req
+  }
+
+  async rejectDepositRequest(requestId: string, adminUser: string, reason: string): Promise<DepositRequest> {
+    const raw = localStorage.getItem(STORAGE_KEYS.DEPOSITS)
+    const list: DepositRequest[] = raw ? JSON.parse(raw) : []
+    const req = list.find((r) => r.id === requestId)
+    if (!req) throw new Error('Deposit request not found')
+    if (req.status !== 'pending') throw new Error(`Deposit request is already ${req.status}`)
+
+    const now = new Date().toISOString()
+    req.status = 'rejected'
+    req.rejectionReason = reason
+    req.reviewedAt = now
+    req.reviewedBy = adminUser
+
+    // Update wallet transaction to failed
+    const txRaw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
+    const txList: WalletTx[] = txRaw ? JSON.parse(txRaw) : []
+    const tx = txList.find((t) => t.reference === req.reference || t.utrNumber === req.utrNumber)
+    if (tx) {
+      tx.status = 'failed'
+      tx.rejectionReason = reason
+      localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(txList))
+      this.emit('wallet_updated', tx)
+    }
+
+    localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify(list))
+
+    await this.createNotification({
+      userId: req.userId,
+      title: 'Deposit Verification Rejected',
+      body: `Your deposit request of ₹${(req.amountMinor / 100).toLocaleString('en-IN')} was rejected: ${reason}`,
+      notificationType: 'vault',
+    })
+
+    this.emit('deposits_updated', req)
+    return req
   }
 
   // --- NOTIFICATIONS ---
@@ -819,6 +1126,11 @@ class StoreEngine {
       sunpayMerchantId: '',
       sunpayApiEndpoint: 'https://api.sunpay.gateway/v1',
       sunpaySandboxMode: true,
+      upiMerchantId: 'russianmarket@icici',
+      upiMerchantName: 'Russian Market Collectibles',
+      upiMinAmountMinor: 10000, // ₹100.00
+      upiMaxAmountMinor: 5000000, // ₹50,000.00
+      upiInstructions: 'Scan with any UPI App (Google Pay, PhonePe, Paytm, BHIM, Cred). Enter your 12-digit UPI UTR number after completing payment for manual curatorial verification.',
     }
 
     const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS)

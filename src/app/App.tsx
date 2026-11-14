@@ -143,7 +143,9 @@ export function App() {
           <ChatSection userId={userId} userEmail={userEmail} />
         )}
 
-        {activeSection === 'wallet' && <WalletSection userId={userId} />}
+        {activeSection === 'wallet' && (
+          <WalletSection userId={userId} userEmail={userEmail} />
+        )}
 
         {activeSection === 'settings' && (
           <SettingsSection
