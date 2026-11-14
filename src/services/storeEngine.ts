@@ -147,6 +147,29 @@ export type StoreSettings = {
   upiMinAmountMinor: number
   upiMaxAmountMinor: number
   upiInstructions: string
+  upiFixedAmounts: number[]
+  paymentValidityMinutes: number
+  qrPaymentEnabled: boolean
+}
+
+export type PaymentRequestRecord = {
+  id: string
+  userId: string
+  userEmail: string
+  amountMinor: number
+  currency: string
+  reference: string
+  merchantUpiId: string
+  merchantDisplayName: string
+  utrNumber?: string
+  status: 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired'
+  expiresAt: string
+  notes?: string
+  rejectionReason?: string
+  reviewedAt?: string
+  reviewedBy?: string
+  createdAt: string
+  updatedAt: string
 }
 
 const STORAGE_KEYS = {
@@ -158,6 +181,7 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'rm_db_notifications_v2',
   WALLET_TX: 'rm_db_wallet_tx_v2',
   DEPOSITS: 'rm_db_deposits_v2',
+  PAYMENT_REQUESTS: 'rm_db_payment_requests_v2',
   SETTINGS: 'rm_db_settings_v2',
   VIDEOS: 'rm_db_videos_v2',
 }
@@ -1131,6 +1155,36 @@ class StoreEngine {
       upiMinAmountMinor: 10000, // ₹100.00
       upiMaxAmountMinor: 5000000, // ₹50,000.00
       upiInstructions: 'Scan with any UPI App (Google Pay, PhonePe, Paytm, BHIM, Cred). Enter your 12-digit UPI UTR number after completing payment for manual curatorial verification.',
+      upiFixedAmounts: [50000, 100000, 200000, 500000, 1000000], // ₹500, ₹1k, ₹2k, ₹5k, ₹10k
+      paymentValidityMinutes: 15,
+      qrPaymentEnabled: true,
+    }
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('store_settings').select('*').eq('id', 1).maybeSingle()
+        if (!error && data) {
+          const remote: Partial<StoreSettings> = {
+            storeName: data.store_name,
+            tagline: data.tagline,
+            currency: data.currency,
+            supportEmail: data.support_email,
+            refundPolicy: data.refund_policy,
+            privacyPolicy: data.privacy_policy,
+            deliveryPolicy: data.delivery_policy,
+            upiMerchantId: data.upi_merchant_id || defaults.upiMerchantId,
+            upiMerchantName: data.upi_merchant_name || defaults.upiMerchantName,
+            upiMinAmountMinor: data.upi_min_amount_minor || defaults.upiMinAmountMinor,
+            upiMaxAmountMinor: data.upi_max_amount_minor || defaults.upiMaxAmountMinor,
+            upiInstructions: data.upi_instructions || defaults.upiInstructions,
+            paymentValidityMinutes: data.payment_validity_minutes || defaults.paymentValidityMinutes,
+            qrPaymentEnabled: data.qr_payment_enabled ?? defaults.qrPaymentEnabled,
+          }
+          return { ...defaults, ...remote }
+        }
+      } catch (err) {
+        console.warn('Failed to load store settings from Supabase, using local defaults.', err)
+      }
     }
 
     const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS)
@@ -1149,8 +1203,241 @@ class StoreEngine {
     const current = await this.getSettings()
     const updated = { ...current, ...settings }
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated))
+
+    if (supabase) {
+      try {
+        await supabase.from('store_settings').upsert({
+          id: 1,
+          store_name: updated.storeName,
+          tagline: updated.tagline,
+          currency: updated.currency,
+          support_email: updated.supportEmail,
+          upi_merchant_id: updated.upiMerchantId,
+          upi_merchant_name: updated.upiMerchantName,
+          upi_min_amount_minor: updated.upiMinAmountMinor,
+          upi_max_amount_minor: updated.upiMaxAmountMinor,
+          upi_instructions: updated.upiInstructions,
+          payment_validity_minutes: updated.paymentValidityMinutes,
+          qr_payment_enabled: updated.qrPaymentEnabled,
+          updated_at: new Date().toISOString(),
+        })
+      } catch (err) {
+        console.warn('Failed to persist settings to Supabase:', err)
+      }
+    }
+
     this.emit('settings_updated', updated)
     return updated
+  }
+
+  // --- PAYMENT REQUESTS (SERVER-AUTHORITATIVE UPI & EXPIRY) ---
+
+  async createPaymentRequest(params: {
+    userId: string
+    userEmail: string
+    amountMinor: number
+  }): Promise<PaymentRequestRecord> {
+    const settings = await this.getSettings()
+    const validityMins = settings.paymentValidityMinutes || 15
+    const expiresAt = new Date(Date.now() + validityMins * 60 * 1000).toISOString()
+    const reference = `RM-DEP-${Date.now().toString().slice(-6)}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+
+    const newRecord: PaymentRequestRecord = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `req_${Date.now()}`,
+      userId: params.userId,
+      userEmail: params.userEmail,
+      amountMinor: params.amountMinor,
+      currency: 'INR',
+      reference,
+      merchantUpiId: settings.upiMerchantId,
+      merchantDisplayName: settings.upiMerchantName,
+      status: 'pending',
+      expiresAt,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Try Supabase insert
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('payment_requests')
+          .insert({
+            id: newRecord.id,
+            user_id: newRecord.userId,
+            user_email: newRecord.userEmail,
+            amount_minor: newRecord.amountMinor,
+            currency: newRecord.currency,
+            reference: newRecord.reference,
+            merchant_upi_id: newRecord.merchantUpiId,
+            merchant_display_name: newRecord.merchantDisplayName,
+            status: 'pending',
+            expires_at: newRecord.expiresAt,
+          })
+          .select()
+          .single()
+
+        if (!error && data) {
+          newRecord.id = data.id
+        }
+      } catch (err) {
+        console.warn('Could not insert payment_requests into Supabase, saving to local cache.', err)
+      }
+    }
+
+    // Save to local cache
+    const existing = await this.getPaymentRequests()
+    const updated = [newRecord, ...existing]
+    localStorage.setItem(STORAGE_KEYS.PAYMENT_REQUESTS, JSON.stringify(updated))
+    this.emit('payment_requests_updated', updated)
+
+    return newRecord
+  }
+
+  async getPaymentRequests(): Promise<PaymentRequestRecord[]> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('payment_requests')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (!error && data && data.length > 0) {
+          return data.map((r: any) => ({
+            id: r.id,
+            userId: r.user_id,
+            userEmail: r.user_email,
+            amountMinor: r.amount_minor,
+            currency: r.currency || 'INR',
+            reference: r.reference,
+            merchantUpiId: r.merchant_upi_id,
+            merchantDisplayName: r.merchant_display_name,
+            utrNumber: r.utr_number,
+            status: r.status,
+            expiresAt: r.expires_at,
+            notes: r.notes,
+            rejectionReason: r.rejection_reason,
+            reviewedAt: r.reviewed_at,
+            reviewedBy: r.reviewed_by,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+          }))
+        }
+      } catch (err) {
+        console.warn('Failed to load payment_requests from Supabase:', err)
+      }
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.PAYMENT_REQUESTS)
+    if (!raw) return []
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return []
+    }
+  }
+
+  async submitPaymentUtr(requestId: string, utrNumber: string): Promise<PaymentRequestRecord> {
+    const list = await this.getPaymentRequests()
+    const target = list.find((r) => r.id === requestId)
+    if (!target) throw new Error('Payment request not found.')
+
+    // Validate server-authoritative expiry
+    if (new Date(target.expiresAt).getTime() < Date.now()) {
+      target.status = 'expired'
+      localStorage.setItem(STORAGE_KEYS.PAYMENT_REQUESTS, JSON.stringify(list))
+      throw new Error('This payment request has expired. Please generate a fresh payment QR.')
+    }
+
+    target.utrNumber = utrNumber.trim()
+    target.status = 'submitted'
+    target.updatedAt = new Date().toISOString()
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('payment_requests')
+          .update({
+            utr_number: target.utrNumber,
+            status: 'submitted',
+            updated_at: target.updatedAt,
+          })
+          .eq('id', requestId)
+      } catch (err) {
+        console.warn('Failed to update UTR in Supabase:', err)
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEYS.PAYMENT_REQUESTS, JSON.stringify(list))
+    this.emit('payment_requests_updated', list)
+    return target
+  }
+
+  async verifyPaymentAndCredit(requestId: string, adminNotes?: string): Promise<{ success: boolean; newBalanceMinor: number }> {
+    // 1. Try PostgreSQL atomic RPC function
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.rpc('verify_payment_and_credit_wallet', {
+          p_request_id: requestId,
+          p_admin_notes: adminNotes || 'Verified by Administrator',
+        })
+        const rpcResult = data as { success?: boolean; new_balance_minor?: number } | null
+        if (!error && rpcResult && typeof rpcResult.new_balance_minor === 'number') {
+          this.emit('wallet_updated', {})
+          this.emit('payment_requests_updated', {})
+          return { success: true, newBalanceMinor: rpcResult.new_balance_minor }
+        }
+      } catch (err) {
+        console.warn('RPC verify_payment_and_credit_wallet not available, using storeEngine atomic verification.', err)
+      }
+    }
+
+    // 2. Fallback to storeEngine verified credit
+    const list = await this.getPaymentRequests()
+    const target = list.find((r) => r.id === requestId)
+    if (!target) throw new Error('Payment request not found.')
+    if (target.status === 'verified') throw new Error('Payment request is already verified.')
+
+    const now = new Date().toISOString()
+    target.status = 'verified'
+    target.reviewedAt = now
+    target.reviewedBy = 'Administrator'
+    target.notes = adminNotes || target.notes
+    target.updatedAt = now
+
+    // Credit user's wallet via wallet transaction record
+    const txRaw = localStorage.getItem(STORAGE_KEYS.WALLET_TX)
+    const txList: WalletTx[] = txRaw ? JSON.parse(txRaw) : []
+    const tx = txList.find((t) => t.reference === target.reference || (target.utrNumber && t.utrNumber === target.utrNumber))
+    if (tx) {
+      tx.status = 'completed'
+      tx.approvedAt = now
+      tx.approvedBy = 'Administrator'
+    } else {
+      txList.unshift({
+        id: `wtx_${Date.now()}`,
+        userId: target.userId,
+        amountMinor: target.amountMinor,
+        transactionType: 'credit',
+        status: 'completed',
+        reference: target.reference,
+        description: `Verified Deposit via UPI QR (UTR: ${target.utrNumber || 'N/A'})`,
+        utrNumber: target.utrNumber,
+        approvedAt: now,
+        approvedBy: 'Administrator',
+        createdAt: now,
+      })
+    }
+    localStorage.setItem(STORAGE_KEYS.WALLET_TX, JSON.stringify(txList))
+    this.emit('wallet_updated', {})
+
+    // Also update legacy deposit request for compatibility
+    await this.approveDepositRequest(target.id, 'Administrator').catch(() => {})
+
+    localStorage.setItem(STORAGE_KEYS.PAYMENT_REQUESTS, JSON.stringify(list))
+    this.emit('payment_requests_updated', list)
+    const newBal = await this.getWalletBalance(target.userId)
+    return { success: true, newBalanceMinor: newBal }
   }
 }
 

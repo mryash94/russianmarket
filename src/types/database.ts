@@ -175,6 +175,32 @@ export type Database = {
         sunpay_merchant_id: string | null
         sunpay_api_endpoint: string | null
         sunpay_sandbox_mode: boolean
+        upi_merchant_id: string | null
+        upi_merchant_name: string | null
+        upi_min_amount_minor: number | null
+        upi_max_amount_minor: number | null
+        upi_instructions: string | null
+        payment_validity_minutes: number | null
+        qr_payment_enabled: boolean | null
+        updated_at: string
+      }>
+      payment_requests: Table<{
+        id: string
+        user_id: string
+        user_email: string
+        amount_minor: number
+        currency: string
+        reference: string
+        merchant_upi_id: string
+        merchant_display_name: string
+        utr_number: string | null
+        status: 'pending' | 'submitted' | 'verified' | 'rejected' | 'expired'
+        expires_at: string
+        notes: string | null
+        rejection_reason: string | null
+        reviewed_at: string | null
+        reviewed_by: string | null
+        created_at: string
         updated_at: string
       }>
       videos: Table<{
@@ -250,6 +276,17 @@ export type Database = {
     }
     Views: Record<string, never>
     Functions: {
+      verify_payment_and_credit_wallet: {
+        Args: {
+          p_request_id: string
+          p_admin_notes?: string
+        }
+        Returns: {
+          success: boolean
+          new_balance_minor: number
+          message?: string
+        }
+      }
       is_admin: {
         Args: Record<string, never>
         Returns: boolean

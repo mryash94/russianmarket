@@ -28,6 +28,8 @@ type HeaderProps = {
   onSearchChange: (query: string) => void
   searchQuery: string
   onMarkNotificationRead: (id: string) => void
+  user?: { email?: string | null } | null
+  onOpenAuth?: () => void
 }
 
 export function Header({
@@ -45,6 +47,8 @@ export function Header({
   onSearchChange,
   searchQuery,
   onMarkNotificationRead,
+  user,
+  onOpenAuth,
 }: HeaderProps) {
   const [showSearchInput, setShowSearchInput] = useState(false)
   const [showNotifDropdown, setShowNotifDropdown] = useState(false)
@@ -199,14 +203,34 @@ export function Header({
               title="Admin Control Room"
               className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                 isAdminView
-                  ? 'bg-white/15 text-white border-white/20'
+                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-white border-white/[0.08] hover:bg-white/[0.05]'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5 sm:hidden" />
               <span className="hidden sm:inline">
-                {isAdminView ? 'Admin View' : 'Admin'}
+                {isAdminView ? 'Admin Active' : 'Admin'}
               </span>
+            </button>
+          )}
+
+          {/* User Profile / Sovereign Sign In */}
+          {user ? (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              title={user.email || 'Collector Account'}
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500/30 to-emerald-500/20 border border-white/20 flex items-center justify-center font-bold text-white text-xs hover:border-cyan-400 transition-colors"
+            >
+              {(user.email?.[0] ?? 'C').toUpperCase()}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAuth}
+              className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-medium border border-white/10 transition-colors"
+            >
+              Sign In
             </button>
           )}
         </div>

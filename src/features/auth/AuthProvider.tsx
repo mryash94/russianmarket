@@ -5,131 +5,313 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Session } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 import { supabase, supabaseConfigError } from '../../lib/supabase'
-import { AuthContext, type AuthContextValue } from './authContext'
+import { AuthContext, type AuthContextValue, type UserRole } from './authContext'
+
+const AUTHORIZED_ADMIN_EMAIL = 'own77777777@gmail.com'
+const PENDING_CHECKOUT_KEY = 'rm_pending_checkout'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [role, setRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(Boolean(supabase))
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!supabase) return
+  // Verify server-side role from user_roles table
+  const fetchUserRole = useCallback(async (activeUser: User | null): Promise<UserRole> => {
+    if (!activeUser) return 'customer'
 
-    let active = true
-    let receivedAuthEvent = false
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        receivedAuthEvent = true
-        if (active) {
-          setSession(nextSession)
-          setLoading(false)
-        }
-      },
-    )
+    const email = activeUser.email?.trim().toLowerCase() ?? ''
+    const isOwner = email === AUTHORIZED_ADMIN_EMAIL
 
-    void supabase.auth.getSession().then(({ data, error: sessionError }) => {
-      if (!active || receivedAuthEvent) return
-      setSession(data.session)
-      setError(sessionError ? 'Your saved session could not be restored.' : null)
-      setLoading(false)
-    }).catch((sessionError: unknown) => {
-      if (!active || receivedAuthEvent) return
-      console.error('BLACK X could not restore the Supabase session.', sessionError)
-      setError('Your saved session could not be restored. Please try signing in again.')
-      setLoading(false)
-    })
+    if (!supabase) {
+      return isOwner ? 'admin' : 'customer'
+    }
 
-    return () => {
-      active = false
-      subscription.unsubscribe()
+    try {
+      const { data, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', activeUser.id)
+        .maybeSingle()
+
+      if (!roleError && data?.role) {
+        return data.role as UserRole
+      }
+      return isOwner ? 'admin' : 'customer'
+    } catch {
+      return isOwner ? 'admin' : 'customer'
     }
   }, [])
 
-  const runAuthAction = useCallback(async (
-    action: 'signIn' | 'signUp' | 'signOut',
-    email?: string,
-    password?: string,
-  ) => {
+  // Sync session and role
+  const syncSession = useCallback(async (nextSession: Session | null) => {
+    setSession(nextSession)
+    const activeUser = nextSession?.user ?? null
+    setUser(activeUser)
+
+    if (activeUser) {
+      const resolvedRole = await fetchUserRole(activeUser)
+      setRole(resolvedRole)
+    } else {
+      setRole(null)
+    }
+    setLoading(false)
+  }, [fetchUserRole])
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+
+    let isMounted = true
+
+    // Check initial active session
+    void supabase.auth.getSession().then(async ({ data: { session: initialSession }, error: sessionError }) => {
+      if (!isMounted) return
+      if (sessionError) {
+        console.warn('Supabase session restore warning:', sessionError.message)
+      }
+      await syncSession(initialSession)
+    }).catch((err: unknown) => {
+      if (!isMounted) return
+      console.error('Failed to restore Supabase session:', err)
+      setLoading(false)
+    })
+
+    // Listen to real-time auth changes (Sign-in, OAuth redirects, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, nextSession) => {
+        if (!isMounted) return
+        await syncSession(nextSession)
+      },
+    )
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [syncSession])
+
+  const signInWithGoogle = useCallback(async (returnUrl?: string) => {
     setError(null)
     setNotice(null)
     if (!supabase) {
-      setError(supabaseConfigError ?? 'Supabase authentication is unavailable.')
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return
+    }
+
+    if (returnUrl) {
+      sessionStorage.setItem('rm_auth_return_url', returnUrl)
+    }
+
+    try {
+      const redirectOrigin = window.location.origin
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${redirectOrigin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+      if (oauthError) {
+        setError(oauthError.message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google OAuth failed to initialize.')
+    }
+  }, [])
+
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
       return
     }
 
     try {
-      if (action === 'signOut') {
-        const { error: signOutError } = await supabase.auth.signOut()
-        if (signOutError) {
-          setError(signOutError.message)
-          return
-        }
-        setSession(null)
-        setNotice('You have been signed out.')
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      if (signInError) {
+        setError(signInError.message)
         return
       }
+      await syncSession(data.session)
+      setNotice('Signed in successfully.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed.')
+    }
+  }, [syncSession])
 
-      const credentials = {
-        email: email?.trim().toLowerCase() ?? '',
-        password: password ?? '',
-      }
-      if (action === 'signIn') {
-        const { error: signInError } = await supabase.auth.signInWithPassword(credentials)
-        if (signInError) {
-          setError(signInError.message)
-          return
-        }
-        setNotice('You are signed in.')
-        return
-      }
+  const signUpWithEmail = useCallback(async (email: string, password: string) => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return
+    }
 
-      const { data, error: signUpError } = await supabase.auth.signUp(credentials)
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+      })
       if (signUpError) {
         setError(signUpError.message)
         return
       }
-      setNotice(data.session
-        ? 'Your account is ready.'
-        : 'Check your email to confirm your account, then sign in.')
-    } catch (authError) {
-      console.error(`BLACK X Supabase ${action} request failed.`, authError)
-      setError(authError instanceof Error
-        ? authError.message
-        : 'The authentication request could not be completed. Please try again.')
+      if (data.session) {
+        await syncSession(data.session)
+        setNotice('Account created and signed in.')
+      } else {
+        setNotice('Please check your email to confirm your account, then sign in.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed.')
+    }
+  }, [syncSession])
+
+  const sendEmailOtp = useCallback(async (email: string) => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return
+    }
+
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
+      })
+      if (otpError) {
+        setError(otpError.message)
+        throw otpError
+      }
+      setNotice(`One-time verification code sent to ${email}.`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send verification code.')
+      throw err
     }
   }, [])
 
-  const signIn = useCallback(
-    (email: string, password: string) => runAuthAction('signIn', email, password),
-    [runAuthAction],
-  )
-  const signUp = useCallback(
-    (email: string, password: string) => runAuthAction('signUp', email, password),
-    [runAuthAction],
-  )
-  const signOut = useCallback(
-    () => runAuthAction('signOut'),
-    [runAuthAction],
-  )
+  const verifyOtp = useCallback(async (email: string, token: string): Promise<boolean> => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      setError(supabaseConfigError ?? 'Supabase is not configured.')
+      return false
+    }
+
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: token.trim(),
+        type: 'email',
+      })
+      if (verifyError || !data.session) {
+        setError(verifyError?.message ?? 'Invalid or expired verification code.')
+        return false
+      }
+      await syncSession(data.session)
+      setNotice('Verification successful.')
+      return true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed.')
+      return false
+    }
+  }, [syncSession])
+
+  const signOut = useCallback(async () => {
+    setError(null)
+    setNotice(null)
+    if (!supabase) {
+      await syncSession(null)
+      return
+    }
+
+    try {
+      await supabase.auth.signOut()
+      await syncSession(null)
+      setNotice('Signed out.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign out failed.')
+    }
+  }, [syncSession])
+
   const clearMessages = useCallback(() => {
     setError(null)
     setNotice(null)
   }, [])
 
+  const setPendingCheckoutProduct = useCallback((productId: string) => {
+    sessionStorage.setItem(PENDING_CHECKOUT_KEY, productId)
+  }, [])
+
+  const getPendingCheckoutProduct = useCallback(() => {
+    return sessionStorage.getItem(PENDING_CHECKOUT_KEY)
+  }, [])
+
+  const clearPendingCheckoutProduct = useCallback(() => {
+    sessionStorage.removeItem(PENDING_CHECKOUT_KEY)
+  }, [])
+
+  const isAuthorizedEmail = Boolean(
+    user?.email?.trim().toLowerCase() === AUTHORIZED_ADMIN_EMAIL
+  )
+  const isAdmin = Boolean(role === 'admin' || isAuthorizedEmail)
+
   const value = useMemo<AuthContextValue>(() => ({
     session,
-    user: session?.user ?? null,
+    user,
+    role,
+    isAdmin,
+    isAuthorizedAdmin: isAuthorizedEmail,
     loading,
     error,
     notice,
-    signIn,
-    signUp,
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    sendEmailOtp,
+    verifyOtp,
     signOut,
     clearMessages,
-  }), [session, loading, error, notice, signIn, signUp, signOut, clearMessages])
+    setPendingCheckoutProduct,
+    getPendingCheckoutProduct,
+    clearPendingCheckoutProduct,
+  }), [
+    session,
+    user,
+    role,
+    isAdmin,
+    isAuthorizedEmail,
+    loading,
+    error,
+    notice,
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    sendEmailOtp,
+    verifyOtp,
+    signOut,
+    clearMessages,
+    setPendingCheckoutProduct,
+    getPendingCheckoutProduct,
+    clearPendingCheckoutProduct,
+  ])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

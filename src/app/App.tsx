@@ -11,18 +11,53 @@ import { ChatSection } from '../features/chat/ChatSection'
 import { WalletSection } from '../features/wallet/WalletSection'
 import { SettingsSection } from '../features/settings/SettingsSection'
 import { AdminDashboard } from '../features/admin/AdminDashboard'
+import { AdminLoginGateway } from '../features/admin/AdminLoginGateway'
+import { AuthModal } from '../features/auth/AuthModal'
 import { storeEngine, type NotificationItem } from '../services/storeEngine'
 import { useAuth } from '../features/auth/authContext'
+import { supabase } from '../lib/supabase'
 import type { Product } from '../types/product'
 
 const CART_STORAGE_KEY = 'rm_cart_items_v2'
 
 export function App() {
-  const { user } = useAuth()
+  const {
+    user,
+    isAdmin,
+    loading: authLoading,
+    setPendingCheckoutProduct,
+    getPendingCheckoutProduct,
+    clearPendingCheckoutProduct,
+  } = useAuth()
+
   const userId = user?.id || 'demo_collector_user'
   const userEmail = user?.email || 'collector@russianmarket.store'
 
-  // Application State
+  // Application Routing State
+  const [isAdminRoute, setIsAdminRoute] = useState(() => {
+    return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
+  })
+
+  // Popstate Listener for Browser Back/Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      setIsAdminRoute(window.location.pathname.startsWith('/admin'))
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  const navigateToAdmin = useCallback(() => {
+    window.history.pushState({}, '', '/admin')
+    setIsAdminRoute(true)
+  }, [])
+
+  const navigateToStore = useCallback(() => {
+    window.history.pushState({}, '', '/')
+    setIsAdminRoute(false)
+  }, [])
+
+  // Application Navigation & Data
   const [activeSection, setActiveSection] = useState<AppSection>('cards')
   const [products, setProducts] = useState<Product[]>([])
   const [cartItems, setCartItems] = useState<Record<string, number>>(() => {
@@ -39,7 +74,7 @@ export function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isOrdersOpen, setIsOrdersOpen] = useState(false)
   const [isVaultOpen, setIsVaultOpen] = useState(false)
-  const [isAdminView, setIsAdminView] = useState(false)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
 
   // Realtime Badges & Data
   const [searchQuery, setSearchQuery] = useState('')
@@ -47,7 +82,7 @@ export function App() {
   const [ordersCount, setOrdersCount] = useState(0)
   const [vaultCount, setVaultCount] = useState(0)
 
-  // Load Initial Store Data & Subscribe to Realtime Updates
+  // Load Initial Store Data
   const refreshStoreData = useCallback(async () => {
     try {
       const [pList, nList, oList, vList] = await Promise.all([
@@ -74,17 +109,76 @@ export function App() {
     return () => unsubscribe()
   }, [refreshStoreData])
 
+  // Realtime Subscriptions for live updates
+  useEffect(() => {
+    if (!supabase || !user) return
+
+    const channel = supabase
+      .channel(`user-realtime-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` },
+        () => {
+          void refreshStoreData()
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payment_requests', filter: `user_id=eq.${user.id}` },
+        () => {
+          void refreshStoreData()
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => {
+          void refreshStoreData()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      if (supabase) {
+        void supabase.removeChannel(channel)
+      }
+    }
+  }, [user, refreshStoreData])
+
   // Save Cart Changes
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
   }, [cartItems])
 
+  // Resume Pending Checkout after Guest Logs In
+  useEffect(() => {
+    if (user && products.length > 0) {
+      const pendingProductId = getPendingCheckoutProduct()
+      if (pendingProductId) {
+        clearPendingCheckoutProduct()
+        const targetProduct = products.find((p) => p.id === pendingProductId)
+        if (targetProduct) {
+          setCartItems({ [pendingProductId]: 1 })
+          setIsAuthModalOpen(false)
+          setIsCheckoutOpen(true)
+        }
+      }
+    }
+  }, [user, products, getPendingCheckoutProduct, clearPendingCheckoutProduct])
+
   const unreadNotificationsCount = useMemo(() => {
     return notifications.filter((n) => !n.readAt).length
   }, [notifications])
 
+  // Canonical Single-Purchase BUY NOW Flow with Guest Auth Intercept
   const handleQuickBuy = (product: Product) => {
-    // Canonical single-purchase flow: exactly one product per checkout
+    if (!user) {
+      // Guest: Store pending checkout product and prompt login
+      setPendingCheckoutProduct(product.id)
+      setIsAuthModalOpen(true)
+      return
+    }
+
     setCartItems({ [product.id]: 1 })
     setIsCheckoutOpen(true)
   }
@@ -99,13 +193,37 @@ export function App() {
     setNotifications(updated)
   }
 
-  // Admin Check
-  const isAdmin = true // In local/demo mode, enable admin control room
+  // ========================================================
+  // ROUTE 1: ADMIN CONTROL ROOM (/admin)
+  // ========================================================
+  if (isAdminRoute) {
+    if (authLoading) {
+      return (
+        <div className="min-h-screen bg-[#060709] flex flex-col items-center justify-center p-4">
+          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-4" />
+          <span className="text-xs text-white/60 font-mono tracking-widest uppercase">
+            Verifying Sovereign Admin Session…
+          </span>
+        </div>
+      )
+    }
 
-  if (isAdminView) {
-    return <AdminDashboard onExitAdmin={() => setIsAdminView(false)} />
+    // Server-Verified Admin Gate: only users with admin role can access
+    if (!user || !isAdmin) {
+      return (
+        <AdminLoginGateway
+          onSuccess={() => setIsAdminRoute(true)}
+          onReturnToStore={navigateToStore}
+        />
+      )
+    }
+
+    return <AdminDashboard onExitAdmin={navigateToStore} />
   }
 
+  // ========================================================
+  // ROUTE 2: CUSTOMER STOREFRONT (/)
+  // ========================================================
   return (
     <div className="min-h-screen bg-[#060709] text-[#ededed] flex flex-col font-sans overflow-x-hidden selection:bg-white selection:text-black">
       {/* 1. Header (Mobile-first, sticky with search, orders, notifications, cart, and desktop nav) */}
@@ -117,13 +235,21 @@ export function App() {
         vaultCount={vaultCount}
         notifications={notifications}
         isAdmin={isAdmin}
-        isAdminView={isAdminView}
-        onToggleAdminView={() => setIsAdminView(true)}
-        onOpenOrders={() => setIsOrdersOpen(true)}
-        onOpenVault={() => setIsVaultOpen(true)}
+        isAdminView={false}
+        onToggleAdminView={navigateToAdmin}
+        onOpenOrders={() => {
+          if (!user) setIsAuthModalOpen(true)
+          else setIsOrdersOpen(true)
+        }}
+        onOpenVault={() => {
+          if (!user) setIsAuthModalOpen(true)
+          else setIsVaultOpen(true)
+        }}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         onMarkNotificationRead={handleMarkNotificationRead}
+        user={user}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       {/* 2. Main Content View Area with ample safe bottom clearance */}
@@ -150,19 +276,18 @@ export function App() {
         {activeSection === 'settings' && (
           <SettingsSection
             isAdmin={isAdmin}
-            onToggleAdmin={() => setIsAdminView(true)}
+            onToggleAdmin={navigateToAdmin}
           />
         )}
       </main>
 
-      {/* Subtle Mobile Bottom Ambient Fade (low height to never obscure scrolling cards) */}
+      {/* Subtle Mobile Bottom Ambient Fade */}
       <div
         className="md:hidden fixed bottom-0 inset-x-0 h-16 pointer-events-none bg-gradient-to-t from-[#060709] to-transparent z-40"
         aria-hidden="true"
       />
 
       {/* 3. Navigation Controls */}
-      {/* Mobile Fixed Bottom Bar (safe-area optimized, enlarged touch targets) */}
       <Navigation
         activeSection={activeSection}
         onChange={setActiveSection}
@@ -207,9 +332,16 @@ export function App() {
         onClose={() => setIsVaultOpen(false)}
         userId={userId}
       />
+
+      {/* Sovereign Auth Modal (Prompted on BUY NOW for Guests) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        title="Sign In to Complete Acquisition"
+        subtitle="Authenticate via Google or email to complete your collectible purchase and access your private vault."
+      />
     </div>
   )
 }
 
 export default App
-
