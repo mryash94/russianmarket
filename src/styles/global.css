@@ -1,4 +1,55 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --color-container: var(--container);
+  --color-container-high: var(--container-high);
+  --color-container-highest: var(--container-highest);
+  --color-outline-variant: var(--outline-variant);
+  --color-success: var(--success);
+}
+
+:root {
+  --container: #f8f9fc;
+  --container-high: #eff2f7;
+  --container-highest: #e1e6ec;
+  --outline-variant: rgba(33, 34, 38, 0.06);
+  --success: #008052;
+  --shadow-float: 0 1px 2px rgba(18, 19, 23, 0.04), 0 8px 24px -6px rgba(18, 19, 23, 0.12),
+    0 24px 56px -12px rgba(18, 19, 23, 0.1);
+  --state-hover: 0.05;
+  --state-press: 0.09;
+  --state-focus: 0.12;
+  --ease-dx: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dark {
+  --container: #18191d;
+  --container-high: #212226;
+  --container-highest: #45474d;
+  --outline-variant: rgba(230, 234, 240, 0.06);
+  --success: #0ebc5f;
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -8px rgba(0, 0, 0, 0.5);
+  --state-hover: 0.06;
+  --state-press: 0.1;
+  --state-focus: 0.14;
+}
+
+/* Helper utilities for auth-drawer & shadcn components */
+.state-layer {
+  position: relative;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--primary, #00f0ff);
+  outline-offset: 2px;
+}
+@keyframes caret-blink {
+  0%, 70%, 100% { opacity: 1; }
+  20%, 50% { opacity: 0; }
+}
+.animate-caret-blink {
+  animation: caret-blink 1.25s ease-out infinite;
+}
 
 /**
  * RUSSIAN MARKET — Master Design System
