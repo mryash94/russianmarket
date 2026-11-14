@@ -10,6 +10,7 @@ import {
   Clock,
   RefreshCw,
   ShieldCheck,
+  ExternalLink,
 } from 'lucide-react'
 import {
   storeEngine,
@@ -431,6 +432,19 @@ export function AddMoneyModal({
                 {settings?.upiInstructions || 'Scan with GPay, PhonePe, Paytm, or BHIM. After paying, enter your 12-digit UPI UTR number below.'}
               </p>
             </div>
+
+            {/* Mobile Direct UPI Intent Link */}
+            <a
+              href={`upi://pay?pa=${encodeURIComponent(
+                activeRequest.merchantUpiId || settings?.upiMerchantId || 'russianmarket@icici'
+              )}&pn=${encodeURIComponent(
+                activeRequest.merchantDisplayName || settings?.upiMerchantName || 'Russian Market Collectibles'
+              )}&am=${(activeRequest.amountMinor / 100).toFixed(2)}&cu=INR&tn=${encodeURIComponent(activeRequest.reference)}`}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-400/15 to-emerald-400/15 hover:from-cyan-400/25 hover:to-emerald-400/25 border border-cyan-400/30 text-cyan-300 font-semibold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 sm:hidden"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Tap to Pay with UPI App (GPay / PhonePe / Paytm)</span>
+            </a>
 
             {/* UTR Submission Form */}
             <form onSubmit={(e) => void handleSubmitUTR(e)} className="space-y-3 pt-1">

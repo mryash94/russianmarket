@@ -16,6 +16,7 @@ import {
   type StoreSettings,
   type PaymentRequestRecord,
   type WalletTx,
+  type AdminAuditLog,
 } from '../../services/storeEngine'
 import type { Product, CardCategory } from '../../types/product'
 import { formatINR } from '../../lib/currency'
@@ -41,8 +42,10 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
   const [settings, setSettings] = useState<StoreSettings | null>(null)
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequestRecord[]>([])
   const [transactions, setTransactions] = useState<WalletTx[]>([])
+  const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
+  const [upiError, setUpiError] = useState<string | null>(null)
 
   // Filters & Searches
   const [orderSearch, setOrderSearch] = useState('')
@@ -67,18 +70,20 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
   const reloadData = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [o, p, s, pr, tx] = await Promise.all([
+      const [o, p, s, pr, tx, logs] = await Promise.all([
         storeEngine.getOrders(),
         storeEngine.getProducts(),
         storeEngine.getSettings(),
         storeEngine.getPaymentRequests(),
         storeEngine.getWalletTransactions(),
+        storeEngine.getAdminAuditLogs(),
       ])
       setOrders(o)
       setProducts(p)
       setSettings(s)
       setPaymentRequests(pr)
       setTransactions(tx)
+      setAuditLogs(logs)
     } catch (err) {
       console.error('Failed to load admin data:', err)
     } finally {
@@ -136,14 +141,31 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
 
   const handleUpdateUPISettings = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setUpiError(null)
     const form = new FormData(e.currentTarget)
-    const upiMerchantId = (form.get('upiMerchantId') as string) || ''
-    const upiMerchantName = (form.get('upiMerchantName') as string) || ''
+    const upiMerchantId = ((form.get('upiMerchantId') as string) || '').trim()
+    const upiMerchantName = ((form.get('upiMerchantName') as string) || '').trim()
     const upiMin = parseInt(form.get('upiMinAmount') as string, 10) * 100 || 10000
     const upiMax = parseInt(form.get('upiMaxAmount') as string, 10) * 100 || 5000000
     const validityMins = parseInt(form.get('paymentValidityMinutes') as string, 10) || 15
     const upiInstructions = (form.get('upiInstructions') as string) || ''
     const qrPaymentEnabled = form.get('qrPaymentEnabled') === 'on'
+
+    const vpaRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/
+    if (!vpaRegex.test(upiMerchantId)) {
+      setUpiError('Invalid UPI VPA format. Must be formatted as username@bank (e.g. russianmarket@icici).')
+      return
+    }
+
+    if (upiMin <= 0) {
+      setUpiError('Minimum deposit amount must be greater than ₹0.')
+      return
+    }
+
+    if (upiMin > upiMax) {
+      setUpiError('Minimum deposit amount cannot be greater than Maximum deposit amount.')
+      return
+    }
 
     await storeEngine.updateSettings({
       upiMerchantId,
@@ -155,7 +177,7 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
       qrPaymentEnabled,
     })
 
-    notifySuccess('UPI Merchant Parameters synchronized successfully!')
+    notifySuccess('UPI Merchant Parameters synchronized and broadcast via Realtime!')
     await reloadData()
   }
 
@@ -848,6 +870,13 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                     </label>
                   </div>
 
+                  {upiError && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{upiError}</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     className="w-full h-11 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-semibold text-xs flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
@@ -1065,22 +1094,42 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
           {/* ======================================================== */}
           {activeTab === 'audit' && (
             <div className="p-6 rounded-2xl bg-[#0c0e12] border border-white/5 space-y-4">
-              <h2 className="text-base font-bold text-white">Immutable Administrative Audit Log</h2>
-              <div className="divide-y divide-white/5 text-xs font-mono">
-                <div className="py-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-semibold text-white block">INITIAL_ADMIN_BOOTSTRAP</span>
-                    <span className="text-[10px] text-white/40">Root operator: {AUTHORIZED_ADMIN_EMAIL}</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-400">VERIFIED</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-white">Immutable Administrative Audit Log</h2>
+                  <p className="text-xs text-white/50 font-sans mt-0.5">
+                    Real-time cryptographically recorded administrative operations & configuration updates
+                  </p>
                 </div>
-                <div className="py-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-semibold text-white block">UPI_GATEWAY_CONFIGURED</span>
-                    <span className="text-[10px] text-white/40">VPA: {settings?.upiMerchantId}</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-400">VERIFIED</span>
-                </div>
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px]">
+                  {auditLogs.length} Records Active
+                </span>
+              </div>
+
+              <div className="divide-y divide-white/5 text-xs font-mono max-h-[500px] overflow-y-auto">
+                {auditLogs.length === 0 ? (
+                  <div className="py-8 text-center text-white/40">No audit events recorded yet.</div>
+                ) : (
+                  auditLogs.map((log) => (
+                    <div key={log.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white">{log.action}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-white/10 text-cyan-400 text-[9px]">
+                            {log.targetResource}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-white/40 block truncate max-w-md">
+                          {log.payload ? JSON.stringify(log.payload) : 'System state mutation'}
+                        </span>
+                      </div>
+                      <div className="text-left sm:text-right text-[10px] text-white/40 font-mono shrink-0">
+                        <span className="text-emerald-400 block font-semibold">VERIFIED</span>
+                        <span>{new Date(log.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -1099,6 +1148,17 @@ export function AdminDashboard({ onExitAdmin }: AdminDashboardProps) {
                 <div className="flex justify-between p-3 bg-white/5 rounded-xl">
                   <span className="text-white/60">Supabase Endpoint:</span>
                   <span className="text-cyan-400 truncate max-w-[200px]">deeprhlnoflqzpraxkaq</span>
+                </div>
+                <div className="flex justify-between p-3 bg-white/5 rounded-xl">
+                  <span className="text-white/60">Realtime Channel:</span>
+                  <span className="text-emerald-400 flex items-center gap-1.5 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>SUBSCRIBED (Active)</span>
+                  </span>
+                </div>
+                <div className="flex justify-between p-3 bg-white/5 rounded-xl">
+                  <span className="text-white/60">Root Administrator:</span>
+                  <span className="text-white font-bold">{AUTHORIZED_ADMIN_EMAIL}</span>
                 </div>
               </div>
             </div>

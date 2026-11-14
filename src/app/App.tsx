@@ -81,20 +81,23 @@ export function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [ordersCount, setOrdersCount] = useState(0)
   const [vaultCount, setVaultCount] = useState(0)
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
 
   // Load Initial Store Data
   const refreshStoreData = useCallback(async () => {
     try {
-      const [pList, nList, oList, vList] = await Promise.all([
+      const [pList, nList, oList, vList, chatCount] = await Promise.all([
         storeEngine.getProducts(),
         storeEngine.getNotifications(userId),
         storeEngine.getOrders(userId),
         storeEngine.getCustomerEntitlements(userId),
+        storeEngine.getUnreadChatCount(userId),
       ])
       setProducts(pList)
       setNotifications(nList)
       setOrdersCount(oList.length)
       setVaultCount(vList.length)
+      setUnreadChatCount(chatCount)
     } catch (err) {
       console.error('Failed to load store data:', err)
     }
@@ -241,6 +244,7 @@ export function App() {
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         unreadCount={unreadNotificationsCount}
+        unreadChatCount={unreadChatCount}
         ordersCount={ordersCount}
         vaultCount={vaultCount}
         notifications={notifications}
@@ -263,7 +267,11 @@ export function App() {
       />
 
       {/* 2. Main Content View Area with ample safe bottom clearance */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 pb-[calc(11rem+env(safe-area-inset-bottom,0px))] md:pb-20">
+      <main className={`flex-1 max-w-7xl w-full mx-auto px-3.5 sm:px-6 ${
+        activeSection === 'chat'
+          ? 'pt-2 sm:pt-4 pb-2 md:pb-6'
+          : 'pt-3 sm:pt-4 pb-[calc(11rem+env(safe-area-inset-bottom,0px))] md:pb-20'
+      }`}>
         {activeSection === 'cards' && (
           <CatalogPage
             products={products}
@@ -302,7 +310,7 @@ export function App() {
         activeSection={activeSection}
         onChange={setActiveSection}
         variant="mobile"
-        unreadChatCount={0}
+        unreadChatCount={unreadChatCount}
       />
 
       {/* 4. Modals and Drawers */}

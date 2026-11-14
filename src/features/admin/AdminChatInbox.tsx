@@ -7,6 +7,7 @@ import {
   Bot,
   RefreshCw,
   FileText,
+  ChevronLeft,
 } from 'lucide-react'
 import {
   storeEngine,
@@ -20,6 +21,7 @@ type AdminChatInboxProps = {
 export function AdminChatInbox({ onNotify }: AdminChatInboxProps) {
   const [conversations, setConversations] = useState<SupportConversation[]>([])
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null)
+  const [mobileShowThread, setMobileShowThread] = useState(false)
   const [filter, setFilter] = useState<'all' | 'unread' | 'open' | 'closed'>('all')
   const [search, setSearch] = useState('')
   const [replyText, setReplyText] = useState('')
@@ -143,7 +145,9 @@ export function AdminChatInbox({ onNotify }: AdminChatInboxProps) {
       {/* 2. Master-Detail Inbox View Container */}
       <div className="grid grid-cols-1 lg:grid-cols-12 rounded-2xl bg-[#0c0e13] border border-white/[0.08] overflow-hidden min-h-[580px] shadow-xl">
         {/* Left Column: Conversation Threads List (4 Cols) */}
-        <div className="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-white/[0.07] flex flex-col bg-[#0c0e13]">
+        <div className={`lg:col-span-4 border-b lg:border-b-0 lg:border-r border-white/[0.07] flex flex-col bg-[#0c0e13] ${
+          mobileShowThread ? 'hidden lg:flex' : 'flex'
+        }`}>
           {/* Search and Filter Row */}
           <div className="p-3 border-b border-white/[0.07] space-y-2">
             <div className="relative">
@@ -196,7 +200,10 @@ export function AdminChatInbox({ onNotify }: AdminChatInboxProps) {
                 return (
                   <div
                     key={conv.id}
-                    onClick={() => setSelectedConvId(conv.id)}
+                    onClick={() => {
+                      setSelectedConvId(conv.id)
+                      setMobileShowThread(true)
+                    }}
                     className={`p-3.5 cursor-pointer transition-colors ${
                       isSelected
                         ? 'bg-[#181c25] border-l-2 border-l-white'
@@ -236,12 +243,23 @@ export function AdminChatInbox({ onNotify }: AdminChatInboxProps) {
         </div>
 
         {/* Right Column: Active Conversation (8 Cols) */}
-        <div className="lg:col-span-8 flex flex-col bg-[#0c0e13]">
+        <div className={`lg:col-span-8 flex flex-col bg-[#0c0e13] ${
+          !mobileShowThread ? 'hidden lg:flex' : 'flex'
+        }`}>
           {selectedConv ? (
             <>
               {/* Active Thread Header */}
               <div className="p-3.5 border-b border-white/[0.07] flex items-center justify-between bg-[#0c0e13]">
                 <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setMobileShowThread(false)}
+                    className="lg:hidden p-1.5 rounded-lg bg-[#181c25] border border-white/10 text-white/70 hover:text-white flex items-center gap-1 text-xs"
+                    title="Back to thread list"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="text-[10px]">Inbox</span>
+                  </button>
                   <div className="w-8 h-8 rounded-lg bg-[#181c25] border border-white/[0.08] flex items-center justify-center text-white">
                     <User className="w-4 h-4" />
                   </div>

@@ -241,8 +241,11 @@ export type Database = {
       support_conversations: Table<{
         id: string
         user_id: string
+        user_email?: string
         subject: string
         status: 'open' | 'pending' | 'closed'
+        unread_admin_count?: number
+        unread_customer_count?: number
         created_at: string
         updated_at: string
       }>
@@ -252,7 +255,9 @@ export type Database = {
         sender_user_id: string | null
         sender_type: 'customer' | 'admin' | 'system'
         body: string
-        idempotency_key: string
+        attachment_name?: string | null
+        attachment_url?: string | null
+        idempotency_key?: string | null
         created_at: string
       }>
       notifications: Table<{
@@ -266,11 +271,15 @@ export type Database = {
       }>
       admin_audit_logs: Table<{
         id: string
-        actor_id: string | null
+        admin_user_id?: string | null
+        actor_id?: string | null
         action: string
-        entity_type: string
-        entity_id: string | null
-        details: Json
+        target_resource?: string
+        entity_type?: string
+        entity_id?: string | null
+        payload?: Json
+        details?: Json
+        ip_address?: string | null
         created_at: string
       }>
     }

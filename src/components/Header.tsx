@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Search,
   Bell,
@@ -9,13 +9,14 @@ import {
 } from 'lucide-react'
 import { RussianMarketLogo } from './RussianMarketLogo'
 import { Navigation, type AppSection } from './Navigation'
-import type { NotificationItem } from '../services/storeEngine'
+import { storeEngine, type NotificationItem } from '../services/storeEngine'
 
 type HeaderProps = {
   activeSection: AppSection
   onSectionChange: (section: AppSection) => void
   cartCount?: number
   unreadCount: number
+  unreadChatCount?: number
   ordersCount: number
   vaultCount?: number
   notifications: NotificationItem[]
@@ -36,6 +37,7 @@ export function Header({
   activeSection,
   onSectionChange,
   unreadCount,
+  unreadChatCount = 0,
   ordersCount,
   vaultCount = 0,
   notifications,
@@ -52,13 +54,38 @@ export function Header({
 }: HeaderProps) {
   const [showSearchInput, setShowSearchInput] = useState(false)
   const [showNotifDropdown, setShowNotifDropdown] = useState(false)
+  const [connStatus, setConnStatus] = useState(storeEngine.getConnectionStatus())
+
+  useEffect(() => {
+    const unsub = storeEngine.subscribe((event, payload) => {
+      if (event === 'connection_status_changed') {
+        setConnStatus(payload as 'connected' | 'connecting' | 'offline')
+      }
+    })
+    return () => unsub()
+  }, [])
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#060709]/95 backdrop-blur-md border-b border-white/[0.07] px-3.5 sm:px-6 py-2.5 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
-        {/* Left: Brand Logo */}
+        {/* Left: Brand Logo & Realtime Status Indicator */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <RussianMarketLogo size="md" showWordmark={true} />
+          <div
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.07] text-[10px] font-mono-code text-[#9499a6]"
+            title={`Supabase Realtime Status: ${connStatus}`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                connStatus === 'connected'
+                  ? 'bg-[#34d399] animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                  : connStatus === 'connecting'
+                  ? 'bg-[#fbbf24] animate-pulse'
+                  : 'bg-[#666b7a]'
+              }`}
+            />
+            <span className="capitalize">{connStatus === 'connected' ? 'Live Realtime' : connStatus}</span>
+          </div>
         </div>
 
         {/* Center: Desktop Primary Navigation */}
@@ -67,6 +94,7 @@ export function Header({
             activeSection={activeSection}
             onChange={onSectionChange}
             variant="desktop"
+            unreadChatCount={unreadChatCount}
           />
         </div>
 

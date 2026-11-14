@@ -208,7 +208,7 @@ export function ChatSection({ userId, userEmail: _userEmail = 'collector@russian
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-130px)] sm:h-[calc(100vh-140px)] max-w-4xl mx-auto space-y-3">
+    <div className="flex flex-col h-[calc(100dvh-10.5rem-env(safe-area-inset-bottom,0px))] sm:h-[calc(100vh-9rem)] max-w-4xl mx-auto space-y-2 sm:space-y-3">
       {/* 1. Compact Header */}
       <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-[#0c0e13] border border-white/[0.07] flex-shrink-0">
         <div className="flex items-center gap-3">

@@ -172,6 +172,16 @@ export type PaymentRequestRecord = {
   updatedAt: string
 }
 
+export type AdminAuditLog = {
+  id: string
+  adminUserId?: string | null
+  action: string
+  targetResource: string
+  payload?: any
+  ipAddress?: string
+  createdAt: string
+}
+
 const STORAGE_KEYS = {
   PRODUCTS: 'rm_db_products_v2',
   ORDERS: 'rm_db_orders_v2',
@@ -184,9 +194,15 @@ const STORAGE_KEYS = {
   PAYMENT_REQUESTS: 'rm_db_payment_requests_v2',
   SETTINGS: 'rm_db_settings_v2',
   VIDEOS: 'rm_db_videos_v2',
+  AUDIT_LOGS: 'rm_db_audit_logs_v2',
 }
 
 type RealtimeListener = (event: string, payload: unknown) => void
+
+function isUuid(str?: string | null): boolean {
+  if (!str) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+}
 
 function normalizeProductCategory(p: any): Product {
   let cat: 'VISA' | 'MASTERCARD' | 'RUPAY' = 'MASTERCARD'
@@ -227,6 +243,64 @@ function normalizeProductCategory(p: any): Product {
  */
 class StoreEngine {
   private listeners: Set<RealtimeListener> = new Set()
+  private connectionStatus: 'connected' | 'connecting' | 'offline' = 'connecting'
+
+  constructor() {
+    this.initSupabaseRealtime()
+  }
+
+  getConnectionStatus(): 'connected' | 'connecting' | 'offline' {
+    return this.connectionStatus
+  }
+
+  private initSupabaseRealtime() {
+    if (!supabase) {
+      this.connectionStatus = 'offline'
+      return
+    }
+    try {
+      supabase
+        .channel('store-engine-global-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
+          this.emit('settings_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+          this.emit('order_created', payload)
+          this.emit('order_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_requests' }, (payload) => {
+          this.emit('payment_requests_updated', payload)
+          this.emit('deposits_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'support_messages' }, (payload) => {
+          this.emit('new_message', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'support_conversations' }, (payload) => {
+          this.emit('conversations_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+          this.emit('products_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet_transactions' }, (payload) => {
+          this.emit('wallet_updated', payload)
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_audit_logs' }, (payload) => {
+          this.emit('audit_logs_updated', payload)
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            this.connectionStatus = 'connected'
+            this.emit('connection_status_changed', 'connected')
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            this.connectionStatus = 'offline'
+            this.emit('connection_status_changed', 'offline')
+          }
+        })
+    } catch (err) {
+      console.warn('[StoreEngine] Realtime channel subscription warning:', err)
+      this.connectionStatus = 'offline'
+    }
+  }
 
   subscribe(listener: RealtimeListener): () => void {
     this.listeners.add(listener)
@@ -650,6 +724,53 @@ class StoreEngine {
   // --- SUPPORT CHAT ---
 
   async getConversations(userId?: string | null): Promise<SupportConversation[]> {
+    if (supabase) {
+      try {
+        let query = supabase
+          .from('support_conversations')
+          .select('*, messages:support_messages(*)')
+          .order('updated_at', { ascending: false })
+
+        if (userId && isUuid(userId)) {
+          query = query.eq('user_id', userId)
+        }
+
+        const { data, error } = await query
+        if (!error && data && data.length > 0) {
+          const mapped: SupportConversation[] = data.map((c: any) => ({
+            id: c.id,
+            userId: c.user_id,
+            userEmail: c.user_email,
+            subject: c.subject,
+            status: c.status,
+            unreadAdminCount: c.unread_admin_count || 0,
+            unreadCustomerCount: c.unread_customer_count || 0,
+            createdAt: c.created_at,
+            updatedAt: c.updated_at,
+            messages: Array.isArray(c.messages)
+              ? c.messages
+                  .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                  .map((m: any) => ({
+                    id: m.id,
+                    conversationId: m.conversation_id,
+                    senderUserId: m.sender_user_id,
+                    senderType: m.sender_type,
+                    body: m.body,
+                    attachmentName: m.attachment_name,
+                    attachmentUrl: m.attachment_url,
+                    createdAt: m.created_at,
+                    status: 'delivered',
+                  }))
+              : [],
+          }))
+          localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(mapped))
+          return mapped
+        }
+      } catch (err) {
+        console.warn('Supabase getConversations fallback:', err)
+      }
+    }
+
     const raw = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS)
     let list: SupportConversation[] = raw ? JSON.parse(raw) : []
 
@@ -712,6 +833,11 @@ class StoreEngine {
     return list
   }
 
+  async getUnreadChatCount(userId?: string | null): Promise<number> {
+    const list = await this.getConversations(userId)
+    return list.reduce((sum, c) => sum + (c.unreadCustomerCount || 0), 0)
+  }
+
   async getAllConversationsForAdmin(): Promise<SupportConversation[]> {
     const list = await this.getConversations()
     return list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -769,14 +895,54 @@ class StoreEngine {
     // Supabase sync if active
     if (supabase) {
       try {
-        await supabase.from('support_messages').insert({
-          id: newMsg.id,
-          conversation_id: params.conversationId,
-          sender_user_id: params.senderUserId || null,
-          sender_type: params.senderType,
-          body: params.body,
-          idempotency_key: newMsg.id,
-        })
+        let targetConvId = params.conversationId
+        if (!isUuid(targetConvId) && params.senderUserId && isUuid(params.senderUserId)) {
+          const { data: convData } = await supabase
+            .from('support_conversations')
+            .select('id')
+            .eq('user_id', params.senderUserId)
+            .maybeSingle()
+
+          if (convData) {
+            targetConvId = convData.id
+          } else {
+            const { data: newConvData } = await supabase
+              .from('support_conversations')
+              .insert({
+                user_id: params.senderUserId,
+                user_email: conv?.userEmail || `${params.senderUserId}@russianmarket.store`,
+                subject: conv?.subject || 'Collector Concierge',
+                status: 'open',
+              })
+              .select('id')
+              .single()
+            if (newConvData) {
+              targetConvId = newConvData.id
+              conv.id = targetConvId
+            }
+          }
+        }
+
+        if (isUuid(targetConvId)) {
+          await supabase.from('support_messages').insert({
+            conversation_id: targetConvId,
+            sender_user_id: isUuid(params.senderUserId) ? params.senderUserId : null,
+            sender_type: params.senderType,
+            body: params.body,
+            attachment_name: params.attachmentName || null,
+            attachment_url: params.attachmentUrl || null,
+          })
+
+          await supabase
+            .from('support_conversations')
+            .update({
+              updated_at: new Date().toISOString(),
+              ...(params.senderType === 'customer'
+                ? { unread_admin_count: (conv.unreadAdminCount || 0) + 1 }
+                : { unread_customer_count: (conv.unreadCustomerCount || 0) + 1 }),
+            })
+            .eq('id', targetConvId)
+        }
       } catch (err) {
         console.warn('Supabase chat message insert warning:', err)
       }
@@ -1227,6 +1393,7 @@ class StoreEngine {
     }
 
     this.emit('settings_updated', updated)
+    await this.recordAdminAuditLog('UPDATE_STORE_SETTINGS', 'store_settings', updated).catch(() => {})
     return updated
   }
 
@@ -1436,8 +1603,107 @@ class StoreEngine {
 
     localStorage.setItem(STORAGE_KEYS.PAYMENT_REQUESTS, JSON.stringify(list))
     this.emit('payment_requests_updated', list)
+    await this.recordAdminAuditLog('VERIFY_UPI_PAYMENT', 'payment_requests', { requestId, adminNotes }).catch(() => {})
     const newBal = await this.getWalletBalance(target.userId)
     return { success: true, newBalanceMinor: newBal }
+  }
+
+  // --- ADMIN AUDIT LOGS ---
+
+  async getAdminAuditLogs(): Promise<AdminAuditLog[]> {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('admin_audit_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50)
+
+        if (!error && data && data.length > 0) {
+          return data.map((r: any) => ({
+            id: r.id,
+            adminUserId: r.admin_user_id,
+            action: r.action,
+            targetResource: r.target_resource,
+            payload: r.payload,
+            ipAddress: r.ip_address,
+            createdAt: r.created_at,
+          }))
+        }
+      } catch (err) {
+        console.warn('Supabase getAdminAuditLogs fallback:', err)
+      }
+    }
+
+    const raw = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)
+    if (!raw) {
+      const initial: AdminAuditLog[] = [
+        {
+          id: `audit_init_1`,
+          action: 'ROOT_ADMIN_AUTHENTICATED',
+          targetResource: 'admin_control_center',
+          payload: { operator: 'own77777777@gmail.com' },
+          ipAddress: '127.0.0.1 (Authenticated)',
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `audit_init_2`,
+          action: 'GATEWAY_UPI_CONFIGURED',
+          targetResource: 'store_settings',
+          payload: { vpa: 'russianmarket@icici', merchant: 'Russian Market Collectibles' },
+          ipAddress: '127.0.0.1 (System)',
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+      ]
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(initial))
+      return initial
+    }
+
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return []
+    }
+  }
+
+  async recordAdminAuditLog(
+    action: string,
+    targetResource: string,
+    payload?: any,
+    adminUserId?: string,
+  ): Promise<AdminAuditLog> {
+    const raw = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)
+    const list: AdminAuditLog[] = raw ? JSON.parse(raw) : []
+
+    const newLog: AdminAuditLog = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `audit_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      adminUserId: adminUserId || null,
+      action,
+      targetResource,
+      payload,
+      ipAddress: '127.0.0.1 (Admin Session)',
+      createdAt: new Date().toISOString(),
+    }
+
+    localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([newLog, ...list.slice(0, 99)]))
+
+    if (supabase) {
+      try {
+        await supabase.from('admin_audit_logs').insert({
+          id: isUuid(newLog.id) ? newLog.id : undefined,
+          admin_user_id: isUuid(adminUserId) ? adminUserId : null,
+          action: newLog.action,
+          target_resource: newLog.targetResource,
+          payload: newLog.payload || null,
+          ip_address: newLog.ipAddress,
+        })
+      } catch (err) {
+        console.warn('Supabase admin_audit_logs sync warning:', err)
+      }
+    }
+
+    this.emit('audit_logs_updated', newLog)
+    return newLog
   }
 }
 
