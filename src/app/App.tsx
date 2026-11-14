@@ -299,6 +299,9 @@ export function App() {
           <SettingsSection
             isAdmin={isAdmin}
             onToggleAdmin={navigateToAdmin}
+            onOpenOrders={() => setIsOrdersOpen(true)}
+            onOpenWallet={() => setActiveSection('wallet')}
+            onOpenChat={() => setActiveSection('chat')}
           />
         )}
       </main>

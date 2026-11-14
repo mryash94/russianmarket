@@ -417,8 +417,8 @@ export function ChatSection({ userId, userEmail: _userEmail = 'collector@russian
           </div>
         )}
 
-        {/* Fixed Message Composer Area */}
-        <div className="p-3 sm:p-4 bg-[#0c0e13] border-t border-white/[0.07] flex-shrink-0">
+        {/* Fixed Message Composer Area (with mobile safe clearance >45.1px) */}
+        <div className="p-3 sm:p-4 pb-20 md:pb-4 bg-[#0c0e13] border-t border-white/[0.07] flex-shrink-0">
           <form onSubmit={handleSendMessage} className="flex items-end gap-2">
             {/* Hidden File Input */}
             <input
