@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react'
 import { Header } from '../components/Header'
 import { Navigation, type AppSection } from '../components/Navigation'
 import { CatalogPage } from '../features/catalog/CatalogPage'
@@ -10,13 +10,14 @@ import { VideoSection } from '../features/video/VideoSection'
 import { ChatSection } from '../features/chat/ChatSection'
 import { WalletSection } from '../features/wallet/WalletSection'
 import { SettingsSection } from '../features/settings/SettingsSection'
-import { AdminDashboard } from '../features/admin/AdminDashboard'
 import { AdminLoginGateway } from '../features/admin/AdminLoginGateway'
 import { AuthModal } from '../features/auth/AuthModal'
 import { storeEngine, type NotificationItem } from '../services/storeEngine'
 import { useAuth } from '../features/auth/authContext'
 import { supabase } from '../lib/supabase'
 import type { Product } from '../types/product'
+
+const AdminDashboard = lazy(() => import('../features/admin/AdminDashboard'))
 
 const CART_STORAGE_KEY = 'rm_cart_items_v2'
 
@@ -231,7 +232,20 @@ export function App() {
       )
     }
 
-    return <AdminDashboard onExitAdmin={navigateToStore} />
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#060709] flex items-center justify-center text-white font-mono text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Initializing Enterprise Command Center...</span>
+            </div>
+          </div>
+        }
+      >
+        <AdminDashboard onExitAdmin={navigateToStore} />
+      </Suspense>
+    )
   }
 
   // ========================================================

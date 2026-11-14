@@ -246,6 +246,7 @@ export type Database = {
         status: 'open' | 'pending' | 'closed'
         unread_admin_count?: number
         unread_customer_count?: number
+        internal_notes?: string | null
         created_at: string
         updated_at: string
       }>

@@ -7,6 +7,7 @@ import {
   Check,
   RefreshCw,
   X,
+  Download,
 } from 'lucide-react'
 import {
   storeEngine,
@@ -14,6 +15,7 @@ import {
   type WalletTx,
 } from '../../services/storeEngine'
 import { formatINR } from '../../lib/currency'
+import { exportPaymentRequestsToCSV } from '../../lib/exportUtils'
 
 type AdminWalletManagerProps = {
   onNotify: (msg: string) => void
@@ -263,6 +265,19 @@ export function AdminWalletManager({ onNotify }: AdminWalletManagerProps) {
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportPaymentRequestsToCSV(filteredDeposits)
+                onNotify(`Exported ${filteredDeposits.length} payment requests to CSV`)
+              }}
+              className="h-8 px-2.5 rounded-lg bg-[#181c25] hover:bg-[#202530] text-[#9499a6] hover:text-[#ededed] text-xs font-mono-code flex items-center gap-1.5 transition-colors border border-white/[0.08]"
+              title="Export Payment Requests CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
           </div>
         </div>
 

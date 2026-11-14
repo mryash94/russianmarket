@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { formatINR } from '../lib/currency'
 import { SEED_PRODUCTS } from '../data/seedProducts'
 import { SEED_VIDEOS, type VideoItem } from '../data/seedVideos'
 import type { Product, CollectibleCollection } from '../types/product'
@@ -86,6 +87,7 @@ export type SupportConversation = {
   status: 'open' | 'pending' | 'closed'
   unreadAdminCount?: number
   unreadCustomerCount?: number
+  internalNotes?: string
   createdAt: string
   updatedAt: string
   messages: SupportMessage[]
@@ -745,6 +747,7 @@ class StoreEngine {
             status: c.status,
             unreadAdminCount: c.unread_admin_count || 0,
             unreadCustomerCount: c.unread_customer_count || 0,
+            internalNotes: c.internal_notes || c.internalNotes || undefined,
             createdAt: c.created_at,
             updatedAt: c.updated_at,
             messages: Array.isArray(c.messages)
@@ -960,6 +963,37 @@ class StoreEngine {
       conv.status = status
       conv.updatedAt = new Date().toISOString()
       localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
+      if (supabase && isUuid(conversationId)) {
+        try {
+          await supabase
+            .from('support_conversations')
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', conversationId)
+        } catch {}
+      }
+      this.emit('conversations_updated', list)
+    }
+  }
+
+  async updateConversationInternalNotes(conversationId: string, notes: string): Promise<void> {
+    const list = await this.getConversations()
+    const conv = list.find((c) => c.id === conversationId)
+    if (conv) {
+      conv.internalNotes = notes
+      conv.updatedAt = new Date().toISOString()
+      localStorage.setItem(STORAGE_KEYS.CONVERSATIONS, JSON.stringify(list))
+      if (supabase && isUuid(conversationId)) {
+        try {
+          await supabase
+            .from('support_conversations')
+            .update({ internal_notes: notes, updated_at: new Date().toISOString() })
+            .eq('id', conversationId)
+        } catch {}
+      }
+      await this.recordAdminAuditLog('UPDATE_INTERNAL_NOTES', 'support_conversations', {
+        conversationId,
+        snippet: notes.slice(0, 40),
+      }).catch(() => {})
       this.emit('conversations_updated', list)
     }
   }
@@ -1079,6 +1113,41 @@ class StoreEngine {
       balanceMinor: data.balanceMinor,
       txCount: data.txCount,
     }))
+  }
+
+  async adjustWalletBalance(params: {
+    userId: string
+    amountMinor: number
+    reason: string
+    adminEmail?: string
+  }): Promise<{ success: boolean; newBalanceMinor: number; tx: WalletTx }> {
+    const newTx = await this.recordWalletTransaction({
+      userId: params.userId,
+      amountMinor: params.amountMinor,
+      transactionType: 'adjustment',
+      status: 'completed',
+      reference: `ADJ_${Date.now()}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      description: `Administrative Adjustment: ${params.reason}`,
+    })
+
+    await this.recordAdminAuditLog('ADJUST_WALLET_BALANCE', 'wallet_transactions', {
+      userId: params.userId,
+      amountMinor: params.amountMinor,
+      reason: params.reason,
+      adminEmail: params.adminEmail || 'admin',
+      txId: newTx.id,
+    }).catch(() => {})
+
+    const newBalance = await this.getWalletBalance(params.userId)
+
+    await this.createNotification({
+      userId: params.userId,
+      title: 'Wallet Balance Adjusted',
+      body: `Your sovereign wallet was adjusted by ${params.amountMinor >= 0 ? '+' : ''}${formatINR(params.amountMinor)}. Reason: ${params.reason}`,
+      notificationType: 'system',
+    }).catch(() => {})
+
+    return { success: true, newBalanceMinor: newBalance, tx: newTx }
   }
 
   // --- ADD MONEY WITH UPI QR & DEPOSIT REQUESTS ---

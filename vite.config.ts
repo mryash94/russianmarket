@@ -18,5 +18,28 @@ export default defineConfig({
       ignored: ['**/russianmarket.unslop-upstream-inspect*'],
     },
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('scheduler')) {
+              return 'vendor-react'
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase'
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons'
+            }
+            if (id.includes('qrcode')) {
+              return 'vendor-qrcode'
+            }
+          }
+        },
+      },
+    },
+  },
 })
 
